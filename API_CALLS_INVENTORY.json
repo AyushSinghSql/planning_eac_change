@@ -1,0 +1,383 @@
+{
+  "project": "Planning UI - FINAXIS LUMINA",
+  "generatedDate": "2026-07-01",
+  "baseUrlSource": "src/components/config.js",
+  "apiCalls": [
+    {
+      "id": "API_001",
+      "component": "ReportingScreen.jsx",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "httpMethod": "GET",
+      "endpoint": "/Forecast/GetSummaryV1",
+      "fullUrl": "${backendUrl}/Forecast/GetSummaryV1",
+      "functionName": "fetchForecast()",
+      "lineNumber": 143,
+      "triggerEvent": "useEffect on component mount",
+      "authentication": "None (public)",
+      "requestBody": null,
+      "responseType": "JSON (hierarchical financial data)",
+      "errorHandling": "try-catch with console.error()",
+      "loadingIndicator": true,
+      "loadingStateVar": "loading",
+      "purpose": "Fetches forecast summary for financial reporting with monthly totals and profit calculations",
+      "usedIn": [
+        "Financial report generation",
+        "Monthly revenue/expense display"
+      ]
+    },
+    {
+      "id": "API_002",
+      "component": "ProjectHoursDetails.jsx",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "httpMethod": "GET",
+      "endpoint": "/api/Configuration/GetAllConfigValuesByProject/{projectId}",
+      "fullUrl": "${backendUrl}/api/Configuration/GetAllConfigValuesByProject/xxxxx",
+      "functionName": "fetchOrgConfig()",
+      "lineNumber": 385,
+      "triggerEvent": "useEffect hook",
+      "authentication": "None (currently)",
+      "requestBody": null,
+      "responseType": "JSON Array (configuration objects)",
+      "errorHandling": "try-catch with error throw",
+      "loadingIndicator": true,
+      "loadingStateVar": "isDurationLoading",
+      "purpose": "Fetches configuration settings including escalation percent and month",
+      "usedIn": ["Project configuration", "Employee escalation settings"],
+      "notes": "Currently hardcoded with 'xxxxx' - needs dynamic projectId"
+    },
+    {
+      "id": "API_003",
+      "component": "ProjectHoursDetails.jsx",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "httpMethod": "GET",
+      "endpoint": "/Forecast/GetMonthlyDataV1",
+      "fullUrl": "${backendUrl}/Forecast/GetMonthlyDataV1?planID=${planId}&planType=${apiPlanType}",
+      "functionName": "fetchAndSetLaborCost()",
+      "lineNumber": 452,
+      "triggerEvent": "useEffect (depends on planType)",
+      "authentication": "None",
+      "parameters": {
+        "planID": "Dynamic from props",
+        "planType": "Converts 'NBBUD' to 'BUD', else as-is"
+      },
+      "requestBody": null,
+      "responseType": "JSON (monthly labor cost data)",
+      "errorHandling": "try-catch with console.error()",
+      "loadingIndicator": true,
+      "loadingStateVar": "isLoading",
+      "purpose": "Fetches monthly forecast data for labor costs by plan",
+      "usedIn": [
+        "Employee hours calculation",
+        "Labor cost tracking",
+        "Monthly projections"
+      ]
+    },
+    {
+      "id": "API_004",
+      "component": "Dashboard.jsx",
+      "status": "ACTIVE",
+      "priority": "CRITICAL",
+      "httpMethod": "GET",
+      "endpoint": "/Orgnization/{userId}",
+      "fullUrl": "${backendUrl}/Orgnization/${user.userId}",
+      "functionName": "loadConfig()",
+      "lineNumber": 138,
+      "triggerEvent": "useEffect (depends on user.userId)",
+      "authentication": true,
+      "authHeader": "Authorization: Bearer ${token}",
+      "tokenSource": "localStorage.currentUser.token",
+      "requestBody": null,
+      "responseType": "JSON (screens and fields visibility)",
+      "errorHandling": "try-catch with fallback to empty visibility",
+      "loadingIndicator": true,
+      "loadingStateVar": "loading",
+      "purpose": "Fetches user-specific screen and field visibility configuration for RBAC",
+      "usedIn": [
+        "Role-based access control",
+        "Screen visibility",
+        "Field-level permissions"
+      ],
+      "notes": "Bypassed for ADMIN role users"
+    },
+    {
+      "id": "API_005",
+      "component": "NewBusiness.jsx",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "httpMethod": "GET",
+      "endpoint": "/Orgnization/GetAllOrgs",
+      "fullUrl": "${backendUrl}/Orgnization/GetAllOrgs",
+      "functionName": "fetchLookupData()",
+      "lineNumber": 214,
+      "triggerEvent": "useEffect on component mount",
+      "authentication": "None",
+      "requestMethod": "axios.get (parallel with other calls)",
+      "requestBody": null,
+      "responseType": "JSON Array (organization objects)",
+      "errorHandling": "catch with console.error()",
+      "loadingIndicator": false,
+      "purpose": "Fetches list of organizations for dropdown selection in new business form",
+      "usedIn": ["New business form population", "Organization dropdown"]
+    },
+    {
+      "id": "API_006",
+      "component": "NewBusiness.jsx",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "httpMethod": "GET",
+      "endpoint": "/Project/GetAccountGroupCodes",
+      "fullUrl": "${backendUrl}/Project/GetAccountGroupCodes",
+      "functionName": "fetchLookupData()",
+      "lineNumber": 215,
+      "triggerEvent": "useEffect on component mount",
+      "authentication": "None",
+      "requestMethod": "axios.get (parallel with other calls via Promise.all)",
+      "requestBody": null,
+      "responseType": "JSON Array (account group codes)",
+      "errorHandling": "catch with console.error()",
+      "loadingIndicator": false,
+      "purpose": "Fetches account group codes for selection in business budget forms",
+      "usedIn": ["New business form population", "Account group dropdown"]
+    },
+    {
+      "id": "API_007",
+      "component": "NewBusiness.jsx",
+      "status": "ACTIVE",
+      "priority": "MEDIUM",
+      "httpMethod": "GET",
+      "endpoint": "/Orgnization/GetAllTemplates",
+      "fullUrl": "${backendUrl}/Orgnization/GetAllTemplates",
+      "functionName": "fetchBurdenTemplates()",
+      "lineNumber": 251,
+      "triggerEvent": "useEffect on component mount",
+      "authentication": "None",
+      "requestBody": null,
+      "responseType": "JSON Array (burden template objects)",
+      "errorHandling": "try-catch with toast.error()",
+      "loadingIndicator": false,
+      "purpose": "Fetches burden templates for project cost calculations",
+      "usedIn": ["Burden template selection", "Project budget setup"],
+      "notes": "Includes data format validation"
+    },
+    {
+      "id": "API_008",
+      "component": "NewBusiness.jsx",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "httpMethod": "GET",
+      "endpoint": "/Project/GetProjectPlans",
+      "fullUrl": "${backendUrl}/Project/GetProjectPlans",
+      "functionName": "fetchAllBusinessBudgets()",
+      "lineNumber": 262,
+      "triggerEvent": "On demand (likely from button click or useEffect)",
+      "authentication": "None",
+      "requestBody": null,
+      "responseType": "JSON Array (project plan objects)",
+      "errorHandling": "try-catch with fallback to empty array",
+      "loadingIndicator": false,
+      "purpose": "Fetches all project plans to display in business budget table",
+      "usedIn": ["Project plans table display", "Business budget listing"]
+    },
+    {
+      "id": "API_009",
+      "component": "NewBusinessComponent.jsx",
+      "status": "ACTIVE",
+      "priority": "MEDIUM",
+      "httpMethod": "GET",
+      "endpoint": "/GetAllNewBusinessById/{searchTerm}",
+      "fullUrl": "${backendUrl}/GetAllNewBusinessById/${term}",
+      "functionName": "Search function (async)",
+      "lineNumber": 106,
+      "triggerEvent": "User search/autocomplete",
+      "authentication": "None",
+      "parameters": {
+        "searchTerm": "User input from search field"
+      },
+      "requestBody": null,
+      "responseType": "JSON (search results)",
+      "errorHandling": "Implicit in async handler",
+      "loadingIndicator": false,
+      "purpose": "Searches for new business records by ID",
+      "usedIn": ["New business search", "Autocomplete suggestions"]
+    },
+    {
+      "id": "API_010",
+      "component": "AnalogRate.jsx",
+      "status": "COMMENTED_OUT",
+      "priority": "LOW",
+      "httpMethod": "GET",
+      "endpoint": "/api/AnalgsRt",
+      "fullUrl": "${backendUrl}/api/AnalgsRt",
+      "functionName": "fetchNbiRates()",
+      "lineNumber": 55,
+      "triggerEvent": "Would be on component mount",
+      "authentication": "None",
+      "requestBody": null,
+      "responseType": "JSON (NBI rates)",
+      "purpose": "Fetches Non-Billed Items (NBI) rates for rate configuration",
+      "notes": "Currently disabled - requires review before activation"
+    },
+    {
+      "id": "API_011",
+      "component": "ProjectPlanTable.jsx",
+      "status": "ACTIVE",
+      "priority": "MEDIUM",
+      "httpMethod": "GET",
+      "endpoint": "[Dynamic - varies by context]",
+      "fullUrl": "Dynamic based on row selection",
+      "functionName": "handleFetchAuditLogs()",
+      "lineNumber": 147,
+      "triggerEvent": "User interaction (likely row click)",
+      "authentication": "None",
+      "requestBody": null,
+      "responseType": "JSON (audit log data)",
+      "errorHandling": "try-catch with toast.error()",
+      "loadingIndicator": false,
+      "purpose": "Fetches audit logs for project plan history and tracking",
+      "usedIn": ["Audit trail display", "Plan history tracking"]
+    },
+    {
+      "id": "API_012",
+      "component": "FinancialReport.jsx",
+      "status": "ACTIVE",
+      "priority": "MEDIUM",
+      "httpMethod": "POST",
+      "endpoint": "[Dynamic endpoint]",
+      "functionName": "[Dynamic handler]",
+      "lineNumber": 78,
+      "triggerEvent": "Report generation/export",
+      "authentication": "None",
+      "requestBody": "JSON (financial report data)",
+      "responseType": "JSON (success/failure response)",
+      "errorHandling": "try-catch",
+      "loadingIndicator": false,
+      "purpose": "Submits/generates financial reports",
+      "usedIn": ["Financial report export", "Report generation"]
+    },
+    {
+      "id": "API_013",
+      "component": "Login.jsx",
+      "status": "COMMENTED_OUT",
+      "priority": "CRITICAL",
+      "httpMethod": "POST",
+      "endpoint": "/api/User/login",
+      "fullUrl": "${backendUrl}/api/User/login",
+      "lineNumber": 76,
+      "purpose": "User authentication login",
+      "notes": "Currently disabled - must be activated for authentication flow"
+    },
+    {
+      "id": "API_014",
+      "component": "ChatBot.jsx",
+      "status": "COMMENTED_OUT",
+      "priority": "LOW",
+      "httpMethod": "POST",
+      "endpoint": "[ChatBot endpoint]",
+      "lineNumber": 30,
+      "purpose": "ChatBot API call (feature currently disabled)",
+      "notes": "Requires feature review before activation"
+    },
+    {
+      "id": "API_015",
+      "component": "Warning.jsx",
+      "status": "COMMENTED_OUT",
+      "priority": "LOW",
+      "httpMethod": "GET",
+      "endpoint": "[Warning endpoint]",
+      "lineNumber": 22,
+      "purpose": "Fetches warning/alert data",
+      "notes": "Currently disabled - review implementation before use"
+    }
+  ],
+  "summary": {
+    "totalAPICalls": 15,
+    "activeAPICalls": 12,
+    "commentedAPICalls": 3,
+    "httpMethods": {
+      "GET": 12,
+      "POST": 2,
+      "PUT": 0,
+      "DELETE": 0
+    },
+    "authenticationRequired": 1,
+    "componentsWithAPICalls": 11,
+    "averageErrorHandling": "Good (try-catch with logging)",
+    "averageLoadingIndicators": "Moderate (50% coverage)"
+  },
+  "authentication": {
+    "method": "Bearer Token",
+    "tokenStorage": "localStorage.currentUser.token",
+    "tokenRetrieval": "JSON.parse(localStorage.getItem('currentUser')).token",
+    "usedIn": ["Dashboard.jsx - /Orgnization/{userId}"]
+  },
+  "errorHandlingPatterns": [
+    {
+      "pattern": "try-catch with console.error()",
+      "components": [
+        "ProjectHoursDetails.jsx",
+        "NewBusiness.jsx",
+        "Dashboard.jsx"
+      ],
+      "severity": "Basic"
+    },
+    {
+      "pattern": "toast notifications",
+      "components": ["ProjectPlanTable.jsx", "NewBusiness.jsx"],
+      "severity": "User-facing"
+    },
+    {
+      "pattern": "Fallback to defaults",
+      "components": ["Dashboard.jsx", "NewBusiness.jsx"],
+      "severity": "Resilient"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "item": "Activate Login API",
+      "reason": "Critical for authentication flow",
+      "file": "Login.jsx",
+      "estimatedEffort": "Low"
+    },
+    {
+      "priority": 2,
+      "item": "Standardize error handling across all components",
+      "reason": "Inconsistent error handling patterns",
+      "estimatedEffort": "Medium"
+    },
+    {
+      "priority": 3,
+      "item": "Add loading indicators to ProjectPlanTable and FinancialReport",
+      "reason": "Missing visual feedback during API calls",
+      "estimatedEffort": "Low"
+    },
+    {
+      "priority": 4,
+      "item": "Fix ProjectHoursDetails hardcoded 'xxxxx' projectId",
+      "reason": "Configuration fetch uses placeholder value",
+      "file": "ProjectHoursDetails.jsx:386",
+      "estimatedEffort": "Low"
+    },
+    {
+      "priority": 5,
+      "item": "Implement API request timeout handling",
+      "reason": "No visible timeout configuration",
+      "estimatedEffort": "Medium"
+    },
+    {
+      "priority": 6,
+      "item": "Add request/response logging middleware",
+      "reason": "Improve debugging and monitoring",
+      "estimatedEffort": "High"
+    },
+    {
+      "priority": 7,
+      "item": "Create API service layer/module",
+      "reason": "Consolidate API calls and reduce code duplication",
+      "estimatedEffort": "High"
+    }
+  ]
+}
