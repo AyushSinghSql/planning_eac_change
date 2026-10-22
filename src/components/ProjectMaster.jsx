@@ -208,20 +208,45 @@ function ProjectMaster() {
     return [...pasted, ...newRows, ...recentRows, ...existing];
   }, [projects, recentSavedIds]);
 
+  // const filteredProjects = useMemo(() => {
+  //   const trimmed = search.toLowerCase().trim();
+  //   if (!trimmed) return sortedProjects;
+    
+  //   return sortedProjects.filter(
+  //     (project) =>
+  //       project.isNew ||
+  //       project.isPasted ||
+  //       columns.some((column) =>
+  //         String(project[column.key] || "")
+  //           .toLowerCase()
+  //           .includes(trimmed),
+  //       ),
+  //   );
+  // }, [sortedProjects, search]);
+
   const filteredProjects = useMemo(() => {
-    const trimmed = search.toLowerCase().trim();
-    if (!trimmed) return sortedProjects;
-    return sortedProjects.filter(
-      (project) =>
-        project.isNew ||
-        project.isPasted ||
-        columns.some((column) =>
-          String(project[column.key] || "")
+  const trimmed = search.toLowerCase().trim();
+
+  // Filter only by Project ID
+  const filtered = !trimmed
+    ? sortedProjects
+    : sortedProjects.filter(
+        (project) =>
+          project.isNew ||
+          project.isPasted ||
+          String(project.project_id ?? "")
             .toLowerCase()
             .includes(trimmed),
-        ),
-    );
-  }, [sortedProjects, search]);
+      );
+
+  return [...filtered].sort((a, b) =>
+    String(a.project_id ?? "").localeCompare(
+      String(b.project_id ?? ""),
+      undefined,
+      { numeric: true, sensitivity: "base" },
+    ),
+  );
+}, [sortedProjects, search]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
