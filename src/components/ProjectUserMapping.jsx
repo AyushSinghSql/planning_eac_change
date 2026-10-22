@@ -5,7 +5,6 @@ import { backendUrl } from "./config";
 import { toast } from "react-toastify";
 import { AiOutlineFundProjectionScreen } from "react-icons/ai";
 import { useOutletContext } from "react-router-dom";
-import { debounce } from "lodash";
 
 export default function ProjectUserMapping({ onClose }) {
   // Global lists & options
@@ -21,7 +20,7 @@ export default function ProjectUserMapping({ onClose }) {
 
   // Search & Available Employees state
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
-  const [projectSearchTerm, setProjectSearchTerm] = useState("");
+  const [inputValue, setInputValue] = useState("");
 
   // UI / Loading states
   const [projectLoading, setProjectLoading] = useState(false);
@@ -53,18 +52,14 @@ export default function ProjectUserMapping({ onClose }) {
     fetchEmployees();
   }, []);
 
-  // --- Fetch Projects with Search and Take parameter using the search endpoint ---
+  // --- Fetch Projects via Async Select ---
   const fetchProjects = useCallback(
-    async (searchTerm) => {
-      const trimmedTerm = searchTerm?.trim() ?? "";
+    async (searchText) => {
+      const trimmedTerm =
+        typeof searchText === "string" ? searchText.trim() : "";
       if (trimmedTerm.length < 4) {
-        setProjectOptions([]);
-        setProjectLoading(false);
-        return;
+        return [];
       }
-
-      setProjectLoading(true);
-      setError(null);
 
       try {
         const res = await axios.get(`${backendUrl}/api/ProjectMaster/search`, {
@@ -72,49 +67,53 @@ export default function ProjectUserMapping({ onClose }) {
         });
         const projData = Array.isArray(res.data) ? res.data : [];
 
-        setProjectOptions(
-          projData.map((p) => ({
-            value: p.projectId,
-            label: `${p.projectId} - ${p.projectName || ""} (PM: ${p.projectManagerName || "None"})`,
-            raw: p,
-          })),
-        );
+        return projData.map((p) => ({
+          value: p.projectId,
+          label: `${p.projectId} - ${p.projectName || ""} (PM: ${p.projectManagerName || "None"})`,
+          raw: p,
+        }));
       } catch (e) {
         console.error("Failed to load projects:", e);
         setError("Failed to load project list. Please try again.");
-        setProjectOptions([]);
-      } finally {
-        setProjectLoading(false);
+        return [];
       }
     },
     [lookupTake],
   );
 
-  const debouncedFetchProjects = useMemo(
-    () =>
-      debounce((query) => {
-        fetchProjects(query);
-      }, 500),
-    [fetchProjects],
-  );
+  const [asyncProjectOptions, setAsyncProjectOptions] = useState([]);
 
-  useEffect(() => {
-    return () => {
-      debouncedFetchProjects.cancel();
-    };
-  }, [debouncedFetchProjects]);
-
-  useEffect(() => {
-    const term = projectSearchTerm.trim();
-    if (term.length >= 4) {
-      setProjectLoading(true);
-      debouncedFetchProjects(term);
-    } else {
-      debouncedFetchProjects.cancel();
-      setProjectOptions([]);
-      setProjectLoading(false);
+  //   const handleProjectInputChange = async (newInput, { action }) => {
+  //     if (action === "input-change") {
+  //       const val = typeof newInput === "string" ? newInput : "";
+  //       setInputValue(val);
+  //       if (val.trim().length >= 4) {
+  //         setProjectLoading(true);
+  //         const results = await fetchProjects(val);
+  //         setAsyncProjectOptions(results);
+  //         setProjectLoading(false);
+  //       } else {
+  //         setAsyncProjectOptions([]);
+  //       }
+  //     }
+  //     return newInput;
+  //   };
+  const handleProjectInputChange = (newInput, { action }) => {
+    if (action === "input-change") {
+      const val = typeof newInput === "string" ? newInput : "";
+      setInputValue(val);
+      if (val.trim().length >= 4) {
+        setProjectLoading(true);
+        fetchProjects(val).then((results) => {
+          setAsyncProjectOptions(results);
+          setProjectLoading(false);
+        });
+      } else {
+        setAsyncProjectOptions([]);
+      }
     }
-  }, [projectSearchTerm, debouncedFetchProjects]);
+    return newInput;
+  };
 
   // --- Fetch Mapped Employees for Selected Project ---
   useEffect(() => {
@@ -129,7 +128,7 @@ export default function ProjectUserMapping({ onClose }) {
       return;
     }
 
-    const matchedOpt = projectOptions.find(
+    const matchedOpt = asyncProjectOptions.find(
       (o) => o.value === selectedProjectId,
     );
     if (matchedOpt && matchedOpt.raw) {
@@ -175,7 +174,7 @@ export default function ProjectUserMapping({ onClose }) {
     };
 
     fetchProjMappings();
-  }, [selectedProjectId, employeesList, projectOptions]);
+  }, [selectedProjectId, employeesList, asyncProjectOptions]);
 
   // Filtered employees for mapping table based on search
   const filteredEmployeesForMapping = useMemo(() => {
@@ -234,8 +233,8 @@ export default function ProjectUserMapping({ onClose }) {
       const items = Array.from(selectedEmployeeIds).map((employeeId) => ({
         projId: String(selectedProjectId),
         emplId: String(employeeId),
-        billLabCatCd: "AA",
-        dfltFl: "Y",
+        billLabCatCd: "",
+        dfltFl: "s",
         companyId: "",
         startDt: nowIso,
         endDt: "2078-12-31T00:00:00.000Z",
@@ -298,8 +297,8 @@ export default function ProjectUserMapping({ onClose }) {
       {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
 
       <div className="space-y-4">
-        {/* Project Search & Selection Section */}
-        <div className="flex flex-col gap-3 bg-gray-50 p-3.5 rounded border border-gray-200 shadow-sm">
+        {/* Project Search & Selection Single Input Section */}
+        <div className="flex flex-col gap-2 bg-gray-50 p-3.5 rounded border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center">
             <label className="font-semibold text-gray-700">
               Select Project <span className="text-red-500">*</span>
@@ -308,40 +307,28 @@ export default function ProjectUserMapping({ onClose }) {
               Type at least 4 characters to search
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <input
-                type="text"
-                placeholder="Search Project ID or Name..."
-                value={projectSearchTerm}
-                onChange={(e) => setProjectSearchTerm(e.target.value)}
-                className="bg-white w-full px-3 py-2 border border-gray-300 rounded shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs text-black"
-                autoComplete="off"
-              />
-            </div>
-            <div>
-              <Select
-                options={projectOptions}
-                isLoading={projectLoading}
-                value={
-                  projectOptions.find((o) => o.value === selectedProjectId) ||
-                  null
-                }
-                onChange={(opt) => setSelectedProjectId(opt ? opt.value : "")}
-                placeholder={
-                  projectSearchTerm.trim().length < 4
-                    ? "Enter at least 4 chars in search..."
-                    : "Select project from results..."
-                }
-                className="text-xs"
-                classNamePrefix="select"
-                isClearable
-                isDisabled={
-                  projectSearchTerm.trim().length < 4 &&
-                  projectOptions.length === 0
-                }
-              />
-            </div>
+          <div>
+            <Select
+              options={asyncProjectOptions}
+              isLoading={projectLoading}
+              value={
+                asyncProjectOptions.find(
+                  (o) => o.value === selectedProjectId,
+                ) || null
+              }
+              onChange={(opt) => setSelectedProjectId(opt ? opt.value : "")}
+              onInputChange={handleProjectInputChange}
+              placeholder="Type at least 4 characters to search Project ID or Name..."
+              className="text-xs"
+              classNamePrefix="select"
+              isClearable
+              isSearchable
+              noOptionsMessage={() =>
+                (inputValue || "").trim().length < 4
+                  ? "Please enter at least 4 characters..."
+                  : "No projects found"
+              }
+            />
           </div>
 
           {/* Project Details Card */}
@@ -451,7 +438,9 @@ export default function ProjectUserMapping({ onClose }) {
                           <tr
                             key={emp.employeeId}
                             onClick={() => handleEmployeeToggle(emp.employeeId)}
-                            className={`cursor-pointer transition-colors ${isChecked ? "bg-sky-50" : "hover:bg-gray-50"}`}
+                            className={`cursor-pointer transition-colors ${
+                              isChecked ? "bg-sky-50" : "hover:bg-gray-50"
+                            }`}
                           >
                             <td
                               className="w-10 px-2.5 py-2 border-b border-r border-gray-300 text-center"
