@@ -1257,7 +1257,8 @@ const Login = () => {
   const [configValue, setConfigValue] = useState({});
   const [loadConfig, setLoadConfig] = useState(false);
 
-  const dashboardUrl = "/dashboard/project-report?tab=highlevel";
+  // const dashboardUrl = "/dashboard/project-report?tab=highlevel";
+  const dashboardUrl = "/dashboard/sub-create-timesheet";
 
   const getConfigValue = async () => {
     setLoadConfig(true);
