@@ -230,8 +230,7 @@ export default function Approval() {
     return `${month}/${day}/${year}`;
   }
 
-    const isAdmin =
-currentUser?.role.toUpperCase() === "ADMIN";
+  const isAdmin = currentUser?.role.toUpperCase() === "ADMIN";
   const isUser = currentUser?.role === "user" || currentUser?.role === "User";
   const isPM = currentUser?.role === "pm";
   const columns = columnsAdmin;
@@ -1788,7 +1787,6 @@ currentUser?.role.toUpperCase() === "ADMIN";
                     />
                     Approved
                   </label>
-
                   <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1799,7 +1797,16 @@ currentUser?.role.toUpperCase() === "ADMIN";
                     />
                     Rejected
                   </label>
-
+                  <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={searchStatus.includes("submitted")}
+                      value="submitted"
+                      onChange={handleStatusCheckboxChange}
+                      className="cursor-pointer accent-blue-600"
+                    />
+                    Submitted
+                  </label>
                   {isAdmin && (
                     <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
                       <input
@@ -1812,17 +1819,6 @@ currentUser?.role.toUpperCase() === "ADMIN";
                       Processed
                     </label>
                   )}
-
-                  <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={searchStatus.includes("submitted")}
-                      value="submitted"
-                      onChange={handleStatusCheckboxChange}
-                      className="cursor-pointer accent-blue-600"
-                    />
-                    Submitted
-                  </label>
                 </div>
               </div>
               <button
@@ -2038,27 +2034,63 @@ currentUser?.role.toUpperCase() === "ADMIN";
                                 }}
                               >
                                 {col === "Status" ? (
-                                  <button
-                                    type="button"
-                                    className="relative inline-flex items-center justify-center cursor-pointer"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setApprovalPanelRow(row);
-                                    }}
-                                  >
-                                    <span
-                                      className={getStatusStyle(
-                                        row[col] || "PENDING",
-                                      )}
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      className="relative inline-flex items-center justify-center cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setApprovalPanelRow(row);
+                                      }}
                                     >
-                                      {(row[col] || "Pending")
-                                        .charAt(0)
-                                        .toUpperCase() +
-                                        (row[col] || "Pending")
-                                          .slice(1)
-                                          .toLowerCase()}
-                                    </span>
-                                  </button>
+                                      <span
+                                        className={getStatusStyle(
+                                          row[col] || "PENDING",
+                                        )}
+                                      >
+                                        {(row[col] || "Pending")
+                                          .charAt(0)
+                                          .toUpperCase() +
+                                          (row[col] || "Pending")
+                                            .slice(1)
+                                            .toLowerCase()}
+                                      </span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer text-gray-500 hover:text-blue-600"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setApprovalPanelRow(row);
+                                      }}
+                                      title="View Audit Trail"
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line
+                                          x1="12"
+                                          y1="16"
+                                          x2="12"
+                                          y2="12"
+                                        ></line>
+                                        <line
+                                          x1="12"
+                                          y1="8"
+                                          x2="12.01"
+                                          y2="8"
+                                        ></line>
+                                      </svg>
+                                    </button>
+                                  </div>
                                 ) : col === "All" ? (
                                   <input
                                     type="checkbox"
