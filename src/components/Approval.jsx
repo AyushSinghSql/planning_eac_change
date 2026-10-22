@@ -1837,7 +1837,7 @@ export default function Approval() {
                     {(() => {
                       const approveEligibleCount = selectedRows.filter(
                         (row) =>
-                          // row["Status"]?.toLowerCase() !== "approved" &&
+                          row["Status"]?.toLowerCase() !== "approved" &&
                           row["Status"]?.toLowerCase() !== "rejected" &&
                           row["Status"]?.toLowerCase() !== "processed",
                       ).length;
@@ -1870,7 +1870,7 @@ export default function Approval() {
                             disabled={
                               approveLoading ||
                               approveEligibleCount === 0 ||
-                              // hasApprovedSelected ||
+                              hasApprovedSelected ||
                               hasProcessedSelected ||
                               allProcessedSelected
                             }
