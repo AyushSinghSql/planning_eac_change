@@ -230,8 +230,8 @@ export default function Approval() {
     return `${month}/${day}/${year}`;
   }
 
-  const isAdmin =
-    currentUser?.role === "admin" || currentUser?.role === "ADMIN";
+    const isAdmin =
+currentUser?.role.toUpperCase() === "ADMIN";
   const isUser = currentUser?.role === "user" || currentUser?.role === "User";
   const isPM = currentUser?.role === "pm";
   const columns = columnsAdmin;
