@@ -2403,8 +2403,7 @@ const MassUtilityProject = ({
             approvedBy: "",
             templateId: plan.templateId || 1,
             projStartDt: plan.projStartDt,
-            // projEndDt: plan.projEndDt,
-            projEndDt: "2026-12-31",
+            projEndDt: plan.projEndDt,
             // fiscalYear: fiscalYear,
           };
 

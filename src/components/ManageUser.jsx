@@ -633,6 +633,8 @@ const ManageUser = () => {
         role: String(roleId || ""),
         roleId: Number(roleId || 0),
         isActive: Boolean(user.isActive),
+        firstLogin: Boolean(user.firstLogin),
+        isMFAEnabled: Boolean(user.isMFAEnabled),
       };
 
       // --------------------------------------------------------
@@ -841,15 +843,15 @@ const ManageUser = () => {
 
       const roleId = getRoleId(user.role);
 
-      await axios.put(`${backendUrl}/api/User/${user.userId}`, {
-        userId: user.userId,
-        username: user.username?.trim() || "",
-        fullName: user.fullName?.trim() || "",
-        email: user.email?.trim() || "",
-        role: String(roleId || ""),
-        roleId: Number(roleId || 0),
-        isActive: Boolean(user.isActive),
-        password,
+      await axios.put(`${backendUrl}/api/User/${user.userId}/reset-password`, {
+        // userId: user.userId,
+        // username: user.username?.trim() || "",
+        // fullName: user.fullName?.trim() || "",
+        // email: user.email?.trim() || "",
+        // role: String(roleId || ""),
+        // roleId: Number(roleId || 0),
+        // isActive: Boolean(user.isActive),
+        newPassword: password,
       });
 
       toast.success("Password reset successfully.");

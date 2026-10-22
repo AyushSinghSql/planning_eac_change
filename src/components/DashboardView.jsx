@@ -238,11 +238,24 @@ export default function DashboardView({
       });
     }
 
+    // const projMetric = isLabor ? "hours" : "amount";
+    // const byProj = Object.values(projMap)
+    //   // .filter((p) => isRevenue || /^/i.test(safeString(p.label).trim()))
+    //   .sort((a, b) => b[projMetric] - a[projMetric])
+    //   .slice(0, 8);
     const projMetric = isLabor ? "hours" : "amount";
+
     const byProj = Object.values(projMap)
-      .filter((p) => isRevenue || /^C/i.test(safeString(p.label).trim()))
+      .filter((p) => {
+        const project = safeString(p.label).trim().toUpperCase();
+
+        // Exclude GANDA, FRINGE, and IRAND projects
+        return !/(GANDA|FRNGE|IRAND|HRPAY|OVRHD|FACIT|GRANT|SMEHP|GENES|UTLTY)/i.test(
+          project,
+        );
+      })
       .sort((a, b) => b[projMetric] - a[projMetric])
-      .slice(0, 8);
+      .slice(0, 10);
 
     const realIds = (list, key) =>
       new Set(

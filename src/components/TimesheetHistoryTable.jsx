@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { backendUrl } from "./config";
 
-const TimesheetHistoryTable = ({ timesheetDate,lines, onClose }) => {
+const TimesheetHistoryTable = ({
+  timesheetDate,
+  lines,
+  onClose,
+  resourceType,
+}) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +21,7 @@ const TimesheetHistoryTable = ({ timesheetDate,lines, onClose }) => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(lines),
-          }
+          },
         );
         if (!res.ok) throw new Error("Failed to load history");
         const data = await res.json();

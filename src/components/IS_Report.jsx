@@ -1928,7 +1928,30 @@ const IS_Report = () => {
       const closingMonth = Number(closingPeriod?.month);
       const closingYear = Number(closingPeriod?.year);
 
-const sortOrder = [
+      // const sortOrder = [
+      //   "Contracts Revenue",
+      //   "Direct Labor",
+      //   "Direct Travel",
+      //   "Direct Materials",
+      //   "Subcontracts",
+      //   "Other Direct Costs",
+      //   "Gross Profit / (Loss)",
+      //   "Fringe Benefits",
+      //   "Overhead",
+      //   "Cost of Goods Sold",
+      //   "General & Administrative",
+      //   "Subcontract & Matl Handling",
+      //   "Misc Income/(Expenses)",
+      //   "Interest Expense",
+      //   "B&P",
+      //   "Business Development",
+      //   "Other Unallowable Expense",
+      //   "Allocations",
+      //   "Income Taxes",
+      //   "Net Profit / (Loss)",
+      // ];
+
+      const sortOrder = [
         "Revenue",
         "Revenue Adjustment",
         "Revenue Total",
@@ -1961,7 +1984,6 @@ const sortOrder = [
         "Net Profit / (Loss)",
         "Net Profit / (Loss) %",
       ];
-
 
       const getTotals = (item) => {
         return item.monthlyTotals || {};

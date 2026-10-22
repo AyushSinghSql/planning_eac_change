@@ -180,6 +180,7 @@ export default function Approval() {
   const [searchEmployeeId, setSearchEmployeeId] = useState("");
   const [searchEmployeeName, setSearchEmployeeName] = useState("");
   const [selectedResourceId, setSelectedResourceId] = useState(null);
+  const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [approveLoading, setApproveLoading] = useState(false);
@@ -229,7 +230,8 @@ export default function Approval() {
     return `${month}/${day}/${year}`;
   }
 
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin =
+    currentUser?.role === "admin" || currentUser?.role === "ADMIN";
   const isUser = currentUser?.role === "user" || currentUser?.role === "User";
   const isPM = currentUser?.role === "pm";
   const columns = columnsAdmin;
@@ -618,6 +620,7 @@ export default function Approval() {
     setSelectedResourceId(employeeId);
     setSelectedTimesheetDate(clickedDate);
     setSelectedTimesheetLines(linesForKey);
+    setSelectedResourceType(rowData.resource_Type || "");
     setCurrentSelectedRowId(rowData.id);
 
     setTimeout(() => {
@@ -633,6 +636,7 @@ export default function Approval() {
 
   const handleCloseDetails = () => {
     setSelectedResourceId(null);
+    setSelectedResourceType(null);
   };
 
   useEffect(() => {
@@ -670,6 +674,7 @@ export default function Approval() {
     setNotifySelectAll(false);
     setUnifiedSelectAll(false);
     setSearchStatus(""); // Reset status filter
+    setSelectedResourceType(null);
   }, []);
 
   // useEffect(() => {
@@ -751,6 +756,10 @@ export default function Approval() {
           !existingEntry.combinedLineNos.includes(timesheet.lineNo)
         ) {
           existingEntry.combinedLineNos.push(timesheet.lineNo);
+        }
+
+        if (!existingEntry.resource_Type && timesheet.resource_Type) {
+          existingEntry.resource_Type = timesheet.resource_Type;
         }
       } else {
         // First entry for this key
@@ -835,6 +844,8 @@ export default function Approval() {
           const employeeId = ts.resource_Id || ts.resourceId;
           const approverId = ts.pm_User_Id || ts.pmUserId || ts.approverUserId;
 
+          // const resourceType = "user";
+
           if (!date || !employeeId || !approverId) {
             console.log("Skipping entry - missing required fields:", {
               date,
@@ -876,9 +887,6 @@ export default function Approval() {
       console.log("Final dateToLineNos:", dateToLineNos);
 
       setDateToLineNos(dateToLineNos);
-
-
-      console.log(dateToLineNos)
 
       // -----------------------------
       // Transform the nested structure into flat rows (existing logic)
@@ -939,6 +947,8 @@ export default function Approval() {
 
             // Store the raw hours array for grouping operations
             rawHoursData: timesheetEntry.timesheetHours || [],
+            resource_Type:
+              timesheetEntry.resource_Type || timesheetEntry.type || "",
           };
 
           flattenedData.push(row);
@@ -1349,10 +1359,10 @@ export default function Approval() {
       (row) => (row["Status"] || "").toLowerCase() === "approved",
     );
 
-    if (hasApprovedRows) {
-      showToast("Cannot approve already approved timesheets.", "warning");
-      return;
-    }
+    // if (hasApprovedRows) {
+    //   showToast("Cannot approve already approved timesheets.", "warning");
+    //   return;
+    // }
 
     performBulkApprove("Bulk approved");
   };
@@ -1827,7 +1837,7 @@ export default function Approval() {
                     {(() => {
                       const approveEligibleCount = selectedRows.filter(
                         (row) =>
-                          row["Status"]?.toLowerCase() !== "approved" &&
+                          // row["Status"]?.toLowerCase() !== "approved" &&
                           row["Status"]?.toLowerCase() !== "rejected" &&
                           row["Status"]?.toLowerCase() !== "processed",
                       ).length;
@@ -1860,7 +1870,7 @@ export default function Approval() {
                             disabled={
                               approveLoading ||
                               approveEligibleCount === 0 ||
-                              hasApprovedSelected ||
+                              // hasApprovedSelected ||
                               hasProcessedSelected ||
                               allProcessedSelected
                             }
@@ -2203,6 +2213,7 @@ export default function Approval() {
             <TimesheetHistoryTable
               timesheetDate={selectedTimesheetDate}
               lines={selectedTimesheetLines}
+              resourceType={selectedResourceType}
               onClose={() => setShowHistory(false)}
             />
           )}
@@ -2211,6 +2222,7 @@ export default function Approval() {
             <TimesheetRevisionTable
               timesheetDate={selectedTimesheetDate}
               lines={selectedTimesheetLines}
+              resourceType={selectedResourceType}
               onClose={() => setShowRevision(false)}
             />
           )}
@@ -2228,10 +2240,12 @@ export default function Approval() {
               <TimesheetApprovalModal
                 resourceId={selectedResourceId}
                 timesheetDate={selectedTimesheetDate}
+                resourceType={selectedResourceType}
                 onClose={() => {
                   setSelectedResourceId(null);
                   setCurrentSelectedRowId(null);
                   setSelectedTimesheetDate(null);
+                  setSelectedResourceType(null);
                 }}
               />
             </div>

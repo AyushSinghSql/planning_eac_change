@@ -280,14 +280,14 @@ const LaborForm = () => {
       type: "boolean",
       defaultValue: "true",
     },
-    {
-      name: "IpFiltering_RestrictedPaths",
-      label: "Restricted API Paths",
-      description:
-        "Enter comma-separated API paths that should only be accessible to IP addresses listed in Allowed IP Addresses. For example, /api/admin,/api/financialreport,/api/export. When IP filtering is enabled, requests to these paths, including their subpaths, are rejected with HTTP 403 Forbidden if the client's IP address is not in the allowed list. Other paths are not restricted by this list, but blocked IP addresses are still denied access to every endpoint.",
-      type: "text",
-      defaultValue: "/api/admin,/api/financialreport,/api/export",
-    },
+    // {
+    //   name: "IpFiltering_RestrictedPaths",
+    //   label: "Restricted API Paths",
+    //   description:
+    //     "Enter comma-separated API paths that should only be accessible to IP addresses listed in Allowed IP Addresses. For example, /api/admin,/api/financialreport,/api/export. When IP filtering is enabled, requests to these paths, including their subpaths, are rejected with HTTP 403 Forbidden if the client's IP address is not in the allowed list. Other paths are not restricted by this list, but blocked IP addresses are still denied access to every endpoint.",
+    //   type: "text",
+    //   defaultValue: "/api/admin,/api/financialreport,/api/export",
+    // },
     {
       name: "IpFiltering_AllowedIps",
       label: "Allowed IP Addresses",

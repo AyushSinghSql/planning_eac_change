@@ -2485,21 +2485,21 @@ const DIRECT_NAMES = [
   "Direct Materials",
   "Subcontracts",
   "Other Direct Costs",
-  "Consultation",
-  "Materials",
-  "Material Handling",
-  "Subcontractors",
-  "Travel",
-  "Other Direct Cost",
-  "Equipment",
-  "Unallowable Direct - ODCs",
 ];
 
 const INDIRECT_NAMES = [
   "Fringe Benefits",
   "Overhead",
+  // "Cost of Goods Sold",
   "General & Administrative",
-  "Subcontract & Matl Handling"
+  "Subcontract & Matl Handling",
+  // "Misc Income/(Expenses)",
+  // "Interest Expense",
+  // "B&P",
+  // "Business Development",
+  // "Other Unallowable Expense",
+  // "Allocations",
+  // "Income Taxes",
 ];
 const INDIRECT_NAMES_WITH_UNALLOWABLE = [
   "Fringe Benefits",
@@ -2514,12 +2514,6 @@ const INDIRECT_NAMES_WITH_UNALLOWABLE = [
   "Other Unallowable Expense",
   "Allocations",
   "Income Taxes",
-    "General & Administration Exp",
-  "HR/Payroll Allocation",
-  "IT/Facilities",
-  "Project Specific Overhead",
-  "Subcont, Material & Equipment",
-  "Unallowables"
 ];
 
 /*
@@ -2598,7 +2592,8 @@ const nameMatchesAny = (node, list) => {
 };
 
 /* Same node classification as ReportingScreen (top-level nodes only) */
-const isRevenueRoot = (node) => normalizeName(node?.name) === "revenue";
+const isRevenueRoot = (node) =>
+  normalizeName(node?.name) === "contracts revenue";
 const isAdjustmentNode = (node) =>
   normalizeName(node?.name).includes("adjustment");
 const isDirectNode = (node) => nameMatchesAny(node, DIRECT_NAMES);
@@ -2610,7 +2605,6 @@ const isDirectNonLaborNode = (node) => {
   const name = normalizeName(node?.name);
   return name.includes("direct non labor") || name.includes("direct non-labor");
 };
-
 /* Adjust if your project nodes use a different `type` value */
 const isProjectNode = (node) => normalizeName(node?.type).includes("project");
 
@@ -2693,7 +2687,7 @@ const buildStatementTree = (rawData) => {
   const top = mergeEntriesByName(toArray(rawData)).map((item) => mapNode(item));
 
   /* Move 50.32.02 under 90 (Unallowable), same as the report */
-  const unallowable = top.find((n) => n.id === "90" || n.id === "900" || n.id === "998");
+  const unallowable = top.find((n) => n.id === "90");
   const moveIndex = top.findIndex((n) => n.id === "50.32.02");
 
   if (unallowable && moveIndex !== -1) {
@@ -2731,10 +2725,6 @@ const getBudgetValue = (node, key) => {
   if (isAdjustmentNode(node)) return 0;
 
   const isRev = normalizeName(node.name) === "revenue" || isRevenueRoot(node);
-
-  // if(isRev){
-  //   console.log(node)
-  // }
 
   return safeNumber(
     isRev
@@ -2877,7 +2867,9 @@ const calculateMetricsForMonth = (
 
   const rawRevenue = val(groups.revenueNode);
 
-  const revenue = round2(isBeforeOrAtClosingPeriod ? rawRevenue : rawRevenue);
+  const revenue = round2(
+    isBeforeOrAtClosingPeriod ? rawRevenue * -1 : rawRevenue,
+  );
 
   /*
    * Direct Costs

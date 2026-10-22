@@ -517,60 +517,10 @@ const Vendor_Expenses = ({
         .includes(lowerVal);
     });
 
-    const groups = filteredSource.reduce((acc, entry) => {
-      const baseKey = String(entry.prime_key || entry.primeKey || "").split(
-        ".",
-      )[0];
-      if (!baseKey) return acc;
-      if (!acc[baseKey]) acc[baseKey] = [];
-      acc[baseKey].push(entry);
-      return acc;
-    }, {});
-
-    for (const key in groups) {
-      groups[key].sort(
-        (a, b) =>
-          parseFloat(b.prime_key || b.primeKey || 0) -
-          parseFloat(a.prime_key || a.primeKey || 0),
-      );
-    }
-
-    let filteredGroups = Object.values(groups);
-
-    filteredGroups.sort((groupA, groupB) => {
-      const entryA = groupA[0];
-      const entryB = groupB[0];
-
-      const statusA = (entryA.status || "").toLowerCase();
-      const statusB = (entryB.status || "").toLowerCase();
-
-      const isPendingA =
-        statusA !== "approved" && statusA !== "rejected" && statusA !== "paid";
-      const isPendingB =
-        statusB !== "approved" && statusB !== "rejected" && statusB !== "paid";
-
-      if (isPendingA && !isPendingB) return -1;
-      if (!isPendingA && isPendingB) return 1;
-
-      const numA =
-        parseInt(
-          String(entryA.prime_key || entryA.primeKey || "")
-            .split(".")[0]
-            .replace(/\D/g, ""),
-          10,
-        ) || 0;
-      const numB =
-        parseInt(
-          String(entryB.prime_key || entryB.primeKey || "")
-            .split(".")[0]
-            .replace(/\D/g, ""),
-          10,
-        ) || 0;
-
-      return numB - numA;
-    });
-
-    return filteredGroups;
+    // Keep the first record as the parent row and place all remaining
+    // matching records beneath it. The existing expand/collapse control
+    // determines whether those child rows are visible.
+    return filteredSource.length > 0 ? [filteredSource] : [];
   }, [localEntries, searchColumn, searchValue]);
 
   if (!hasMounted)
@@ -587,10 +537,10 @@ const Vendor_Expenses = ({
     <div className="min-h-screen text-gray-800 p-2">
       <div className="w-full">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6 border-b pb-4">
-          <h1 className="text-3xl font-extrabold text-blue-800 tracking-tighter">
+        <div className="p-4 w-full flex items-center rounded-sm bg-white">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             Vendor Expenses
-          </h1>
+          </h2>
           {/* <div className="flex items-center gap-4">
             <div className="bg-gray-100 p-2 rounded-lg flex items-center gap-2">
               <img
@@ -617,13 +567,11 @@ const Vendor_Expenses = ({
             <form onSubmit={(e) => handleSave(e, false)} className="space-y-6">
               {/* Row 1 & 2 Inputs: Now 4 grid boxes per row */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative">
-                  <label className="block text-xs font-bold mb-1">
-                    Vendor Name *
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Vendor Name *</label>
                   <input
                     type="text"
-                    className="w-full p-2 border rounded bg-white"
+                    className="input-style"
                     placeholder="Search or enter vendor name..."
                     value={vendorSearch || formData.vendorName}
                     onChange={(e) => {
@@ -659,14 +607,12 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Vendor ID (Editable Open Text Field) */}
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Vendor ID
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Vendor ID</label>
                   <input
                     id="vendorId"
                     type="text"
-                    className="w-full p-2 border rounded bg-white font-mono"
+                    className="input-style"
                     placeholder="Enter Vendor ID"
                     value={formData.vendorId}
                     onChange={handleInputChange}
@@ -674,13 +620,11 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Contract */}
-                <div className="relative">
-                  <label className="block text-xs font-bold mb-1">
-                    Contract *
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Contract *</label>
                   <input
                     type="text"
-                    className="w-full p-2 border rounded bg-white disabled:bg-gray-100"
+                    className="input-style"
                     placeholder="Type to filter contracts..."
                     value={contractSearch}
                     disabled={!formData.vendorName && !formData.vendorId}
@@ -713,15 +657,13 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Amount */}
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Amount *
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Amount *</label>
                   <input
                     id="chargeAmount"
                     type="number"
                     step="0.01"
-                    className="w-full p-2 border rounded bg-white"
+                    className="input-style"
                     value={formData.chargeAmount}
                     onChange={handleInputChange}
                     required
@@ -729,12 +671,12 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Date */}
-                <div>
-                  <label className="block text-xs font-bold mb-1">Date *</label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Date *</label>
                   <input
                     id="chargeDate"
                     type="date"
-                    className="w-full p-2 border rounded bg-white"
+                    className="input-style"
                     value={formData.chargeDate}
                     onChange={handleInputChange}
                     required
@@ -742,13 +684,11 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Charge Code */}
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Charge Code *
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Charge Code *</label>
                   <select
                     id="chargeCode"
-                    className="w-full p-2 border rounded bg-white"
+                    className="input-style"
                     value={formData.chargeCode}
                     onChange={handleInputChange}
                     required
@@ -766,10 +706,8 @@ const Vendor_Expenses = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 text-xs">
                 {/* Voucher No Element */}
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-gray-700">
-                    Voucher No
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">Voucher No</label>
                   <input
                     id="voucherNo"
                     type="text"
@@ -778,7 +716,7 @@ const Vendor_Expenses = ({
                         ? "Enter tracking number..."
                         : "—"
                     }
-                    className="w-full p-2 border rounded bg-white disabled:bg-gray-100 disabled:text-gray-400 font-mono"
+                    className="input-style"
                     value={formData.voucherNo}
                     onChange={handleInputChange}
                     disabled={currentUserRole !== "admin"}
@@ -786,13 +724,13 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Accounting Status Toggle */}
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-gray-700">
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24 mr-12">
                     Accounting Status
                   </label>
                   <select
                     id="accounting"
-                    className="w-full p-2 border rounded bg-white disabled:bg-gray-100 disabled:text-gray-400 font-medium"
+                    className="input-style"
                     value={formData.accounting ? "true" : "false"}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -808,14 +746,14 @@ const Vendor_Expenses = ({
                 </div>
 
                 {/* Date Processed Datepicker */}
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-gray-700">
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24 mr-11">
                     Date Processed
                   </label>
                   <input
                     id="dateProcessed"
                     type="date"
-                    className="w-full p-2 border rounded bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                    className="input-style"
                     value={formData.dateProcessed}
                     onChange={handleInputChange}
                     disabled={currentUserRole !== "admin"}
@@ -825,27 +763,25 @@ const Vendor_Expenses = ({
 
               {/* File Path and Notes */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    File Path *
-                  </label>
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24">File Path *</label>
                   <input
                     id="pdfFilePath"
                     type="text"
-                    className="w-full p-2 border rounded bg-white"
+                    className="input-style"
                     value={formData.pdfFilePath}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="input-label w-24 mr-26">
                     Notes / Rejection Reason
                   </label>
                   <textarea
                     id="notes"
                     rows="1"
-                    className={`w-full p-2 border rounded bg-white ${userName === "Revolve" && formData.status === "Rejected" ? "border-red-500" : ""}`}
+                    className="input-style"
                     value={formData.notes}
                     onChange={handleInputChange}
                   />
@@ -854,42 +790,43 @@ const Vendor_Expenses = ({
 
               {/* Status controls */}
               <div className="p-4 bg-white border-2 border-dashed rounded-lg flex flex-wrap items-center justify-between gap-4">
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStatus("Submitted")}
-                    className={`px-4 py-2 rounded font-bold text-xs transition-all ${formData.status === "Submitted" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400"}`}
-                  >
-                    Submitted
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStatus("Approved")}
-                    className={`px-4 py-2 rounded font-bold text-xs transition-all ${formData.status === "Approved" ? "bg-green-600 text-white shadow-md" : "bg-gray-100 text-gray-400"} ${currentUserRole !== "admin" ? "opacity-30" : ""}`}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStatus("Rejected")}
-                    className={`px-4 py-2 rounded font-bold text-xs transition-all ${formData.status === "Rejected" ? "bg-red-600 text-white shadow-md" : "bg-gray-100 text-gray-400"} ${currentUserRole !== "admin" ? "opacity-30" : ""}`}
-                  >
-                    Reject
-                  </button>
+                <div className="flex items-center gap-2">
+                  {[
+                    { label: "Submitted", value: "Submitted" },
+                    { label: "Approved", value: "Approved" },
+                    { label: "Rejected", value: "Rejected" },
+                  ].map((status) => (
+                    <label
+                      key={status.value}
+                      className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+                    >
+                      <input
+                        type="radio"
+                        name="expenseStatus"
+                        value={status.value}
+                        checked={formData.status === status.value}
+                        onChange={() => setStatus(status.value)}
+                        className="h-4 w-4 accent-blue-600"
+                      />
+                      {status.label}
+                    </label>
+                  ))}
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="px-6 py-2 bg-gray-200 rounded font-bold text-xs"
+                    className="btn1  bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center gap-1"
+                    // className="px-4 py-2 text-xs font-medium transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-8 py-2 rounded font-bold shadow-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    className="btn1 btn-blue flex items-center gap-1"
                   >
-                    <Save size={18} /> Save Record
+                    {/* <Save size={11} />  */}
+                    Save
                   </button>
                 </div>
               </div>
@@ -898,25 +835,27 @@ const Vendor_Expenses = ({
         )}
 
         {/* Combined Action Row */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6 bg-gray-100 p-4 rounded-lg shadow-sm">
-          <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4 bg-gray-100 p-3 rounded-lg shadow-sm mt-3">
+          <div className="flex gap-2">
             {!isAdding && !editingEntry && (
               <button
                 onClick={() => {
                   resetForm();
                   setIsAdding(true);
                 }}
-                className="bg-yellow-500 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-bold shadow-md hover:bg-yellow-600 transition"
+                className="btn1 btn-blue flex items-center gap-1 text-xs"
               >
-                <Plus size={20} /> Add
+                {/* <Plus size={15} />  */}
+                Add
               </button>
             )}
             <button
               disabled={selectedRows.size !== 1}
               onClick={startEdit}
-              className="bg-gray-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 disabled:opacity-50 font-bold transition"
+              className="btn1 btn-blue flex items-center gap-1 text-xs"
             >
-              <Pencil size={20} /> Edit
+              {/* <Pencil size={15} /> */}
+              Edit
             </button>
             <button
               type="button"
@@ -928,28 +867,29 @@ const Vendor_Expenses = ({
                 );
                 if (targetEntry) setViewingRecord(targetEntry);
               }}
-              className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg flex items-center gap-2 text-xs font-bold shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="btn1 btn-blue flex items-center gap-1"
             >
-              <FileText size={16} className="text-gray-500" /> View Record
+              {/* <FileText size={12} className="text-gray-500" />  */}
+              View Record
             </button>
             <button
               type="button"
               onClick={handleExportToExcel}
-              className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-xs font-bold shadow-md hover:bg-emerald-700 transition-all"
+              className="btn1 btn-blue flex items-center gap-1"
             >
-              <Download size={16} />
+              {/* <Download size={12} /> */}
               {selectedRows.size > 0
                 ? `Export Selected (${selectedRows.size})`
-                : "Export All to Excel"}
+                : "Export"}
             </button>
           </div>
 
           <div className="flex flex-grow items-center gap-3 w-full xl:w-auto">
-            <div className="flex items-center border rounded-lg bg-white flex-grow shadow-sm">
+            <div className="flex items-center border rounded-lg bg-white flex-grow shadow-sm h-9">
               <select
                 value={searchColumn}
                 onChange={(e) => setSearchColumn(e.target.value)}
-                className="p-2 bg-transparent border-r text-sm font-medium outline-none"
+                className="px-2 py-1.5 bg-transparent border-r text-xs font-medium outline-none"
               >
                 {searchableColumns.map((col) => (
                   <option key={col.key} value={col.key}>
@@ -962,43 +902,43 @@ const Vendor_Expenses = ({
                 placeholder="Quick search..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full p-2 text-sm outline-none"
+                className="w-full px-2 py-1.5 text-xs outline-none"
               />
-              <Search size={18} className="text-gray-400 mx-2" />
+              <Search size={12} className="text-gray-400 mx-2" />
             </div>
-            <label className="flex items-center cursor-pointer gap-2 text-sm font-bold bg-white p-2 rounded-lg border shadow-sm">
+            <label className="flex items-center cursor-pointer gap-1.5 text-xs font-bold bg-white px-2 py-1.5 rounded-lg border shadow-sm">
               Latest Only
               <input
                 type="checkbox"
                 checked={showOnlyLatest}
                 onChange={(e) => setShowOnlyLatest(e.target.checked)}
-                className="w-4 h-4"
+                className="w-4 h-3"
               />
             </label>
           </div>
         </div>
 
         {/* Data Table */}
-        <div className="overflow-hidden border border-gray-200 rounded-lg shadow-sm bg-white">
-          <div className="overflow-x-auto whitespace-nowrap">
+        <div className="border-line">
+          <div className="synchronized-tables-container flex w-full">
             <table className="min-w-full border-collapse text-left text-xs">
               <thead className="bg-gray-50 border-b border-gray-200 font-semibold text-gray-600">
                 <tr>
                   <th className="p-4 w-12 text-center"></th>
-                  <th className="px-6 py-3">Record</th>
-                  <th className="px-6 py-3">Charge Code</th>
-                  <th className="px-6 py-3">Vendor Name</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Voucher No</th>
-                  <th className="px-6 py-3">Accounting</th>
-                  <th className="px-6 py-3">Date Processed</th>
-                  <th className="p-3 text-left border-b font-bold text-gray-700">
+                  <th className="text-center px-6 py-3">Record</th>
+                  <th className="text-center px-6 py-3">Charge Code</th>
+                  <th className="text-center px-6 py-3">Vendor Name</th>
+                  <th className="text-center px-6 py-3">Status</th>
+                  <th className="text-center px-6 py-3">Voucher No</th>
+                  <th className="text-center px-6 py-3">Accounting</th>
+                  <th className="text-center px-6 py-3">Date Processed</th>
+                  <th className="p-3 text-center font-bold text-gray-700">
                     PDF Path
                   </th>
-                  <th className="p-3 text-left border-b font-bold text-gray-700">
+                  <th className="p-3 text-center font-bold text-gray-700">
                     Notes
                   </th>
-                  <th className="px-6 py-3 text-right pr-8">Amount</th>
+                  <th className="px-6 py-3 text-center pr-8">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -1047,44 +987,56 @@ const Vendor_Expenses = ({
                           )}
                           {parent.prime_key || parent.primeKey}
                         </td>
-                        <td className="px-6 py-3 font-mono text-gray-600">
+                        <td className="px-6 py-3 font-mono text-gray-600 text-center">
                           {parent.credit_card ||
                             parent.creditCard ||
                             parent.contract_short_name ||
                             parent.contractShortName ||
                             "—"}
                         </td>
-                        <td className="px-6 py-3 text-gray-900 font-medium">
+                        <td className="px-6 py-3 text-gray-900 font-medium text-center">
                           {parent.vendor_name || parent.vendorName}
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-3 text-center">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${parent.status === "Approved" ? "bg-green-100 text-green-700" : parent.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}
+                            className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                              (parent.status || "Submitted") === "Approved"
+                                ? "bg-green-100 text-green-800"
+                                : (parent.status || "Submitted") === "Pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : (parent.status || "Submitted") ===
+                                      "Rejected"
+                                    ? "bg-red-100 text-red-700"
+                                    : (parent.status || "Submitted") ===
+                                        "Submitted"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-gray-100 text-gray-700"
+                            }`}
                           >
                             {parent.status || "Submitted"}
                           </span>
                         </td>
-                        <td className="px-6 py-3 font-mono text-gray-700 font-medium">
+                        <td className="px-6 py-3 font-mono text-gray-700 font-medium text-center">
                           {parent.voucher_no || parent.voucherNo || "—"}
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-3 text-center">
                           {parent.accounting === true ||
                           parent.accounting === "true" ? (
-                            <span className="text-green-600 font-semibold">
-                              ✅ Cleared
+                            <span className="text-black font-semibold">
+                              Cleared
                             </span>
                           ) : (
                             <span className="text-gray-400">⏳ Pending</span>
                           )}
                         </td>
-                        <td className="px-6 py-3 text-gray-500">
+                        <td className="px-6 py-3 text-gray-500 text-center">
                           {parent.date_processed || parent.dateProcessed
                             ? new Date(
                                 parent.date_processed || parent.dateProcessed,
                               ).toLocaleDateString()
                             : "—"}
                         </td>
-                        <td className="px-6 py-3 truncate max-w-[200px]">
+                        <td className="px-6 py-3 truncate max-w-[200px] text-center">
                           {parent.pdf_file_path || parent.pdfFilePath ? (
                             <a
                               href={
@@ -1096,7 +1048,7 @@ const Vendor_Expenses = ({
                               }
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 font-medium hover:underline flex items-center gap-1 text-xs"
+                              className="text-blue-600 font-medium hover:underline flex items-center justify-center gap-1 text-xs"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <FileText
@@ -1113,7 +1065,7 @@ const Vendor_Expenses = ({
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-3 text-gray-600 truncate max-w-[200px]">
+                        <td className="px-6 py-3 text-gray-600 truncate max-w-[200px] text-center">
                           {parent.notes || "-"}
                         </td>
                         <td className="px-6 py-3 text-right font-black pr-8">
@@ -1131,35 +1083,53 @@ const Vendor_Expenses = ({
                         group.slice(1).map((hEntry) => (
                           <tr
                             key={hEntry.id}
-                            className="bg-gray-50 italic text-gray-400 border-l-4 border-yellow-400"
+                            className="hover:bg-blue-50/40 transition-colors"
                           >
                             <td className="p-4"></td>
-                            <td className="px-6 py-2 pl-12 font-bold">
+                            <td className="px-6 py-3 pl-12 font-bold text-left">
                               {hEntry.prime_key || hEntry.primeKey}
                             </td>
-                            <td className="px-6 py-2 font-mono">
+                            <td className="px-6 py-3 font-mono text-gray-600 text-center">
                               {hEntry.credit_card ||
                                 hEntry.creditCard ||
                                 hEntry.contract_short_name ||
                                 hEntry.contractShortName ||
                                 "—"}
                             </td>
-                            <td className="px-6 py-2">
+                            <td className="px-6 py-3 text-center">
                               {hEntry.vendor_name || hEntry.vendorName}
                             </td>
-                            <td className="px-6 py-2 text-xs">
-                              {hEntry.status || "Submitted"}
+                            {/* ```jsx */}
+                            <td className="px-6 py-3 text-center">
+                              <span
+                                className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                                  (hEntry.status || "Submitted") === "Approved"
+                                    ? "bg-green-100 text-green-800"
+                                    : (hEntry.status || "Submitted") ===
+                                        "Pending"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : (hEntry.status || "Submitted") ===
+                                          "Rejected"
+                                        ? "bg-red-100 text-red-700"
+                                        : (hEntry.status || "Submitted") ===
+                                            "Submitted"
+                                          ? "bg-blue-100 text-blue-700"
+                                          : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {hEntry.status || "Submitted"}
+                              </span>
                             </td>
-                            <td className="px-6 py-2 font-mono">
+                            <td className="px-6 py-3 font-mono text-gray-600 text-center">
                               {hEntry.voucher_no || hEntry.voucherNo || "—"}
                             </td>
-                            <td className="px-6 py-2">
+                            <td className="px-6 py-3 text-center">
                               {hEntry.accounting === true ||
                               hEntry.accounting === "true"
                                 ? "Cleared"
                                 : "Pending"}
                             </td>
-                            <td className="px-6 py-2">
+                            <td className="px-6 py-3 text-center">
                               {hEntry.date_processed || hEntry.dateProcessed
                                 ? new Date(
                                     hEntry.date_processed ||
@@ -1167,7 +1137,7 @@ const Vendor_Expenses = ({
                                   ).toLocaleDateString()
                                 : "—"}
                             </td>
-                            <td className="px-6 py-2 truncate max-w-[200px]">
+                            <td className="px-6 py-3 truncate max-w-[200px] text-center">
                               {hEntry.pdf_file_path || hEntry.pdfFilePath ? (
                                 <a
                                   href={
@@ -1197,10 +1167,10 @@ const Vendor_Expenses = ({
                                 </span>
                               )}
                             </td>
-                            <td className="px-6 py-2 text-gray-600 truncate max-w-[200px]">
+                            <td className="px-6 py-3 text-gray-600 truncate max-w-[200px text-center">
                               {hEntry.notes || "-"}
                             </td>
-                            <td className="px-6 py-2 text-right pr-8">
+                            <td className="px-6 py-3 text-right font-black pr-8">
                               $
                               {parseFloat(
                                 hEntry.charge_amount ||

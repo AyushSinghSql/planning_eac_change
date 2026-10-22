@@ -62,7 +62,8 @@ const MAPPING_API = `${backendUrl}/api/PBR/pbr-acct-grp-map/get-all`;
 const POOLS_API = `${backendUrl}/Orgnization/GetAllPools`;
 const PSR_DATA_API = `${backendUrl}/api/ForecastReport/GetPSRData`;
 const LNL_DATA_API = `${backendUrl}/api/PbrLaborNonLabor`;
-const LNL_UPSERT_API = `${backendUrl}/api/PbrLaborNonLabor/bulk-upsert`;
+const LNL_UPDATE_API = `${backendUrl}/api/PbrLaborNonLabor/bulk-update`;
+const LNL_INSERT_API = `${backendUrl}/api/PbrLaborNonLabor/bulk-insert`;
 
 const COA_API = `${backendUrl}/api/ChartOfAccounts`;
 const LAB_HS_API = `${backendUrl}/api/ForecastReport/GetLabHSData`;
@@ -70,6 +71,268 @@ const EMP_API = `${backendUrl}/api/ForecastReport/GetAllEmployee`;
 const VEND_EMP_API = `${backendUrl}/VendorEmployee`;
 const ORGS_API = `${backendUrl}/Orgnization/GetAllOrgs`;
 const GL_DATA_API = `${backendUrl}/api/ForecastReport/GetGlPostDetail`;
+
+// SSAI Active Report account mapping. Revenue is sourced only from the Revenue section.
+const REPORT_ACCOUNT_GROUPS = {
+  "500-001-110": "Direct Labor",
+  "500-001-120": "Direct Labor",
+  "500-002-110": "Direct Labor",
+  "500-002-120": "Direct Labor",
+  "500-003-110": "Direct Labor",
+  "500-003-120": "Direct Labor",
+  "500-004-120": "Direct Labor",
+  "500-006-110": "Direct Labor",
+  "500-007-110": "Direct Labor",
+  "500-010-110": "Direct Labor",
+  "500-010-120": "Direct Labor",
+  "500-013-110": "Direct Labor",
+  "500-013-120": "Direct Labor",
+  "500-017-110": "Direct Labor",
+  "642-001-135": "Consultation",
+  "643-001-135": "Consultation",
+  "643-002-140": "Consultation",
+  "643-004-135": "Consultation",
+  "643-050-135": "Consultation",
+  "643-054-135": "Consultation",
+  "653-002-140": "Materials",
+  "645-001-135": "Material Handling",
+  "645-004-135": "Material Handling",
+  "410-004": "Subcontractors",
+  "646-001-135": "Subcontractors",
+  "646-004-135": "Subcontractors",
+  "646-050-135": "Subcontractors",
+  "646-054-135": "Subcontractors",
+  "647-001-140": "Travel",
+  "647-002-140": "Travel",
+  "647-003-140": "Travel",
+  "647-004-140": "Travel",
+  "647-005-140": "Travel",
+  "647-006-140": "Travel",
+  "647-007-140": "Travel",
+  "647-008-140": "Travel",
+  "647-009-140": "Travel",
+  "648-001-140": "Other Direct Cost",
+  "651-001-140": "Other Direct Cost",
+  "651-002-140": "Other Direct Cost",
+  "653-001-140": "Other Direct Cost",
+  "698-001-999": "Other Direct Cost",
+  "645-002-135": "Equipment",
+  "699-001-140": "Unallowable Direct - ODCs",
+  "699-001-199": "Unallowable Direct - ODCs",
+  "800-001-105": "Fringe Benefits",
+  "800-002-105": "Fringe Benefits",
+  "800-005-105": "Fringe Benefits",
+  "800-006-105": "Fringe Benefits",
+  "800-008-105": "Fringe Benefits",
+  "800-009-105": "Fringe Benefits",
+  "800-011-105": "Fringe Benefits",
+  "800-017-105": "Fringe Benefits",
+  "801-001-105": "Fringe Benefits",
+  "801-002-105": "Fringe Benefits",
+  "801-003-105": "Fringe Benefits",
+  "801-004-105": "Fringe Benefits",
+  "801-006-105": "Fringe Benefits",
+  "801-007-105": "Fringe Benefits",
+  "801-013-105": "Fringe Benefits",
+  "801-014-105": "Fringe Benefits",
+  "801-015-105": "Fringe Benefits",
+  "801-018-105": "Fringe Benefits",
+  "801-020-105": "Fringe Benefits",
+  "801-026-105": "Fringe Benefits",
+  "801-027-105": "Fringe Benefits",
+  "802-001-105": "Fringe Benefits",
+  "802-003-105": "Fringe Benefits",
+  "802-004-105": "Fringe Benefits",
+  "802-005-105": "Fringe Benefits",
+  "802-007-105": "Fringe Benefits",
+  "802-008-105": "Fringe Benefits",
+  "803-001-100": "Fringe Benefits",
+  "803-002-100": "Fringe Benefits",
+  "803-003-100": "Fringe Benefits",
+  "803-005-100": "Fringe Benefits",
+  "804-001-100": "Fringe Benefits",
+  "804-002-100": "Fringe Benefits",
+  "804-003-100": "Fringe Benefits",
+  "804-004-100": "Fringe Benefits",
+  "805-001-105": "Fringe Benefits",
+  "805-003-105": "Fringe Benefits",
+  "805-005-105": "Fringe Benefits",
+  "806-001-105": "Fringe Benefits",
+  "806-002-105": "Fringe Benefits",
+  "806-005-105": "Fringe Benefits",
+  "806-008-105": "Fringe Benefits",
+  "806-010-105": "Fringe Benefits",
+  "806-015-105": "Fringe Benefits",
+  "806-016-105": "Fringe Benefits",
+  "806-020-105": "Fringe Benefits",
+  "998-001-100": "Fringe Benefits",
+  "998-001-105": "Fringe Benefits",
+  "998-002-105": "Fringe Benefits",
+  "700-001-120": "Overhead",
+  "810-021-120": "Overhead",
+  "810-021-150": "Overhead",
+  "810-061-120": "Overhead",
+  "810-062-120": "Overhead",
+  "810-062-160": "Overhead",
+  "810-091-120": "Overhead",
+  "890-002-120": "Overhead",
+  "998-001-106": "Overhead",
+  "998-001-110": "Overhead",
+  "998-001-120": "Overhead",
+  "998-001-125": "Overhead",
+  "998-002-110": "Overhead",
+  "998-002-120": "Overhead",
+  "998-100-106": "Overhead",
+  "998-100-110": "Overhead",
+  "998-100-120": "Overhead",
+  "998-100-125": "Overhead",
+  "998-100-130": "Overhead",
+  "998-100-135": "Overhead",
+  "998-105-125": "Overhead",
+  "998-105-130": "Overhead",
+  "998-105-135": "Overhead",
+  "998-106-110": "Overhead",
+  "998-106-120": "Overhead",
+  "998-125-120": "Overhead",
+  "700-001-140": "General & Administration Exp",
+  "700-002-140": "General & Administration Exp",
+  "700-010-140": "General & Administration Exp",
+  "807-001-140": "General & Administration Exp",
+  "807-003-140": "General & Administration Exp",
+  "807-004-140": "General & Administration Exp",
+  "807-005-140": "General & Administration Exp",
+  "807-006-140": "General & Administration Exp",
+  "807-008-140": "General & Administration Exp",
+  "807-009-140": "General & Administration Exp",
+  "807-010-140": "General & Administration Exp",
+  "807-011-140": "General & Administration Exp",
+  "807-012-140": "General & Administration Exp",
+  "810-001-140": "General & Administration Exp",
+  "810-002-140": "General & Administration Exp",
+  "810-004-140": "General & Administration Exp",
+  "810-005-140": "General & Administration Exp",
+  "810-006-140": "General & Administration Exp",
+  "810-015-140": "General & Administration Exp",
+  "810-016-140": "General & Administration Exp",
+  "810-017-140": "General & Administration Exp",
+  "810-019-140": "General & Administration Exp",
+  "810-021-140": "General & Administration Exp",
+  "810-022-140": "General & Administration Exp",
+  "810-026-140": "General & Administration Exp",
+  "810-027-140": "General & Administration Exp",
+  "810-041-140": "General & Administration Exp",
+  "810-042-140": "General & Administration Exp",
+  "810-049-140": "General & Administration Exp",
+  "810-051-140": "General & Administration Exp",
+  "810-055-140": "General & Administration Exp",
+  "810-056-140": "General & Administration Exp",
+  "810-057-140": "General & Administration Exp",
+  "810-059-140": "General & Administration Exp",
+  "810-061-140": "General & Administration Exp",
+  "810-062-140": "General & Administration Exp",
+  "810-063-140": "General & Administration Exp",
+  "810-065-140": "General & Administration Exp",
+  "810-066-140": "General & Administration Exp",
+  "810-068-140": "General & Administration Exp",
+  "810-069-140": "General & Administration Exp",
+  "810-075-140": "General & Administration Exp",
+  "810-077-140": "General & Administration Exp",
+  "810-084-140": "General & Administration Exp",
+  "810-085-140": "General & Administration Exp",
+  "810-090-140": "General & Administration Exp",
+  "810-091-140": "General & Administration Exp",
+  "810-095-140": "General & Administration Exp",
+  "810-098-140": "General & Administration Exp",
+  "880-001-140": "General & Administration Exp",
+  "880-002-140": "General & Administration Exp",
+  "880-004-140": "General & Administration Exp",
+  "890-001-140": "General & Administration Exp",
+  "890-002-140": "General & Administration Exp",
+  "890-003-140": "General & Administration Exp",
+  "890-004-140": "General & Administration Exp",
+  "998-001-140": "General & Administration Exp",
+  "998-002-140": "General & Administration Exp",
+  "998-100-140": "General & Administration Exp",
+  "998-100-14A": "General & Administration Exp",
+  "998-100-14B": "General & Administration Exp",
+  "998-105-140": "General & Administration Exp",
+  "998-105-14A": "General & Administration Exp",
+  "998-105-14B": "General & Administration Exp",
+  "998-106-140": "General & Administration Exp",
+  "998-106-14A": "General & Administration Exp",
+  "998-106-14B": "General & Administration Exp",
+  "998-125-140": "General & Administration Exp",
+  "998-125-14A": "General & Administration Exp",
+  "998-125-14B": "General & Administration Exp",
+  "700-003-106": "HR/Payroll Allocation",
+  "810-017-106": "HR/Payroll Allocation",
+  "998-105-106": "HR/Payroll Allocation",
+  "700-004-125": "IT/Facilities",
+  "810-016-125": "IT/Facilities",
+  "810-017-125": "IT/Facilities",
+  "810-049-125": "IT/Facilities",
+  "998-106-125": "IT/Facilities",
+  "700-001-130": "Project Specific Overhead",
+  "700-002-130": "Project Specific Overhead",
+  "998-001-130": "Project Specific Overhead",
+  "998-002-130": "Project Specific Overhead",
+  "998-106-130": "Project Specific Overhead",
+  "998-125-130": "Project Specific Overhead",
+  "700-001-135": "Subcont, Material & Equipment",
+  "810-017-135": "Subcont, Material & Equipment",
+  "998-001-135": "Subcont, Material & Equipment",
+  "998-002-135": "Subcont, Material & Equipment",
+  "998-106-135": "Subcont, Material & Equipment",
+  "998-125-135": "Subcont, Material & Equipment",
+  "900-001": "Unallowables",
+  "900-002": "Unallowables",
+  "900-005": "Unallowables",
+  "900-007": "Unallowables",
+  "900-008": "Unallowables",
+  "900-011": "Unallowables",
+  "900-012": "Unallowables",
+  "900-014": "Unallowables",
+  "900-016": "Unallowables",
+  "900-017": "Unallowables",
+  "900-018": "Unallowables",
+  "900-019": "Unallowables",
+  "900-020": "Unallowables",
+  "900-023": "Unallowables",
+  "900-026": "Unallowables",
+  "900-041": "Unallowables",
+  "998-001-999": "Unallowables",
+  "998-002-999": "Unallowables",
+  "410-001": "Interest Income",
+  "410-003": "Interest Income",
+  "410-002": "Other Income",
+};
+const REPORT_DIRECT_COST_GROUPS = new Set([
+  "Consultation",
+  "Materials",
+  "Material Handling",
+  "Subcontractors",
+  "Travel",
+  "Other Direct Cost",
+  "Equipment",
+  "Unallowable Direct - ODCs",
+]);
+const REPORT_INDIRECT_COST_GROUPS = new Set([
+  "Fringe Benefits",
+  "Overhead",
+  "General & Administration Exp",
+  "HR/Payroll Allocation",
+  "IT/Facilities",
+  "Project Specific Overhead",
+  "Subcont, Material & Equipment",
+  "Unallowables",
+]);
+
+function getReportAccountGroup(row, isRevenueSection = false) {
+  const acctId = String(row.acctId ?? "").trim();
+  if (acctId === "410-009") return null;
+  if (isRevenueSection) return "Contracts Revenue";
+  return REPORT_ACCOUNT_GROUPS[acctId] || "Other Expenses";
+}
 
 // Pool definitions are loaded from POOLS_API at runtime.
 
@@ -87,6 +350,203 @@ const months = [
   "Nov",
   "Dec",
 ];
+
+// Presentation filter only: these pools remain in calculations and other tabs.
+function isPbrStructurePoolVisible(name) {
+  const key = String(name ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  return !new Set([
+    "statutory401k",
+    "hrpayrollallocation",
+    "indirectlabitfacalloc",
+  ]).has(key);
+}
+
+function groupPbrStructureAccounts(rows, poolId, section, orgNames = {}) {
+  const accounts = new Map();
+  rows.forEach((row) => {
+    const acctId = String(row.acctId ?? "").trim();
+    const orgId = String(row.orgId ?? "").trim();
+    if (!accounts.has(acctId)) {
+      accounts.set(acctId, {
+        id: `${poolId}-${section}-account-${acctId}`,
+        name: `${acctId || "Unmapped"} - ${row.accountName || `Account ${acctId}`}`,
+        level: "Account",
+        amount: 0,
+        orgs: new Map(),
+      });
+    }
+    const account = accounts.get(acctId);
+    account.amount += Number(row.total || 0);
+    if (!account.orgs.has(orgId)) {
+      const orgName = orgNames[orgId.toUpperCase()] || row.orgName || "";
+      account.orgs.set(orgId, {
+        id: `${account.id}-org-${orgId}`,
+        name: orgName ? `${orgId} - ${orgName}` : orgId || "Unmapped Org",
+        level: "Org",
+        amount: 0,
+        allocations: new Set(),
+      });
+    }
+    const org = account.orgs.get(orgId);
+    org.amount += Number(row.total || 0);
+    if (row.allocationAcctId && String(row.allocationAcctId) !== acctId) {
+      org.allocations.add(String(row.allocationAcctId));
+    }
+  });
+  return Array.from(accounts.values())
+    .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+    .map(({ orgs, ...account }) => ({
+      ...account,
+      amount: Number(account.amount.toFixed(2)),
+      children: Array.from(orgs.values())
+        .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+        .map(({ allocations, ...org }) => ({
+          ...org,
+          amount: Number(org.amount.toFixed(2)),
+          name: allocations.size
+            ? `${org.name} ➔ Allocates to [${Array.from(allocations).join(", ")}]`
+            : org.name,
+        })),
+    }));
+}
+
+// Combine Non-Labor groups only when all parent fields match exactly.
+// splitPbrMonthlyRecords still keeps duplicate records for the same period separate.
+function combinePbrNonLaborGroups(groups) {
+  const combined = [];
+  const byHeader = new Map();
+  groups.forEach((group) => {
+    if (
+      String(group.pbrType ?? "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "") !== "NONLABOR"
+    ) {
+      combined.push(group);
+      return;
+    }
+    const header = Object.keys(group)
+      .filter((key) => key !== "monthlyData")
+      .sort()
+      .map((key) => [key, group[key]]);
+    const key = JSON.stringify(header);
+    if (!byHeader.has(key)) {
+      const merged = { ...group, monthlyData: [...(group.monthlyData || [])] };
+      byHeader.set(key, merged);
+      combined.push(merged);
+    } else {
+      byHeader.get(key).monthlyData.push(...(group.monthlyData || []));
+    }
+  });
+  return combined;
+}
+
+// A grouped GET row may contain several persisted records for the same month.
+// Keep each occurrence in a separate UI row; never discard or combine record IDs.
+function splitPbrMonthlyRecords(group, fiscalYear) {
+  const lanes = [];
+  const occurrences = new Map();
+  (group.monthlyData || []).forEach((period) => {
+    const year = Number(period.fyCd ?? fiscalYear);
+    const month = Number(period.pdNo);
+    if (year !== Number(fiscalYear) || month < 1 || month > 12) return;
+    const key = `${year}:${month}`;
+    const index = occurrences.get(key) || 0;
+    occurrences.set(key, index + 1);
+    if (!lanes[index]) lanes[index] = [];
+    lanes[index].push({ ...period, fyCd: year, pdNo: month });
+  });
+  return (lanes.length ? lanes : [[]]).map((monthlyData) => ({
+    ...group,
+    monthlyData,
+  }));
+}
+
+function pbrRowMetadata(row) {
+  return JSON.stringify([
+    row.projId,
+    row.empId || "",
+    row.vendorId || "",
+    row.acctId || "",
+    row.laborCat || "NA",
+    row.orgId || "",
+    row.pbrGroup || "",
+    Number(row.rate || 0),
+  ]);
+}
+
+function buildPbrSaveRequests(rows, type, fiscalYear, version, status) {
+  const updates = [];
+  const inserts = [];
+  rows
+    .filter((row) => row._isDirty)
+    .forEach((row) => {
+      const isLabor = type === "LABOR";
+      const fields = {
+        version,
+        pbrType: type,
+        projId: getTopLevelProj(row.projId) || "NA",
+        emplRVendId: isLabor ? row.empId || "" : row.vendorId || "",
+        acctId: row.acctId || "",
+        plcCode:
+          isLabor && row.laborCat && row.laborCat !== "- NA"
+            ? row.laborCat
+            : "NA",
+        orgId: row.orgId || "",
+        pbrAcctGrp: row.pbrGroup || "",
+        hrlyRt: isLabor ? Number(row.rate || 0) : 0,
+        status: status.toUpperCase(),
+      };
+      const savedPeriods = row.monthlyRecords || [];
+      const isPersisted = row._isPersisted || savedPeriods.length > 0;
+      const metadataChanged = row._savedMetadata !== pbrRowMetadata(row);
+      const newPeriods = [];
+      months.forEach((month, index) => {
+        const period = {
+          fyCd: Number(fiscalYear),
+          pdNo: index + 1,
+          hrs: isLabor ? Number(row[`${month}Hours`] || 0) : 0,
+          amt: Number(row[`${month}Amount`] || 0),
+          infRt: isLabor ? 0 : Number(row.inflationRate || 0),
+        };
+        const existing = savedPeriods.find(
+          (saved) =>
+            Number(saved.fyCd ?? fiscalYear) === Number(fiscalYear) &&
+            Number(saved.pdNo) === index + 1,
+        );
+        if (existing) {
+          const id = Number(existing.id);
+          if (existing.id == null || !Number.isSafeInteger(id) || id <= 0) {
+            throw new Error(
+              `Cannot update ${month}: the saved monthly record has no valid ID. Reload the report.`,
+            );
+          }
+          if (
+            !isLabor &&
+            Number(row.inflationRate || 0) ===
+              Number(row._savedInflationRate || 0)
+          ) {
+            period.infRt = Number(existing.infRt || 0);
+          }
+          const changed =
+            metadataChanged ||
+            period.hrs !== Number(Number(existing.hrs || 0).toFixed(2)) ||
+            period.amt !== Number(Number(existing.amt || 0).toFixed(2)) ||
+            period.infRt !== Number(existing.infRt || 0);
+          if (!changed) return;
+          // Both the update envelope and its monthly record identify the same DB record.
+          updates.push({ ...fields, id, monthlyData: [{ ...period, id }] });
+        } else if (!isPersisted || period.hrs !== 0 || period.amt !== 0) {
+          // Existing rows only insert populated months that have no saved record.
+          newPeriods.push(period);
+        }
+      });
+      if (newPeriods.length)
+        inserts.push({ ...fields, monthlyData: newPeriods });
+    });
+  return { updates, inserts };
+}
 
 function unwrapApiArray(payload) {
   const data = payload?.data ?? payload;
@@ -290,8 +750,16 @@ function getTopLevelProj(id) {
   return String(id).split(".")[0];
 }
 
-const isExcludedActualAccount = (acctId) =>
-  /^[1-4]/.test(String(acctId ?? "").trim());
+// const isExcludedActualAccount = (acctId) =>
+//   /^[1-4]/.test(String(acctId ?? "").trim());
+const isExcludedActualAccount = (acctId) => {
+  const account = String(acctId || "").trim();
+
+  return (
+    ["1", "2", "3", "4"].some((prefix) => account.startsWith(prefix)) ||
+    account.startsWith("998-")
+  );
+};
 
 function nodeMatchesSearch(node, term) {
   if (!term) return true;
@@ -702,6 +1170,7 @@ export default function PBRReport() {
   const applyEscalationOverrides = () => {
     const yearKey = String(selectedFY);
     const next = { ...poolEscalationRates };
+
     WATERFALL_SEQUENCE.forEach((poolName) => {
       const rate =
         escalationMode === "uniform"
@@ -893,6 +1362,8 @@ export default function PBRReport() {
     }
   }, [WATERFALL_SEQUENCE, activeRateTab]);
   const [showMonthlySummary, setShowMonthlySummary] = useState(false);
+  const [showMonthlyNonLaborSummary, setShowMonthlyNonLaborSummary] =
+    useState(false);
   const [hideZeros, setHideZeros] = useState(false);
   const [error, setError] = useState("");
 
@@ -1283,28 +1754,32 @@ export default function PBRReport() {
     const results = {};
     const previousPoolAllocations = {};
 
-    // Original cost entering the PBR model from Labor + Non-Labor.
-    // Wrap Rate = (Original Cost + cumulative indirect burden) / Original Cost.
-    const sourceCostMonths = {};
-    months.forEach((m) => {
-      sourceCostMonths[`${m}Amount`] =
-        laborData.reduce(
-          (sum, row) => sum + Number(row[`${m}Amount`] || 0),
-          0,
-        ) +
-        nonLaborData.reduce(
-          (sum, row) => sum + Number(row[`${m}Amount`] || 0),
-          0,
-        );
-    });
-    const sourceCostTotal = months.reduce(
-      (sum, m) => sum + Number(sourceCostMonths[`${m}Amount`] || 0),
-      0,
-    );
-    const cumulativeIndirectMonths = {};
-    months.forEach((m) => (cumulativeIndirectMonths[`${m}Amount`] = 0));
-    let cumulativeIndirectTotal = 0;
+    // // Original cost entering the PBR model from Labor + Non-Labor.
+    // // Wrap Rate = (Original Cost + cumulative indirect burden) / Original Cost.
+    // const sourceCostMonths = {};
+    // months.forEach((m) => {
+    // sourceCostMonths[`${m}Amount`] =
+    // laborData.reduce(
+    // (sum, row) => sum + Number(row[`${m}Amount`] || 0),
+    // 0,
+    // ) +
+    // nonLaborData.reduce(
+    // (sum, row) => sum + Number(row[`${m}Amount`] || 0),
+    // 0,
+    // );
+    // });
+    // const sourceCostTotal = months.reduce(
+    // (sum, m) => sum + Number(sourceCostMonths[`${m}Amount`] || 0),
+    // 0,
+    // );
+    // const cumulativeIndirectMonths = {};
+    // months.forEach((m) => (cumulativeIndirectMonths[`${m}Amount`] = 0));
+    // let cumulativeIndirectTotal = 0;
+    //
 
+    const lastPoolName = [...WATERFALL_SEQUENCE]
+      .reverse()
+      .find((p) => hrDataMap[p]);
     WATERFALL_SEQUENCE.forEach((poolName) => {
       const hrD = hrDataMap[poolName];
       if (!hrD) return;
@@ -1314,6 +1789,8 @@ export default function PBRReport() {
 
       let totalCost = 0;
       let totalBase = 0;
+      let totalCostAllocation = 0;
+      let totalBaseAllocation = 0;
       const costMonths = {};
       const baseMonths = {};
       months.forEach((m) => {
@@ -1344,6 +1821,11 @@ export default function PBRReport() {
 
         totalCost += t;
 
+        const ytdAllocation = hasPreviousAllocation
+          ? previousPoolAllocations[key].total
+          : 0;
+        totalCostAllocation += ytdAllocation;
+
         const mData = {};
 
         months.forEach((m) => {
@@ -1354,27 +1836,58 @@ export default function PBRReport() {
           mData[`${m}Amount`] = mAmt;
           costMonths[`${m}Amount`] += mAmt;
         });
+
         return {
           ...acc,
           total: t,
+          ytdAllocation,
           ...mData,
           accountName: coaMap[acc.acctId]?.name || acc.accountName,
         };
       });
 
+      // const evaluatedBases = baseAccounts.map((acc) => {
+      //   const key = `${acc.orgId}_${acc.acctId}`;
+      //   const t = ledger[key]?.total || 0;
+      //   totalBase += t;
+      //   const ytdAllocation = t - (lnlTotalsMap[key]?.total || 0);
+      //   totalBaseAllocation += ytdAllocation;
+      //   const mData = {};
+      //   months.forEach((m) => {
+      //     const mAmt = ledger[key]?.[`${m}Amount`] || 0;
+      //     mData[`${m}Amount`] = mAmt;
+      //     baseMonths[`${m}Amount`] += mAmt;
+      //   });
+      //   return {
+      //     ...acc,
+      //     total: t,
+      //     ytdAllocation,
+      //     ...mData,
+      //     accountName: coaMap[acc.acctId]?.name || acc.accountName,
+      //   };
+      // });
+      const isLastPool = poolName === lastPoolName;
+      const baseSource = isLastPool ? lnlTotalsMap : ledger;
+
       const evaluatedBases = baseAccounts.map((acc) => {
         const key = `${acc.orgId}_${acc.acctId}`;
-        const t = ledger[key]?.total || 0;
+        const t = baseSource[key]?.total || 0;
         totalBase += t;
+        const ytdAllocation = isLastPool
+          ? 0
+          : t - (lnlTotalsMap[key]?.total || 0);
+        totalBaseAllocation += ytdAllocation;
         const mData = {};
         months.forEach((m) => {
-          const mAmt = ledger[key]?.[`${m}Amount`] || 0;
+          const mAmt = baseSource[key]?.[`${m}Amount`] || 0;
           mData[`${m}Amount`] = mAmt;
           baseMonths[`${m}Amount`] += mAmt;
         });
+
         return {
           ...acc,
           total: t,
+          ytdAllocation,
           ...mData,
           accountName: coaMap[acc.acctId]?.name || acc.accountName,
         };
@@ -1397,19 +1910,21 @@ export default function PBRReport() {
             Number(rateMonths[`${m}Rate`] || 0);
         });
         appliedIndirectMonths[`${m}Amount`] = applied;
-        cumulativeIndirectMonths[`${m}Amount`] += applied;
+        // cumulativeIndirectMonths[`${m}Amount`] += applied;
       });
       const appliedIndirectTotal = months.reduce(
         (sum, m) => sum + Number(appliedIndirectMonths[`${m}Amount`] || 0),
         0,
       );
-      cumulativeIndirectTotal += appliedIndirectTotal;
+      // cumulativeIndirectTotal += appliedIndirectTotal;
 
       results[poolName] = {
         evaluatedCosts,
         evaluatedBases,
         totalCost,
         totalBase,
+        totalCostAllocation,
+        totalBaseAllocation,
         costMonths,
         baseMonths,
         rateMonths,
@@ -1419,6 +1934,80 @@ export default function PBRReport() {
       };
 
       evaluatedBases.forEach((acc) => {
+        //         if (acc.allocationAcctId && acc.allocationAcctId !== acc.acctId) {
+        //           const targetKey = `${acc.allocationOrgId || acc.orgId}_${acc.allocationAcctId}`;
+
+        //           if (!ledger[targetKey]) {
+        //             ledger[targetKey] = { total: 0 };
+        //             months.forEach((m) => (ledger[targetKey][`${m}Amount`] = 0));
+        //           }
+
+        //           // ledger[targetKey].total += acc.total * rate;
+        //           let allocationTotal = 0;
+
+        // months.forEach((m) => {
+        //   const allocationAmount =
+        //     acc[`${m}Amount`] * rateMonths[`${m}Rate`];
+        //     console.log("Monthly Allocation Debug", {
+        //   month: m,
+        //   account: acc.acctId,
+        //   org: acc.orgId,
+        //   baseAmount: acc[`${m}Amount`],
+        //   monthlyRate: rateMonths[`${m}Rate`],
+        //   allocationAmount:
+        //     acc[`${m}Amount`] * rateMonths[`${m}Rate`],
+        // }
+        // );
+
+        //   ledger[targetKey][`${m}Amount`] += allocationAmount;
+        //   allocationTotal += allocationAmount;
+        // });
+
+        // ledger[targetKey].total += allocationTotal;
+        //           if (!previousPoolAllocations[targetKey]) {
+        //   previousPoolAllocations[targetKey] = { total: 0 };
+
+        //   months.forEach((m) => {
+        //     previousPoolAllocations[targetKey][`${m}Amount`] = 0;
+        //   });
+        // }
+
+        // previousPoolAllocations[targetKey].total += acc.total * rate;
+
+        //           months.forEach((m) => {
+        //             const allocationAmount =
+        //     acc[`${m}Amount`] * rateMonths[`${m}Rate`];
+        //     const monthIndex = months.indexOf(m);
+
+        // const previousMonths = months.slice(0, monthIndex);
+
+        // const previousYtdCost = previousMonths.reduce(
+        //   (sum, pm) => sum + Number(costMonths[`${pm}Amount`] || 0),
+        //   0
+        // );
+
+        // const previousYtdBase = previousMonths.reduce(
+        //   (sum, pm) => sum + Number(baseMonths[`${pm}Amount`] || 0),
+        //   0
+        // );
+
+        // const previousYtdRate =
+        //   previousYtdBase !== 0
+        //     ? previousYtdCost / previousYtdBase
+        //     : 0;
+
+        // // const allocationAmount =
+        //   // Number(acc[`${m}Amount`] || 0) * previousYtdRate;
+
+        //   ledger[targetKey][`${m}Amount`] += allocationAmount;
+
+        //   previousPoolAllocations[targetKey][`${m}Amount`] +=
+        //     allocationAmount;
+
+        //             ledger[targetKey][`${m}Amount`] +=
+        //               acc[`${m}Amount`] * rateMonths[`${m}Rate`];
+        //           });
+        //         }
         if (acc.allocationAcctId && acc.allocationAcctId !== acc.acctId) {
           const targetKey = `${acc.allocationOrgId || acc.orgId}_${acc.allocationAcctId}`;
 
@@ -1426,28 +2015,37 @@ export default function PBRReport() {
             ledger[targetKey] = { total: 0 };
             months.forEach((m) => (ledger[targetKey][`${m}Amount`] = 0));
           }
-
-          ledger[targetKey].total += acc.total * rate;
           if (!previousPoolAllocations[targetKey]) {
             previousPoolAllocations[targetKey] = { total: 0 };
-
-            months.forEach((m) => {
-              previousPoolAllocations[targetKey][`${m}Amount`] = 0;
-            });
+            months.forEach(
+              (m) => (previousPoolAllocations[targetKey][`${m}Amount`] = 0),
+            );
           }
 
-          previousPoolAllocations[targetKey].total += acc.total * rate;
-
           months.forEach((m) => {
-            const allocationAmount = acc[`${m}Amount`] * rateMonths[`${m}Rate`];
+            const allocationAmount =
+              Number(acc[`${m}Amount`] || 0) *
+              Number(rateMonths[`${m}Rate`] || 0);
 
+            //           console.log("Monthly Allocation Debug", {
+            //   month: m,
+            //   account: acc.acctId,
+            //   org: acc.orgId,
+            //   allocationAcctId : acc.allocationAcctId,
+            //   baseAmount: acc[`${m}Amount`],
+            //   monthlyRate: rateMonths[`${m}Rate`],
+            //   allocationAmount:
+            //     acc[`${m}Amount`] * rateMonths[`${m}Rate`],
+            // }
+            // );
+
+            // add ONCE to each
             ledger[targetKey][`${m}Amount`] += allocationAmount;
+            ledger[targetKey].total += allocationAmount;
 
             previousPoolAllocations[targetKey][`${m}Amount`] +=
               allocationAmount;
-
-            ledger[targetKey][`${m}Amount`] +=
-              acc[`${m}Amount`] * rateMonths[`${m}Rate`];
+            previousPoolAllocations[targetKey].total += allocationAmount;
           });
         }
       });
@@ -1494,29 +2092,30 @@ export default function PBRReport() {
       };
     }).filter(Boolean);
 
-    const overallWrapRate =
-      sourceCostTotal === 0
-        ? 0
-        : (sourceCostTotal + cumulativeIndirectTotal) / sourceCostTotal;
-
-    const overallWrapRateMonths = {};
-    months.forEach((m) => {
-      const source = Number(sourceCostMonths[`${m}Amount`] || 0);
-      const loaded =
-        source + Number(cumulativeIndirectMonths[`${m}Amount`] || 0);
-      overallWrapRateMonths[`${m}Rate`] = source === 0 ? 0 : loaded / source;
-    });
+    // const overallWrapRate =
+    // sourceCostTotal === 0
+    // ? 0
+    // : (sourceCostTotal + cumulativeIndirectTotal) / sourceCostTotal;
+    //
+    // const overallWrapRateMonths = {};
+    // months.forEach((m) => {
+    // const source = Number(sourceCostMonths[`${m}Amount`] || 0);
+    // const loaded =
+    // source + Number(cumulativeIndirectMonths[`${m}Amount`] || 0);
+    // overallWrapRateMonths[`${m}Rate`] = source === 0 ? 0 : loaded / source;
+    // });
+    //
 
     return {
       ledger,
       results,
       tree,
-      sourceCostMonths,
-      sourceCostTotal,
-      cumulativeIndirectMonths,
-      cumulativeIndirectTotal,
-      overallWrapRateMonths,
-      overallWrapRate,
+      // sourceCostMonths,
+      // sourceCostTotal,
+      // cumulativeIndirectMonths,
+      // cumulativeIndirectTotal,
+      // overallWrapRateMonths,
+      // overallWrapRate,
     };
   }, [
     lnlTotalsMap,
@@ -1531,309 +2130,118 @@ export default function PBRReport() {
   // INCOME STATEMENT ENGINE
   // =========================================================================
   const incomeStatementData = useMemo(() => {
-    const categories = {
-      "Contracts Revenue": {
-        id: "REV",
-        name: "Contracts Revenue",
-        childrenMap: {},
-      },
-      "Direct Labor": { id: "DL", name: "Direct Labor", childrenMap: {} },
-      "Other Direct Costs": {
-        id: "ODC",
-        name: "Other Direct Costs",
-        childrenMap: {},
-      },
-      "Fringe Benefits": {
-        id: "FRINGE",
-        name: "Fringe Benefits",
-        childrenMap: {},
-      },
-      Overhead: { id: "OH", name: "Overhead", childrenMap: {} },
-      "General & Administrative": {
-        id: "GA",
-        name: "General & Administrative",
-        childrenMap: {},
-      },
-      "Other Expenses": {
-        id: "OTHER",
-        name: "Other Expenses",
-        childrenMap: {},
-      },
-    };
-
-    const initMonths = () => {
-      let m = {};
-      for (let i = 1; i <= 12; i++) m[i] = 0;
-      return m;
-    };
-
-    const processRow = (r) => {
-      const amtStr = (m) => Number(r[`${m}Amount`] || 0);
-
-      // Use the Mapping tab when the row itself does not have PBR Group
-      const mapping = mappingData.find(
-        (m) => String(m.acctId).trim() === String(r.acctId).trim(),
-      );
-
-      const grp = String(r.pbrGroup || mapping?.pbrAcctGrp || "")
-        .trim()
-        .toLowerCase();
-
-      const pef = String(mapping?.projPef || "")
-        .trim()
-        .toLowerCase();
-
-      const acct = String(r.acctId || "")
-        .trim()
-        .toLowerCase();
-
-      let cat = "Other Expenses";
-
-      // Revenue
-      if (
-        r.type === "Revenue" ||
-        acct.startsWith("40") ||
-        grp.includes("revenue") ||
-        pef.includes("revenue")
-      ) {
-        cat = "Contracts Revenue";
-      }
-
-      // Direct Labor
-      else if (
-        grp.includes("direct labor") ||
-        grp.includes("contract labor") ||
-        grp.includes("direct kargo labor") ||
-        grp.includes("direct cargo labor") ||
-        pef.includes("direct labor") ||
-        acct.startsWith("50-00") ||
-        acct.startsWith("50.00")
-      ) {
-        cat = "Direct Labor";
-      }
-
-      // Other Direct Costs
-      else if (
-        grp.includes("odc") ||
-        grp.includes("material") ||
-        grp.includes("subcontract") ||
-        grp.includes("travel") ||
-        pef.includes("odc") ||
-        pef.includes("material") ||
-        pef.includes("subcontract") ||
-        pef.includes("travel") ||
-        acct.startsWith("50-21") ||
-        acct.startsWith("50.21") ||
-        acct.startsWith("50-22") ||
-        acct.startsWith("50.22") ||
-        acct.startsWith("50-40") ||
-        acct.startsWith("50.40")
-      ) {
-        cat = "Other Direct Costs";
-      }
-
-      // Fringe Benefits
-      else if (grp.includes("fringe") || pef.includes("fringe")) {
-        cat = "Fringe Benefits";
-      }
-
-      // General & Administrative
-      else if (
-        grp.includes("g&a") ||
-        grp.includes("g & a") ||
-        grp.includes("general & administrative") ||
-        grp.includes("general administrative") ||
-        pef.includes("g&a")
-      ) {
-        cat = "General & Administrative";
-      }
-
-      // Overhead
-      else if (
-        grp.includes("overhead") ||
-        grp.startsWith("oh ") ||
-        grp.startsWith("oh:") ||
-        pef.includes("overhead")
-      ) {
-        cat = "Overhead";
-      }
-
-      const acctKey = r.acctId || "Unmapped";
-
-      if (!categories[cat].childrenMap[acctKey]) {
-        categories[cat].childrenMap[acctKey] = {
-          id: acctKey,
-          name: r.acctName || `Account ${acctKey}`,
+    const initMonths = () =>
+      Object.fromEntries(months.map((_, i) => [i + 1, 0]));
+    const categories = new Map();
+    const processRow = (row, isRevenueSection = false) => {
+      const group = getReportAccountGroup(row, isRevenueSection);
+      if (!group) return;
+      if (!categories.has(group)) categories.set(group, new Map());
+      const accounts = categories.get(group);
+      const acctId = String(row.acctId || "Unmapped").trim();
+      if (!accounts.has(acctId)) {
+        accounts.set(acctId, {
+          id: `${group}-${acctId}`,
+          name: `${acctId} - ${row.acctName || `Account ${acctId}`}`,
           monthlyAmts: initMonths(),
-        };
+          children: [],
+        });
       }
-
-      months.forEach((mName, idx) => {
-        categories[cat].childrenMap[acctKey].monthlyAmts[idx + 1] +=
-          amtStr(mName);
+      const account = accounts.get(acctId);
+      months.forEach((month, index) => {
+        account.monthlyAmts[index + 1] += Number(row[`${month}Amount`] || 0);
       });
     };
-
-    laborData.forEach(processRow);
-    nonLaborData.forEach(processRow);
-    revenueData.forEach(processRow);
-
-    const formatNode = (node) => {
-      const children = Object.values(node.childrenMap || {}).sort((a, b) =>
-        a.id.localeCompare(b.id),
-      );
-      const monthlyAmts = initMonths();
-      children.forEach((c) => {
-        for (let i = 1; i <= 12; i++) monthlyAmts[i] += c.monthlyAmts[i];
-      });
-      return { ...node, children, monthlyAmts };
-    };
-
-    const revNode = formatNode(categories["Contracts Revenue"]);
-    const dlNode = formatNode(categories["Direct Labor"]);
-    const odcNode = formatNode(categories["Other Direct Costs"]);
-    const fringeNode = formatNode(categories["Fringe Benefits"]);
-    const ohNode = formatNode(categories["Overhead"]);
-    const gaNode = formatNode(categories["General & Administrative"]);
-    const otherNode = formatNode(categories["Other Expenses"]);
+    laborData.forEach((row) => processRow(row));
+    nonLaborData.forEach((row) => processRow(row));
+    revenueData.forEach((row) => processRow(row, true));
 
     const sumMonths = (nodes) => {
-      const res = initMonths();
-      nodes.forEach((n) => {
-        for (let i = 1; i <= 12; i++) res[i] += n.monthlyAmts[i];
+      const amounts = initMonths();
+      nodes.forEach((node) => {
+        for (let i = 1; i <= 12; i++) amounts[i] += node.monthlyAmts[i];
       });
-      return res;
+      return amounts;
     };
-
-    const totalDirect = sumMonths([dlNode, odcNode]);
-    const gpAmts = initMonths();
-    for (let i = 1; i <= 12; i++)
-      gpAmts[i] = revNode.monthlyAmts[i] - totalDirect[i];
-    const gpNode = {
-      id: "GP",
-      name: "Gross Profit / (Loss)",
-      type: "summary",
-      monthlyAmts: gpAmts,
-      children: [],
+    const groupNode = (name, id = name) => {
+      const children = Array.from(categories.get(name)?.values() || []).sort(
+        (a, b) => a.id.localeCompare(b.id),
+      );
+      return { id, name, monthlyAmts: sumMonths(children), children };
     };
-
-    const indirectChildren = WATERFALL_SEQUENCE.map((poolName) => {
-      const pool = waterfallEngine.results[poolName];
-
-      if (!pool) return null;
-
-      const monthlyAmts = initMonths();
-
-      months.forEach((m, i) => {
-        monthlyAmts[i + 1] = Number(pool.costMonths?.[`${m}Amount`] || 0);
-      });
-
-      const accountChildren = (pool.evaluatedCosts || [])
-        .map((account) => {
-          const accountMonthlyAmts = initMonths();
-
-          months.forEach((m, i) => {
-            accountMonthlyAmts[i + 1] = Number(account[`${m}Amount`] || 0);
-          });
-
-          return {
-            id: `${poolName}-${account.orgId}-${account.acctId}`,
-            name: `${account.orgId} - ${account.acctId} - ${account.accountName}`,
-            type: "detail",
-            monthlyAmts: accountMonthlyAmts,
-          };
-        })
-        .filter((account) =>
-          Object.values(account.monthlyAmts).some(
-            (value) => Number(value || 0) !== 0,
-          ),
-        );
-
-      return {
-        id: poolName,
-        name: poolName,
-        type: "detail",
-        monthlyAmts,
-        children: accountChildren,
-      };
-    }).filter(Boolean);
-
-    const indirectAmts = initMonths();
-
-    indirectChildren.forEach((child) => {
-      for (let i = 1; i <= 12; i++) {
-        indirectAmts[i] += Number(child.monthlyAmts[i] || 0);
-      }
-    });
-
-    const indirectNode = {
+    const revenue = groupNode("Contracts Revenue", "REV");
+    const labor = groupNode("Direct Labor", "DL");
+    const directChildren = Array.from(REPORT_DIRECT_COST_GROUPS, (name) =>
+      groupNode(name),
+    );
+    const direct = {
+      id: "ODC",
+      name: "Other Direct Costs",
+      monthlyAmts: sumMonths(directChildren),
+      children: directChildren,
+    };
+    const indirectChildren = Array.from(REPORT_INDIRECT_COST_GROUPS, (name) =>
+      groupNode(name),
+    );
+    if (categories.has("Other Expenses"))
+      indirectChildren.push(groupNode("Other Expenses", "OTHER"));
+    const indirect = {
       id: "INDIRECT",
       name: "Indirect Expenses",
       type: "summary",
-      monthlyAmts: indirectAmts,
+      monthlyAmts: sumMonths(indirectChildren),
       children: indirectChildren,
     };
-
-    // const totalIndirect = sumMonths([fringeNode, ohNode, gaNode, otherNode]);
-    const totalIndirect = sumMonths([indirectNode, otherNode]);
-    const opexNode = {
-      id: "OPEX",
-      name: "Total Operating Expenses",
-      type: "summary",
-      monthlyAmts: totalIndirect,
-      children: [],
-    };
-
-    const npAmts = initMonths();
-    for (let i = 1; i <= 12; i++) npAmts[i] = gpAmts[i] - totalIndirect[i];
-    const npNode = {
-      id: "NP",
-      name: "Net Profit / (Loss)",
-      type: "summary",
-      monthlyAmts: npAmts,
-      children: [],
-    };
-
-    return [
-      revNode,
-      dlNode,
-      odcNode,
-      gpNode,
-      indirectNode,
-      // otherNode,
-      opexNode,
-      npNode,
-    ].map((n) => {
-      const cleanAmts = {};
-      for (let i = 1; i <= 12; i++) {
-        cleanAmts[i] =
-          Math.round((n.monthlyAmts[i] + Number.EPSILON) * 100) / 100 === 0
-            ? "-"
-            : Number(n.monthlyAmts[i].toFixed(2));
-      }
-      if (n.children) {
-        n.children.forEach((c) => {
-          const cClean = {};
-          for (let i = 1; i <= 12; i++) {
-            cClean[i] =
-              Math.round((c.monthlyAmts[i] + Number.EPSILON) * 100) / 100 === 0
-                ? "-"
-                : Number(c.monthlyAmts[i].toFixed(2));
-          }
-          c.monthlyAmts = cClean;
-        });
-      }
-      return { ...n, monthlyAmts: cleanAmts };
+    const interestIncome = groupNode("Interest Income", "INTEREST");
+    const otherIncome = groupNode("Other Income", "OTHER_INCOME");
+    const grossAmounts = initMonths();
+    const netAmounts = initMonths();
+    for (let i = 1; i <= 12; i++) {
+      grossAmounts[i] =
+        revenue.monthlyAmts[i] - labor.monthlyAmts[i] - direct.monthlyAmts[i];
+      netAmounts[i] =
+        grossAmounts[i] -
+        indirect.monthlyAmts[i] +
+        interestIncome.monthlyAmts[i] +
+        otherIncome.monthlyAmts[i];
+    }
+    const cleanNode = (node) => ({
+      ...node,
+      monthlyAmts: Object.fromEntries(
+        Object.entries(node.monthlyAmts).map(([key, amount]) => {
+          const rounded = Number(amount.toFixed(2));
+          return [key, rounded === 0 ? "-" : rounded];
+        }),
+      ),
+      children: (node.children || []).map(cleanNode),
     });
-    // }, [laborData, nonLaborData, revenueData]);
-  }, [
-    laborData,
-    nonLaborData,
-    revenueData,
-    mappingData,
-    waterfallEngine,
-    WATERFALL_SEQUENCE,
-  ]);
+    return [
+      revenue,
+      labor,
+      direct,
+      {
+        id: "GP",
+        name: "Gross Profit / (Loss)",
+        type: "summary",
+        monthlyAmts: grossAmounts,
+      },
+      indirect,
+      {
+        id: "OPEX",
+        name: "Total Operating Expenses",
+        type: "summary",
+        monthlyAmts: { ...indirect.monthlyAmts },
+      },
+      interestIncome,
+      otherIncome,
+      {
+        id: "NP",
+        name: "Net Profit / (Loss)",
+        type: "summary",
+        monthlyAmts: netAmounts,
+      },
+    ].map(cleanNode);
+  }, [laborData, nonLaborData, revenueData]);
 
   // =========================================================================
   // PBR INCOME STATEMENT ENGINE
@@ -1994,7 +2402,26 @@ export default function PBRReport() {
     ];
   }, [laborData, nonLaborData, revenueData, mappingData, pbrGroups]);
 
-  const pbrTreeData = waterfallEngine.tree;
+  const pbrTreeData = useMemo(
+    () =>
+      waterfallEngine.tree
+        .filter((pool) => isPbrStructurePoolVisible(pool.name))
+        .map((pool) => ({
+          ...pool,
+          children: pool.children.map((section) => ({
+            ...section,
+            children: groupPbrStructureAccounts(
+              section.name === "Cost"
+                ? waterfallEngine.results[pool.id]?.evaluatedCosts || []
+                : waterfallEngine.results[pool.id]?.evaluatedBases || [],
+              pool.id,
+              section.name,
+              orgNameMap,
+            ),
+          })),
+        })),
+    [waterfallEngine, orgNameMap],
+  );
 
   // =========================================================================
   // PROJECT PERFORMANCE ENGINE
@@ -2007,6 +2434,7 @@ export default function PBRReport() {
       "Total Direct Costs": { total: Array(12).fill(0), projects: {} },
       "Gross Profit": { total: Array(12).fill(0), projects: {} },
       "Indirect Burdens": { total: Array(12).fill(0), projects: {} },
+      "Other Income": { total: Array(12).fill(0), projects: {} },
       "Net Profit / Fee": { total: Array(12).fill(0), projects: {} },
     };
 
@@ -2026,6 +2454,7 @@ export default function PBRReport() {
     };
 
     revenueData.forEach((r) => {
+      if (!getReportAccountGroup(r, true)) return;
       const pId = getTopLevelProj(r.projId);
       if (
         perfSelectedProjects.length > 0 &&
@@ -2051,66 +2480,24 @@ export default function PBRReport() {
       )
         return;
 
-      const mapping = mappingData.find((m) => m.acctId === r.acctId);
-      const pef = mapping?.projPef || "";
-      const group = (r.pbrGroup || "").toLowerCase();
-      const acct = String(r.acctId || "");
-
-      const isRev =
-        acct.startsWith("40") ||
-        r.type === "Revenue" ||
-        pef.includes("revenue") ||
-        group.includes("revenue");
-      const isDirLab =
-        acct.startsWith("50-00") ||
-        acct.startsWith("50.00") ||
-        (r.type === "Labor" &&
-          (!group ||
-            pef.includes("direct labor") ||
-            group.includes("direct labor") ||
-            group.includes("contract labor")));
-      const isODC =
-        acct.startsWith("50-21") ||
-        acct.startsWith("50.21") ||
-        acct.startsWith("50-22") ||
-        acct.startsWith("50.22") ||
-        acct.startsWith("50-40") ||
-        acct.startsWith("50.40") ||
-        pef.includes("odc") ||
-        pef.includes("material") ||
-        pef.includes("subcontract") ||
-        pef.includes("travel") ||
-        group.includes("material") ||
-        group.includes("odc") ||
-        group.includes("subcontract");
-
-      months.forEach((m, i) => {
-        const amt = Number(r[`${m}Amount`] || 0);
-
-        if (isRev) addAmt("Contract Revenue", pId, r.projName, i, amt);
-        else if (isDirLab) addAmt("Direct Labor", pId, r.projName, i, amt);
-        else if (isODC) addAmt("Direct Cost (ODC)", pId, r.projName, i, amt);
-        else if (
-          group.includes("overhead") ||
-          group.includes("fringe") ||
-          group.includes("g&a") ||
-          group.includes("indirect") ||
-          group.includes("unallowable")
-        ) {
-          addAmt("Indirect Burdens", pId, r.projName, i, amt);
-        } else {
-          if (pef.includes("direct labor"))
-            addAmt("Direct Labor", pId, r.projName, i, amt);
-          else if (
-            ["ODC", "Material", "Subcontracts", "Travel", "ESPEC LABOR"].some(
-              (v) => pef.includes(v.toLowerCase()),
-            )
-          )
-            addAmt("Direct Cost (ODC)", pId, r.projName, i, amt);
-          else if (pef.includes("contract revenue"))
-            addAmt("Contract Revenue", pId, r.projName, i, amt);
-          else addAmt("Indirect Burdens", pId, r.projName, i, amt);
-        }
+      const group = getReportAccountGroup(r);
+      if (!group) return;
+      const category =
+        group === "Direct Labor"
+          ? "Direct Labor"
+          : REPORT_DIRECT_COST_GROUPS.has(group)
+            ? "Direct Cost (ODC)"
+            : group === "Interest Income" || group === "Other Income"
+              ? "Other Income"
+              : "Indirect Burdens";
+      months.forEach((month, index) => {
+        addAmt(
+          category,
+          pId,
+          r.projName,
+          index,
+          Number(r[`${month}Amount`] || 0),
+        );
       });
     };
 
@@ -2124,7 +2511,9 @@ export default function PBRReport() {
         matrix["Contract Revenue"].total[i] -
         matrix["Total Direct Costs"].total[i];
       matrix["Net Profit / Fee"].total[i] =
-        matrix["Gross Profit"].total[i] - matrix["Indirect Burdens"].total[i];
+        matrix["Gross Profit"].total[i] -
+        matrix["Indirect Burdens"].total[i] +
+        matrix["Other Income"].total[i];
     }
 
     allActiveProjects.forEach((pId) => {
@@ -2133,6 +2522,7 @@ export default function PBRReport() {
         matrix["Direct Labor"].projects[pId]?.projName ||
         matrix["Direct Cost (ODC)"].projects[pId]?.projName ||
         matrix["Indirect Burdens"].projects[pId]?.projName ||
+        matrix["Other Income"].projects[pId]?.projName ||
         "NA";
 
       for (const cat of [
@@ -2155,7 +2545,8 @@ export default function PBRReport() {
 
         const tdc = lab + odc;
         const gp = rev - tdc;
-        const np = gp - ind;
+        const income = matrix["Other Income"].projects[pId]?.values[i] || 0;
+        const np = gp - ind + income;
 
         matrix["Total Direct Costs"].projects[pId].values[i] = tdc;
         matrix["Gross Profit"].projects[pId].values[i] = gp;
@@ -2186,6 +2577,7 @@ export default function PBRReport() {
         isBold: false,
         data: matrix["Indirect Burdens"],
       },
+      { label: "Other Income", isBold: false, data: matrix["Other Income"] },
       {
         label: "Net Profit / Fee",
         isBold: true,
@@ -2207,13 +2599,15 @@ export default function PBRReport() {
     });
 
     return rows;
-  }, [laborData, nonLaborData, revenueData, mappingData, perfSelectedProjects]);
+  }, [laborData, nonLaborData, revenueData, perfSelectedProjects]);
 
   const trendData = waterfallEngine.results[activeRateTab] || {
     evaluatedCosts: [],
     evaluatedBases: [],
     totalCost: 0,
     totalBase: 0,
+    totalCostAllocation: 0,
+    totalBaseAllocation: 0,
     costMonths: {},
     baseMonths: {},
     rateMonths: {},
@@ -2512,112 +2906,122 @@ export default function PBRReport() {
 
         setAllProjects([...masterProjList]);
 
-        const parsedData = versionData.map((dbRow) => {
-          const monthlyCols = {};
-          let totalHours = 0;
-          let totalAmount = 0;
+        const parsedData = combinePbrNonLaborGroups(versionData)
+          .flatMap((group) => splitPbrMonthlyRecords(group, selectedFY))
+          .map((dbRow) => {
+            const monthlyCols = {};
+            let totalHours = 0;
+            let totalAmount = 0;
 
-          const isLabor = dbRow.pbrType?.toUpperCase() === "LABOR";
-          const isRevenue = dbRow.pbrType?.toUpperCase() === "REVENUE";
-          const rowType = isLabor
-            ? "Labor"
-            : isRevenue
-              ? "Revenue"
-              : "Non-Labor";
+            const isLabor = dbRow.pbrType?.toUpperCase() === "LABOR";
+            const isRevenue = dbRow.pbrType?.toUpperCase() === "REVENUE";
+            const rowType = isLabor
+              ? "Labor"
+              : isRevenue
+                ? "Revenue"
+                : "Non-Labor";
 
-          months.forEach((m, idx) => {
-            const pdNo = idx + 1;
-            const monthData = dbRow.monthlyData?.find(
-              (md) =>
-                md.pdNo === pdNo &&
-                Number(md.fyCd ?? selectedFY) === selectedFY,
-            ) || { hrs: 0, amt: 0, infRt: 0 };
-            monthlyCols[`${m}Hours`] = Number((monthData.hrs || 0).toFixed(2));
-            monthlyCols[`${m}Amount`] = Number((monthData.amt || 0).toFixed(2));
-            totalHours += monthData.hrs || 0;
-            totalAmount += monthData.amt || 0;
+            months.forEach((m, idx) => {
+              const pdNo = idx + 1;
+              const monthData = dbRow.monthlyData?.find(
+                (md) =>
+                  Number(md.pdNo) === pdNo &&
+                  Number(md.fyCd ?? selectedFY) === selectedFY,
+              ) || { hrs: 0, amt: 0, infRt: 0 };
+              monthlyCols[`${m}Hours`] = Number(
+                Number(monthData.hrs || 0).toFixed(2),
+              );
+              monthlyCols[`${m}Amount`] = Number(
+                Number(monthData.amt || 0).toFixed(2),
+              );
+              totalHours += Number(monthData.hrs || 0);
+              totalAmount += Number(monthData.amt || 0);
+            });
+
+            const empMatch = isLabor
+              ? empDataList.find(
+                  (e) => String(e.emplId) === String(dbRow.emplRVendId),
+                )
+              : null;
+            // const empStatusRaw = empMatch ? empMatch.status : "";
+            // const empStatusDisplay =
+            //   empStatusRaw === "ACT"
+            //     ? "Active"
+            //     : empStatusRaw === "IN"
+            //       ? "Inactive"
+            //       : empStatusRaw;
+
+            const vendMatch =
+              !isLabor && !isRevenue
+                ? vendDataList.find(
+                    (v) => String(v.vendId) === String(dbRow.emplRVendId),
+                  )
+                : null;
+
+            const glVendMatch =
+              !isLabor && !isRevenue
+                ? allGlExtracted.find(
+                    (g) =>
+                      g.sIdType === "V" &&
+                      String(g.id) === String(dbRow.emplRVendId),
+                  )
+                : null;
+
+            const topId = getTopLevelProj(dbRow.projId);
+            const normalizedOrgId = String(dbRow.orgId ?? "")
+              .trim()
+              .toUpperCase();
+            const resolvedOrgName = localOrgNameMap[normalizedOrgId] || "";
+            const mappedAccount = combinedMapping.find(
+              (m) => String(m.acctId) === String(dbRow.acctId),
+            );
+            const resolvedPbrGroup =
+              dbRow.pbrAcctGrp ||
+              mappedAccount?.pbrAcctGrp ||
+              localCoaMap[dbRow.acctId]?.pbrGroup ||
+              "";
+
+            const savedRow = {
+              uid: `ui_${Math.random().toString(36).substring(2, 9)}`,
+              // GET IDs belong to monthlyData, not to the grouped parent row.
+              id: null,
+              _isPersisted: true,
+              monthlyRecords: (dbRow.monthlyData || []).map((period) => ({
+                ...period,
+              })),
+              monthlyIds: (dbRow.monthlyData || [])
+                .map((period) => period.id)
+                .filter((id) => id != null),
+              type: rowType,
+              projId: topId || "NA",
+              projName: projNameMap[topId] || "NA",
+              acctId: dbRow.acctId || "",
+              acctName: localCoaMap[dbRow.acctId]?.name || "",
+              orgId: dbRow.orgId || "",
+              orgName: resolvedOrgName,
+              pbrGroup: resolvedPbrGroup,
+              empId: isLabor ? dbRow.emplRVendId : "",
+              empName: empMatch ? empMatch.firstName : "",
+              empStatus: isLabor,
+              laborCat: dbRow.plcCode || "",
+              rate: dbRow.hrlyRt || 0,
+              vendorId: !isLabor && !isRevenue ? dbRow.emplRVendId : "",
+              vendorName: glVendMatch
+                ? glVendMatch.name || "Unknown Vendor"
+                : vendMatch
+                  ? vendMatch.vendEmplName ||
+                    `${vendMatch.firstName || ""} ${vendMatch.lastName || ""}`.trim()
+                  : "",
+              inflationRate: dbRow.monthlyData?.[0]?.infRt || 0,
+              totalHours: Number(totalHours.toFixed(2)),
+              totalAmount: Number(totalAmount.toFixed(2)),
+              _isDirty: false,
+              ...monthlyCols,
+            };
+            savedRow._savedMetadata = pbrRowMetadata(savedRow);
+            savedRow._savedInflationRate = Number(savedRow.inflationRate || 0);
+            return savedRow;
           });
-
-          const empMatch = isLabor
-            ? empDataList.find(
-                (e) => String(e.emplId) === String(dbRow.emplRVendId),
-              )
-            : null;
-          // const empStatusRaw = empMatch ? empMatch.status : "";
-          // const empStatusDisplay =
-          //   empStatusRaw === "ACT"
-          //     ? "Active"
-          //     : empStatusRaw === "IN"
-          //       ? "Inactive"
-          //       : empStatusRaw;
-
-          const vendMatch =
-            !isLabor && !isRevenue
-              ? vendDataList.find(
-                  (v) => String(v.vendId) === String(dbRow.emplRVendId),
-                )
-              : null;
-
-          const glVendMatch =
-            !isLabor && !isRevenue
-              ? allGlExtracted.find(
-                  (g) =>
-                    g.sIdType === "V" &&
-                    String(g.id) === String(dbRow.emplRVendId),
-                )
-              : null;
-
-          const topId = getTopLevelProj(dbRow.projId);
-          const normalizedOrgId = String(dbRow.orgId ?? "")
-            .trim()
-            .toUpperCase();
-          const resolvedOrgName = localOrgNameMap[normalizedOrgId] || "";
-          const mappedAccount = combinedMapping.find(
-            (m) => String(m.acctId) === String(dbRow.acctId),
-          );
-          const resolvedPbrGroup =
-            dbRow.pbrAcctGrp ||
-            mappedAccount?.pbrAcctGrp ||
-            localCoaMap[dbRow.acctId]?.pbrGroup ||
-            "";
-
-          return {
-            uid: `ui_${Math.random().toString(36).substring(2, 9)}`,
-            id: dbRow.id || null,
-            // monthlyIds:
-            //   dbRow.monthlyData?.map((md) => md.id).filter(Boolean) || [],
-            monthlyIds:
-              dbRow.monthlyData
-                ?.filter((md) => Number(md.fyCd ?? selectedFY) === selectedFY)
-                .map((md) => md.id)
-                .filter(Boolean) || [],
-            type: rowType,
-            projId: topId || "NA",
-            projName: projNameMap[topId] || "NA",
-            acctId: dbRow.acctId || "",
-            acctName: localCoaMap[dbRow.acctId]?.name || "",
-            orgId: dbRow.orgId || "",
-            orgName: resolvedOrgName,
-            pbrGroup: resolvedPbrGroup,
-            empId: isLabor ? dbRow.emplRVendId : "",
-            empName: empMatch ? empMatch.firstName : "",
-            empStatus: isLabor ? empStatusDisplay : "",
-            laborCat: dbRow.plcCode || "",
-            rate: dbRow.hrlyRt || 0,
-            vendorId: !isLabor && !isRevenue ? dbRow.emplRVendId : "",
-            vendorName: glVendMatch
-              ? glVendMatch.name || "Unknown Vendor"
-              : vendMatch
-                ? vendMatch.vendEmplName ||
-                  `${vendMatch.firstName || ""} ${vendMatch.lastName || ""}`.trim()
-                : "",
-            inflationRate: dbRow.monthlyData?.[0]?.infRt || 0,
-            totalHours: Number(totalHours.toFixed(2)),
-            totalAmount: Number(totalAmount.toFixed(2)),
-            _isDirty: false,
-            ...monthlyCols,
-          };
-        });
 
         setLaborData(parsedData.filter((d) => d.type === "Labor"));
         setNonLaborData(parsedData.filter((d) => d.type === "Non-Labor"));
@@ -3554,7 +3958,8 @@ export default function PBRReport() {
           type: "Labor",
           empId: String(r.id ?? "").trim(),
           empName: r.name || "",
-          empStatus: "",
+          empStatus: "Active",
+          // empStatus: empMatch?.status || "",
           laborCat: r.billLabCatCd || "",
           projId: topId,
           projName:
@@ -4373,17 +4778,31 @@ export default function PBRReport() {
 
   const handleSaveRecords = async () => {
     try {
+      // const laborSet = new Set();
+      // for (let row of laborData) {
+      //   if (!row.empId || row.empId === "TBD") continue;
+      //   const combo = `${getTopLevelProj(row.projId) || "NA"}_${row.acctId}_${row.orgId}_${row.empId}`;
+      //   if (laborSet.has(combo)) {
+      //     showToast(
+      //       `Duplicate Row Error in Labor: Proj [${row.projId}] | Acct [${row.acctId}] | Org [${row.orgId}] | Emp [${row.empId}]`,
+      //       "error",
+      //     );
+      //     return;
+      //   }
+      //   laborSet.add(combo);
+      // }
       const laborSet = new Set();
       for (let row of laborData) {
         if (!row.empId || row.empId === "TBD") continue;
         const combo = `${getTopLevelProj(row.projId) || "NA"}_${row.acctId}_${row.orgId}_${row.empId}`;
-        if (laborSet.has(combo)) {
-          showToast(
-            `Duplicate Row Error in Labor: Proj [${row.projId}] | Acct [${row.acctId}] | Org [${row.orgId}] | Emp [${row.empId}]`,
-            "error",
-          );
-          return;
-        }
+
+        // if (laborSet.has(combo)) {
+        //   showToast(
+        //     `Duplicate Row Error in Labor: ...`,
+        //     "error",
+        //   );
+        //   return;
+        // }
         laborSet.add(combo);
       }
 
@@ -4391,13 +4810,13 @@ export default function PBRReport() {
       for (let row of nonLaborData) {
         if (!row.vendorId || row.vendorId === "TBD") continue;
         const combo = `${getTopLevelProj(row.projId) || "NA"}_${row.acctId}_${row.orgId}_${row.vendorId}`;
-        if (nlSet.has(combo)) {
-          showToast(
-            `Duplicate Row Error in Non-Labor: Proj [${row.projId}] | Acct [${row.acctId}] | Org [${row.orgId}] | Vendor [${row.vendorId}]`,
-            "error",
-          );
-          return;
-        }
+        // if (nlSet.has(combo)) {
+        //   showToast(
+        //     `Duplicate Row Error in Non-Labor: Proj [${row.projId}] | Acct [${row.acctId}] | Org [${row.orgId}] | Vendor [${row.vendorId}]`,
+        //     "error",
+        //   );
+        //   return;
+        // }
         nlSet.add(combo);
       }
 
@@ -4405,66 +4824,32 @@ export default function PBRReport() {
       const currentVersionStatus =
         versions.find((v) => v.id === selectedVersion)?.status || "DRAFT";
 
-      // const buildPayload = (rows, typeStr) => {
-      //   return rows
-      //     .filter(
-      //       (row) =>
-      //         row._isDirty || String(row.id).startsWith("temp_") || !row.id,
-      //     )
-      //     .map((row) => {
-      const buildPayload = (rows, typeStr) => {
-        return rows
-          .filter((row) => row._isDirty)
-          .map((row) => {
-            const isNew = String(row.id).startsWith("temp_") || !row.id;
-            const isLabor = typeStr === "LABOR";
-
-            const monthlyData = months.map((m, idx) => ({
-              fyCd: selectedFY,
-              pdNo: idx + 1,
-              hrs: isLabor ? Number(row[`${m}Hours`] || 0) : 0,
-              amt: Number(row[`${m}Amount`] || 0),
-              infRt: isLabor ? 0 : Number(row.inflationRate || 0),
-            }));
-
-            const payloadRow = {
-              version: selectedVersion,
-              pbrType: typeStr,
-              projId: getTopLevelProj(row.projId) || "NA",
-              emplRVendId: isLabor ? row.empId || "" : row.vendorId || "",
-              acctId: row.acctId || "",
-              plcCode: isLabor
-                ? row.laborCat === "- NA" || !row.laborCat
-                  ? "NA"
-                  : row.laborCat
-                : "NA",
-              orgId: row.orgId || "",
-              pbrAcctGrp: row.pbrGroup || "",
-              hrlyRt: isLabor ? Number(row.rate || 0) : 0,
-              status: currentVersionStatus.toUpperCase(),
-              monthlyData: monthlyData,
-            };
-
-            if (!isNew && row.id != null && !isNaN(row.id)) {
-              payloadRow.id = Number(row.id);
-            }
-
-            return payloadRow;
-          });
-      };
-
-      // const combinedRequests = [
-      //   ...buildPayload(laborData, "LABOR"),
-      //   ...buildPayload(nonLaborData, "NONLABOR"),
-      //   // ...buildPayload(revenueData, "REVENUE"),
-      // ];
-
-      const laborNonLaborRequests = [
-        ...buildPayload(laborData, "LABOR"),
-        ...buildPayload(nonLaborData, "NONLABOR"),
+      const requests = [
+        buildPbrSaveRequests(
+          laborData,
+          "LABOR",
+          selectedFY,
+          selectedVersion,
+          currentVersionStatus,
+        ),
+        buildPbrSaveRequests(
+          nonLaborData,
+          "NONLABOR",
+          selectedFY,
+          selectedVersion,
+          currentVersionStatus,
+        ),
+        buildPbrSaveRequests(
+          revenueData,
+          "REVENUE",
+          selectedFY,
+          selectedVersion,
+          currentVersionStatus,
+        ),
       ];
-      const revenueRequests = buildPayload(revenueData, "REVENUE");
-      const combinedRequests = [...laborNonLaborRequests, ...revenueRequests];
+      const recordsToUpdate = requests.flatMap((request) => request.updates);
+      const recordsToInsert = requests.flatMap((request) => request.inserts);
+      const combinedRequests = [...recordsToUpdate, ...recordsToInsert];
 
       const dirtyMapping = mappingData.filter((m) => m._isDirty);
 
@@ -4474,8 +4859,11 @@ export default function PBRReport() {
         return;
       }
 
-      if (combinedRequests.length > 0) {
-        await axios.post(LNL_UPSERT_API, combinedRequests);
+      if (recordsToUpdate.length > 0) {
+        await axios.post(LNL_UPDATE_API, recordsToUpdate);
+      }
+      if (recordsToInsert.length > 0) {
+        await axios.post(LNL_INSERT_API, recordsToInsert);
       }
 
       if (dirtyMapping.length > 0) {
@@ -4492,7 +4880,7 @@ export default function PBRReport() {
       await fetchData();
     } catch (err) {
       console.error("Save failed:", err);
-      let errorMsg = "Failed to save records. Please try again.";
+      let errorMsg = err.message || "Failed to save records. Please try again.";
 
       if (err.response && err.response.data) {
         const data = err.response.data;
@@ -4753,20 +5141,20 @@ export default function PBRReport() {
           (node.children || []).forEach((c) => walk(c, depth + 1));
         };
         pbrTreeData.forEach((p) => walk(p, 0));
-        styles[rows.length] = { bold: true, bg: "C7D2FE" };
-        rows.push([
-          "Overall Wrap Rate",
-          "Summary",
-          n2(
-            waterfallEngine.sourceCostTotal +
-              waterfallEngine.cumulativeIndirectTotal,
-          ),
-          n2(waterfallEngine.overallWrapRate),
-        ]);
+        // styles[rows.length] = { bold: true, bg: "C7D2FE" };
+        // rows.push([
+        // "Overall Wrap Rate",
+        // "Summary",
+        // n2(
+        // waterfallEngine.sourceCostTotal +
+        // waterfallEngine.cumulativeIndirectTotal,
+        // ),
+        // n2(waterfallEngine.overallWrapRate),
+        // ]);
         add(
           "PBR Structure",
           buildStyledSheet(
-            ["PBR Structure", "Level", "Loaded Cost", "Overall Wrap Rate %"],
+            ["PBR Structure", "Level", "Loaded Cost", "PBR Rate %"],
             rows,
             {
               money: [2],
@@ -4830,35 +5218,42 @@ export default function PBRReport() {
           styles = {};
         const section = (t) => {
           styles[rows.length] = { bold: true, bg: "CBD5E1" };
-          rows.push([t, ...Array(13).fill("")]);
+          rows.push([t, ...Array(14).fill("")]);
         };
         const acct = (a) =>
           rows.push([
             `${a.orgId} - ${a.acctId} - ${a.accountName}${a.allocationAcctId && a.allocationAcctId !== a.acctId ? ` -> Allocates to [${a.allocationAcctId}]` : ""}`,
             n2(a.total),
+            n2(a.ytdAllocation),
             ...months.map((m) => n2(a[`${m}Amount`])),
           ]);
-        const total = (label, tot, mm) => {
+        const total = (label, tot, mm, alloc = 0) => {
           styles[rows.length] = { bold: true, bg: "F1F5F9" };
           rows.push([
             label,
             n2(tot),
+            n2(alloc),
             ...months.map((m) => n2(mm[`${m}Amount`])),
           ]);
         };
 
         section("Cost");
         r.evaluatedCosts.forEach(acct);
-        total("Total Cost", r.totalCost, r.costMonths);
+        total("Total Cost", r.totalCost, r.costMonths, r.totalCostAllocation);
         section("Base");
         r.evaluatedBases.forEach(acct);
-        total("Total Base", r.totalBase, r.baseMonths);
+        total("Total Base", r.totalBase, r.baseMonths, r.totalBaseAllocation);
 
         styles[rows.length] = { bold: true, bg: "E0E7FF", fmt: XL_PCT };
         rows.push([
           `${pool} Rate`,
-          n2(r.rate * 100),
-          ...months.map((m) => n2((r.rateMonths[`${m}Rate`] || 0) * 100)),
+          // n2(r.rate * 100),
+          // "",
+          // ...months.map((m) => n2((r.rateMonths[`${m}Rate`] || 0) * 100)),
+          Number((r.rate * 100).toFixed(2)),
+          ...months.map((m) =>
+            Number(((r.rateMonths[`${m}Rate`] || 0) * 100).toFixed(2)),
+          ),
         ]);
 
         let rc = 0,
@@ -4866,11 +5261,14 @@ export default function PBRReport() {
         styles[rows.length] = { bold: true, bg: "C7D2FE", fmt: XL_PCT };
         rows.push([
           `${pool} YTD Rate`,
-          n2(r.rate * 100),
+          // n2(r.rate * 100),
+          Number((r.rate * 100).toFixed(2)),
+          "",
           ...months.map((m) => {
             rc += n2(r.costMonths[`${m}Amount`]);
             rb += n2(r.baseMonths[`${m}Amount`]);
-            return rb === 0 ? 0 : (rc / rb) * 100;
+            // return rb === 0 ? 0 : (rc / rb) * 100;
+            return rb === 0 ? 0 : Number(((rc / rb) * 100).toFixed(2));
           }),
         ]);
 
@@ -4880,11 +5278,12 @@ export default function PBRReport() {
             [
               "PBR Overhead Group",
               "YTD Amount",
+              "YTD Allocation",
               ...months.map((m) => `${m} Amt`),
             ],
             rows,
             {
-              money: Array.from({ length: 13 }, (_, i) => i + 1),
+              money: Array.from({ length: 14 }, (_, i) => i + 1),
               widths: [60],
               rowStyles: styles,
             },
@@ -5032,6 +5431,7 @@ export default function PBRReport() {
           "Account Name",
           "PBR Account Group",
           "FY Amount",
+          ...months.map((month) => `${month} Amt`),
         ];
         const base = nonLaborData.map((r) => [
           r.projId,
@@ -5040,12 +5440,13 @@ export default function PBRReport() {
           r.acctName,
           r.pbrGroup,
           n2(r.totalAmount),
+          ...months.map((month) => n2(r[`${month}Amount`])),
         ]);
         const { rows, rowStyles } = withTotals(base, 5, headers.length);
         add(
           "Non-Labor Summary",
           buildStyledSheet(headers, rows, {
-            money: [5],
+            money: [5, ...months.map((_, index) => index + 6)],
             rowStyles,
             widths: [16, 34, 14, 30, 34, 18],
           }),
@@ -5092,27 +5493,27 @@ export default function PBRReport() {
         const rows = [],
           styles = {};
         const val = (v) => (v === "-" ? 0 : Number(v));
-        incomeStatementData.forEach((item) => {
+        const appendIncomeNode = (item, depth = 0) => {
           const mv = Array.from({ length: 12 }, (_, i) =>
             val(item.monthlyAmts?.[i + 1] ?? 0),
           );
           styles[rows.length] =
-            item.type === "summary"
-              ? { bold: true, bg: "E2E8F0" }
-              : { bold: true, bg: "F1F5F9" };
-          rows.push([item.name, ...mv, mv.reduce((a, b) => a + b, 0)]);
-          (item.children || []).forEach((c) => {
-            const cv = Array.from({ length: 12 }, (_, i) =>
-              val(c.monthlyAmts?.[i + 1] ?? 0),
-            );
-            styles[rows.length] = { indent: 2 };
-            rows.push([
-              `${c.id} - ${c.name}`,
-              ...cv,
-              cv.reduce((a, b) => a + b, 0),
-            ]);
-          });
-        });
+            depth === 0
+              ? {
+                  bold: true,
+                  bg: item.type === "summary" ? "E2E8F0" : "F1F5F9",
+                }
+              : { indent: depth * 2 };
+          rows.push([
+            depth ? `${item.id} - ${item.name}` : item.name,
+            ...mv,
+            mv.reduce((a, b) => a + b, 0),
+          ]);
+          (item.children || []).forEach((child) =>
+            appendIncomeNode(child, depth + 1),
+          );
+        };
+        incomeStatementData.forEach((item) => appendIncomeNode(item));
         add(
           "Income Statement",
           buildStyledSheet(["Line Item", ...months, "YTD"], rows, {
@@ -5502,12 +5903,21 @@ export default function PBRReport() {
           ))}
         </div>
         <div className="flex items-center gap-4 mb-2">
-          {activeTab === "Labor Summary" && (
+          {(activeTab === "Labor Summary" ||
+            activeTab === "Non-Labor Summary") && (
             <label className="flex items-center gap-1.5 cursor-pointer text-[12px] font-medium text-slate-600 select-none bg-slate-50 px-2 py-1 rounded border border-slate-200">
               <input
                 type="checkbox"
-                checked={showMonthlySummary}
-                onChange={(e) => setShowMonthlySummary(e.target.checked)}
+                checked={
+                  activeTab === "Labor Summary"
+                    ? showMonthlySummary
+                    : showMonthlyNonLaborSummary
+                }
+                onChange={(e) =>
+                  activeTab === "Labor Summary"
+                    ? setShowMonthlySummary(e.target.checked)
+                    : setShowMonthlyNonLaborSummary(e.target.checked)
+                }
                 className="w-3.5 h-3.5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
               />
               Show Monthly
@@ -5741,36 +6151,41 @@ export default function PBRReport() {
 
         {/* PBR STRUCTURE - MONTHLY RATE GRAPH */}
         {activeTab === "PBR Structure" && !loading && (
-          <div className="flex-none bg-white border border-slate-200 shadow-sm p-5 rounded-xl mb-4">
+          <div className="relative z-[60] overflow-visible flex-none bg-white border border-slate-200 shadow-sm p-5 rounded-xl mb-4">
             <h3 className="text-[14px] font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Layers size={16} className="text-indigo-500" />
-              PBR Pool Rates &amp; Overall Wrap Rate
+              PBR Pool Rates {/* &amp; Overall Wrap Rate */}
             </h3>
 
             {/* <div className="flex items-end gap-3 h-52 w-full px-2"> */}
             <div className="flex items-end gap-3 h-52 w-full px-2 overflow-visible">
-              {months.map((month) => {
-                const pools = WATERFALL_SEQUENCE.map((poolName) => ({
-                  name: poolName,
-                  rate:
-                    Number(
-                      waterfallEngine.results[poolName]?.rateMonths?.[
-                        `${month}Rate`
-                      ] || 0,
-                    ) * 100,
-                })).filter((p) => waterfallEngine.results[p.name]);
+              {months.map((month, monthIndex) => {
+                const pools = WATERFALL_SEQUENCE.filter(
+                  isPbrStructurePoolVisible,
+                )
+                  .map((poolName) => ({
+                    name: poolName,
+                    rate:
+                      Number(
+                        waterfallEngine.results[poolName]?.rateMonths?.[
+                          `${month}Rate`
+                        ] || 0,
+                      ) * 100,
+                  }))
+                  .filter((p) => waterfallEngine.results[p.name]);
 
-                const overallWrapRate = Number(
-                  waterfallEngine.overallWrapRateMonths?.[`${month}Rate`] || 0,
-                );
-
-                const values = [...pools.map((p) => p.rate), overallWrapRate];
+                // const overallWrapRate = Number(
+                // waterfallEngine.overallWrapRateMonths?.[`${month}Rate`] || 0,
+                // );
+                //
+                //
+                const values = pools.map((p) => p.rate);
                 const maxRate = Math.max(1, ...values);
 
                 return (
                   <div
                     key={month}
-                    className="flex-1 flex flex-col justify-end items-center gap-2 group relative min-w-0"
+                    className="flex-1 flex flex-col justify-end items-center gap-2 group relative hover:z-[110] min-w-0"
                   >
                     <div className="w-full flex justify-center items-end gap-1 h-[150px] bg-slate-50/50 rounded-t-md border-b border-slate-200 pt-2 px-1">
                       {pools.map(({ name, rate }) => {
@@ -5785,6 +6200,7 @@ export default function PBRReport() {
                         );
                       })}
 
+                      {/* Wrap rate bar disabled.
                       <div
                         style={{
                           height: `${Math.max(2, (overallWrapRate / maxRate) * 100)}%`,
@@ -5792,14 +6208,16 @@ export default function PBRReport() {
                         className="flex-1 bg-violet-500 rounded-t-md hover:bg-violet-600 transition-all cursor-pointer shadow-sm min-w-[4px]"
                         title={`Overall Wrap Rate - ${overallWrapRate.toFixed(2)}x`}
                       />
+                      */}
                     </div>
 
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {month}
                     </span>
 
-                    {/* <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col bg-slate-800 text-white text-[11px] p-3 rounded-lg shadow-xl whitespace-nowrap z-50 min-w-[190px]"> */}
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col bg-slate-800 text-white text-[11px] p-3 rounded-lg shadow-xl whitespace-nowrap z-[100] min-w-[220px]">
+                    <div
+                      className={`absolute top-full hidden group-hover:block bg-slate-800 text-white text-[11px] p-3 rounded-lg shadow-xl z-[100] min-w-[220px] max-w-[calc(100vw-2rem)] max-h-64 overflow-y-auto ${monthIndex < 2 ? "left-0" : monthIndex > 9 ? "right-0" : "left-1/2 -translate-x-1/2"}`}
+                    >
                       <div className="font-bold border-b border-slate-600 pb-1.5 mb-2 text-center text-slate-200">
                         {month} FY{selectedYear}
                       </div>
@@ -5811,6 +6229,7 @@ export default function PBRReport() {
                         </div>
                       ))}
 
+                      {/* Wrap rate tooltip entry disabled.
                       <div className="flex justify-between gap-4 mt-2 pt-2 border-t border-slate-600 font-semibold">
                         <span className="text-violet-300">
                           Overall Wrap Rate:
@@ -5819,6 +6238,7 @@ export default function PBRReport() {
                       </div>
 
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                      */}
                     </div>
                   </div>
                 );
@@ -5833,12 +6253,14 @@ export default function PBRReport() {
                 </span>
               </div>
 
+              {/* Wrap rate legend disabled.
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-violet-500 rounded-sm shadow-sm" />
                 <span className="text-[12px] font-medium text-slate-600">
                   Overall Wrap Rate
                 </span>
               </div>
+              */}
             </div>
           </div>
         )}
@@ -8399,6 +8821,15 @@ export default function PBRReport() {
                     <th className="px-4 py-2.5 text-right border-r border-slate-200">
                       FY Amount
                     </th>
+                    {showMonthlyNonLaborSummary &&
+                      months.map((month) => (
+                        <th
+                          key={month}
+                          className="px-4 py-2.5 text-right border-r border-slate-200 min-w-[100px]"
+                        >
+                          {month} Amt
+                        </th>
+                      ))}
                   </tr>
                 </thead>
               )}
@@ -8411,6 +8842,9 @@ export default function PBRReport() {
                     </th>
                     <th className="px-4 py-2.5 text-right border-r border-slate-200">
                       YTD Amount
+                    </th>
+                    <th className="px-4 py-2.5 text-right border-r border-slate-200">
+                      YTD Allocation
                     </th>
                     {months.map((m) => (
                       <th
@@ -8479,6 +8913,7 @@ export default function PBRReport() {
                           hideZeros={hideZeros}
                         />
                       ))}
+                      {/* Overall Wrap Rate summary disabled.
                       <tr className="bg-indigo-50 border-t-2 border-indigo-300">
                         <td className="px-3 py-2 border-r border-indigo-200 font-bold text-[13px] text-indigo-900">
                           Overall Wrap Rate
@@ -8490,6 +8925,7 @@ export default function PBRReport() {
                           {waterfallEngine.overallWrapRate.toFixed(2)}x
                         </td>
                       </tr>
+                      */}
                     </>
                   )
                 ) : activeTab === "Income Statement" ? (
@@ -8536,6 +8972,7 @@ export default function PBRReport() {
                             acctId,
                             accountName: row.accountName || `Account ${acctId}`,
                             total: 0,
+                            ytdAllocation: 0,
                             monthly: Object.fromEntries(
                               months.map((m) => [`${m}Amount`, 0]),
                             ),
@@ -8545,6 +8982,7 @@ export default function PBRReport() {
 
                         const account = accountMap.get(key);
                         account.total += Number(row.total || 0);
+                        account.ytdAllocation += Number(row.ytdAllocation || 0);
 
                         months.forEach((m) => {
                           account.monthly[`${m}Amount`] += Number(
@@ -8556,6 +8994,7 @@ export default function PBRReport() {
                           account.orgs.set(orgId, {
                             orgId,
                             total: 0,
+                            ytdAllocation: 0,
                             monthly: Object.fromEntries(
                               months.map((m) => [`${m}Amount`, 0]),
                             ),
@@ -8565,6 +9004,7 @@ export default function PBRReport() {
 
                         const org = account.orgs.get(orgId);
                         org.total += Number(row.total || 0);
+                        org.ytdAllocation += Number(row.ytdAllocation || 0);
 
                         months.forEach((m) => {
                           org.monthly[`${m}Amount`] += Number(
@@ -8603,6 +9043,9 @@ export default function PBRReport() {
                         >
                           <td className="px-4 py-2 text-[13px] text-slate-400 italic sticky left-0 bg-slate-50/50 border-r border-slate-200 z-20">
                             No {sectionKey.toLowerCase()} data found.
+                          </td>
+                          <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px]">
+                            -
                           </td>
                           <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px]">
                             -
@@ -8673,6 +9116,9 @@ export default function PBRReport() {
                               <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px] font-semibold text-slate-800">
                                 {formatCurrency(account.total)}
                               </td>
+                              <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px] text-slate-700">
+                                {formatCurrency(account.ytdAllocation)}
+                              </td>
                               {months.map((m) => (
                                 <td
                                   key={`account-${sectionKey}-${account.acctId}-${m}`}
@@ -8719,6 +9165,9 @@ export default function PBRReport() {
                                   <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px] text-slate-700">
                                     {formatCurrency(org.total)}
                                   </td>
+                                  <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px] text-slate-600">
+                                    {formatCurrency(org.ytdAllocation)}
+                                  </td>
                                   {months.map((m) => (
                                     <td
                                       key={`org-${sectionKey}-${account.acctId}-${org.orgId}-${m}`}
@@ -8741,7 +9190,7 @@ export default function PBRReport() {
                       <>
                         <tr>
                           <td
-                            colSpan={14}
+                            colSpan={15}
                             className="px-4 py-2 font-semibold text-[12px] text-slate-800 sticky top-[39px] left-0 z-40 bg-slate-100 border-y border-slate-200 shadow-sm tracking-wide"
                           >
                             Cost — Account → Organization
@@ -8755,6 +9204,9 @@ export default function PBRReport() {
                           </td>
                           <td className="px-4 py-2 border-r border-slate-200 text-right text-[13px] font-semibold text-slate-800">
                             {formatCurrency(trendData.totalCost)}
+                          </td>
+                          <td className="px-4 py-2 border-r border-slate-200 text-right text-[13px] font-semibold text-slate-800">
+                            {formatCurrency(trendData.totalCostAllocation)}
                           </td>
                           {months.map((m) => (
                             <td
@@ -8770,7 +9222,7 @@ export default function PBRReport() {
 
                         <tr>
                           <td
-                            colSpan={14}
+                            colSpan={15}
                             className="px-4 py-2 font-semibold text-[12px] text-slate-800 sticky top-[39px] left-0 z-40 bg-slate-100 border-y border-slate-200 shadow-sm tracking-wide"
                           >
                             Base — Account → Organization
@@ -8784,6 +9236,9 @@ export default function PBRReport() {
                           </td>
                           <td className="px-4 py-2 border-r border-slate-200 text-right text-[13px] font-semibold text-slate-800">
                             {formatCurrency(trendData.totalBase)}
+                          </td>
+                          <td className="px-4 py-2 border-r border-slate-200 text-right text-[13px] font-semibold text-slate-800">
+                            {formatCurrency(trendData.totalBaseAllocation)}
                           </td>
                           {months.map((m) => (
                             <td
@@ -8809,6 +9264,7 @@ export default function PBRReport() {
                                   100
                                 ).toFixed(2) + "%"}
                           </td>
+                          <td className="px-4 py-2 border-r border-indigo-100"></td>
                           {months.map((m) => (
                             <td
                               key={`tr-${m}`}
@@ -8834,6 +9290,7 @@ export default function PBRReport() {
                                   100
                                 ).toFixed(2) + "%"}
                           </td>
+                          <td className="px-4 py-2 border-r border-indigo-300"></td>
                           {months.map((m, idx) => {
                             const monthsToDate = months.slice(0, idx + 1);
                             let runningCost = 0;
@@ -8945,12 +9402,23 @@ export default function PBRReport() {
                         <td className="px-4 py-2 border-r border-slate-100 text-right text-[13px] font-semibold text-indigo-700">
                           {formatCurrency(row.totalAmount)}
                         </td>
+                        {showMonthlyNonLaborSummary &&
+                          months.map((month) => (
+                            <td
+                              key={month}
+                              className="px-4 py-2 border-r border-slate-100 text-right text-[13px] text-slate-600"
+                            >
+                              {formatCurrency(
+                                Number(row[`${month}Amount`] || 0),
+                              )}
+                            </td>
+                          ))}
                       </tr>
                     ))
                   ) : (
                     <tr>
                       <td
-                        colSpan={30}
+                        colSpan={showMonthlyNonLaborSummary ? 18 : 6}
                         className="p-8 text-center text-slate-400 text-[13px]"
                       >
                         No non-labor data available for summary.

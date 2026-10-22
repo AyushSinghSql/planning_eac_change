@@ -5,7 +5,10 @@ import axios from "axios";
 
 import "./index.css";
 import App from "./App.jsx";
-import { backendUrl, ENABLE_SESSION_REFRESH } from "./components/config.js";
+import {
+  backendUrl,
+  ENABLE_SESSION_REFRESH,
+} from "./components/config.js";
 
 axios.defaults.withCredentials = true;
 
@@ -15,11 +18,6 @@ const originalFetch = window.fetch.bind(window);
 let refreshPromise = null;
 
 const refreshSession = () => {
-  console.log(ENABLE_SESSION_REFRESH);
-  if (!ENABLE_SESSION_REFRESH) {
-    return Promise.reject(new Error("Session refresh is desabled"));
-  }
-
   if (!refreshPromise) {
     refreshPromise = axios
       .post(
@@ -28,7 +26,7 @@ const refreshSession = () => {
         {
           withCredentials: true,
           skipAuthRefresh: true,
-        },
+        }
       )
       .finally(() => {
         refreshPromise = null;
@@ -46,7 +44,7 @@ const logout = async () => {
       {
         withCredentials: true,
         skipAuthRefresh: true,
-      },
+      }
     );
   } catch (error) {
     console.error("Logout API failed:", error);
@@ -94,7 +92,9 @@ window.fetch = async (input, init = {}) => {
   const url = requestUrl || "";
 
   const isAuthEndpoint =
-    url.includes("/api/User/login") || url.includes("/api/User/logout");
+    url.includes("/api/User/login") ||
+    url.includes("/api/User/refresh") ||
+    url.includes("/api/User/logout");
 
   if (isAuthEndpoint) {
     return response;
@@ -115,7 +115,7 @@ window.fetch = async (input, init = {}) => {
       credentials: "include",
     });
 
-    if (retryResponse.status === 401 || retryResponse.status === 403) {
+    if (retryResponse.status === 401) {
       await handleLogout();
     }
 
@@ -134,7 +134,6 @@ axios.interceptors.response.use(
 
     if (
       error.response?.status !== 401 ||
-      error.response?.status !== 403 ||
       !originalRequest ||
       originalRequest._retry
     ) {
@@ -144,13 +143,13 @@ axios.interceptors.response.use(
     const url = originalRequest.url || "";
 
     const isAuthEndpoint =
-      url.includes("/api/User/login") || url.includes("/api/User/logout");
+      url.includes("/api/User/login") ||
+      url.includes("/api/User/refresh") ||
+      url.includes("/api/User/logout");
 
     if (isAuthEndpoint || originalRequest.skipAuthRefresh) {
       return Promise.reject(error);
     }
-
-    console.log(ENABLE_SESSION_REFRESH);
 
     if (!ENABLE_SESSION_REFRESH) {
       await handleLogout();
@@ -166,11 +165,11 @@ axios.interceptors.response.use(
       await handleLogout();
       return Promise.reject(refreshError);
     }
-  },
+  }
 );
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 );

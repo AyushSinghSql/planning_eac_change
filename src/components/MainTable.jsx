@@ -1613,6 +1613,7 @@ export default function MainTable() {
                   }
                 }}
                 resourceId={currentUser?.name}
+                userId={currentUser?.userId}
                 existingTimesheetDates={[...existingDatesForUser]}
                 timesheetToEdit={timesheetToEdit}
                 isAdmin={userRole === "admin"}
@@ -1627,6 +1628,7 @@ export default function MainTable() {
                 timesheetData={selectedTimesheetData}
                 onClose={handleCloseDetail}
                 onSave={handleSaveDetails}
+                currentUser={currentUser}
                 isSaving={isSaving}
               />
             </div>

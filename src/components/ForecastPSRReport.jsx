@@ -1076,20 +1076,13 @@ const INDIRECT_PREFIXES = [
 const INDIRECT_PREFIXES_NAME = [
   "Fringe Benefits",
   "Overhead",
-  "General & Administration Exp",
-  "Subcont, Material & Equipment",
+  "General & Administrative",
+  "Subcontract & Matl Handling",
   "Misc Income/(Expenses)",
   "Interest Expense",
   "Other Unallowable Expense",
   "Income Taxes",
   "Allocations",
-
-  "General & Administration Exp",
-  "HR/Payroll Allocation",
-  "IT/Facilities",
-  "Project Specific Overhead",
-  "Subcont, Material & Equipment",
-  "Unallowables"
 ];
 
 const MONTHS = [
@@ -1239,8 +1232,7 @@ const computeTotals = (
     //   return;
     // }
 
-    if (gidName === "Revenue") {
-      console.log(group)
+    if (gidName === "Contracts Revenue") {
       const closingMonth = closingPeriodDate
         ? closingPeriodDate.getMonth() + 1
         : 0;
@@ -1249,7 +1241,7 @@ const computeTotals = (
         MONTHS.forEach((m) => {
           const amount = getAmt(group.monthlyTotals, year, m.key);
 
-          if (m.id <= closingMonth && amount < 0) {
+          if (m.id <= closingMonth) {
             out.rev[m.name] += amount * -1;
           } else {
             out.rev[m.name] += amount;
@@ -1262,7 +1254,8 @@ const computeTotals = (
             if (selectedProjectIds.has(proj.id)) {
               MONTHS.forEach((m) => {
                 const amount = getAmt(proj.monthlyTotals, year, m.key);
-                if (m.id <= closingMonth && amount < 0) {
+
+                if (m.id <= closingMonth) {
                   out.rev[m.name] += amount * -1;
                 } else {
                   out.rev[m.name] += amount;
@@ -1278,7 +1271,7 @@ const computeTotals = (
 
     // ── DIRECT LABOR ─────────────────────────────────────────────────
     // if (gid === "50-00-02") {
-    if (gid === "500" || gid.includes("500")) {
+    if (gid === "50" || gid.includes("50")) {
       if (allMode) {
         MONTHS.forEach((m) => {
           out.cost[m.name] += getAmt(group.monthlyTotals, year, m.key);
@@ -1317,7 +1310,7 @@ const computeTotals = (
       }
       return;
     }
-    if (gidName === "Subcontractors") {
+    if (gidName === "Subcontracts") {
       if (allMode) {
         MONTHS.forEach((m) => {
           out.sub[m.name] += getAmt(group.monthlyTotals, year, m.key);
@@ -1339,9 +1332,9 @@ const computeTotals = (
 
     // ── DIRECT NON-LABOR / ODC ────────────────────────────────────────
     if (
-      gidName === "Other Direct Cost" ||
-      gidName === "Travel" ||
-      gidName === "Materials"
+      gidName === "Other Direct Costs" ||
+      gidName === "Direct Travel" ||
+      gidName === "Direct Materials"
     ) {
       getChildren(group).forEach((acct) => {
         // if (!isODC(acct.id)) return;
@@ -1547,10 +1540,11 @@ const ForecastPSRReport = ({ closingPeriod }) => {
         closingPeriod.month == null ||
         !Number.isFinite(Number(closingPeriod.month))
       ) {
+        console.log("Waiting for closing period...");
         return;
       }
 
-      // setLoading(true);
+      setLoading(true);
       try {
         const [summaryRes, configRes, projectIndirectRes] = await Promise.all([
           axios.get(
@@ -1823,6 +1817,7 @@ const ForecastPSRReport = ({ closingPeriod }) => {
 
   // ── Determine table readiness ─────────────────────────────────────────────
   const tableReady = !loading && (planType === "" || selectedPeers.length > 0);
+  console.log(selectedProjectIds);
   return (
     <div className="w-full overflow-hidden p-2 space-y-6 min-h-screen text-slate-800">
       <style>{`

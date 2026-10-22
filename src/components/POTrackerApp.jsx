@@ -5710,7 +5710,7 @@ function SearchableMultiSelect({
   return (
     <div className="relative" ref={containerRef}>
       {label && (
-        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+        <label className="block text-[10px] font-bold  tracking-wider text-slate-500 mb-1">
           {label}
         </label>
       )}
@@ -6432,10 +6432,10 @@ const DocumentTimelineSection = React.memo(function DocumentTimelineSection({
               {events.length} milestones · {totalDaysSpan}d span
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          {/* <p className="text-[11px] text-slate-500 mt-0.5">
             Chronologically interleaved across PO creation, goods receipts, and
             vendor invoices
-          </p>
+          </p> */}
         </div>
 
         {/* 4 Segmented Sub-Tabs */}
@@ -7233,7 +7233,7 @@ const DocumentTimelineSection = React.memo(function DocumentTimelineSection({
               <div className="overflow-x-auto rounded-xl border border-indigo-100/80">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-indigo-50/40 text-slate-500 uppercase text-[10px] font-bold border-b border-indigo-100/70">
+                    <tr className="bg-indigo-50/40 text-slate-500  text-[10px] font-bold border-b border-indigo-100/70">
                       <th className="py-2.5 px-4">#</th>
                       <th className="py-2.5 px-4">Receipt (GRN)</th>
                       <th className="py-2.5 px-4">GRN Date</th>
@@ -7328,13 +7328,12 @@ const DocumentTimelineSection = React.memo(function DocumentTimelineSection({
             </>
           )}
 
-          <p className="text-xs text-slate-500">
+          {/* <p className="text-xs text-slate-500">
             GRNs and invoices are expanded from the API response and shown in
-            chronological sequence. The API response does not include an
-            explicit GRN-to-invoice reference, so row alignment is a sequence
-            comparison, not confirmation of the accounting link between
-            documents.
-          </p>
+            chronological sequence. The API response does not include an explicit
+            GRN-to-invoice reference, so row alignment is a sequence comparison,
+            not confirmation of the accounting link between documents.
+          </p> */}
         </div>
       )}
     </div>
@@ -8323,7 +8322,7 @@ export default function POTrackerApp() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-base font-bold text-slate-900 tracking-tight">
-                    PR → PO Financial Analytics
+                    Procure-to-Pay Dashboard
                   </h1>
                   <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/70 text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full">
                     {filteredPOs.length} of {poList.length} Orders
@@ -8431,7 +8430,7 @@ export default function POTrackerApp() {
           {/* Multi-Select & Searchable Filter Bar */}
           <div className="pt-3 border-t border-indigo-100/70 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 items-end">
             <div className="lg:col-span-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-[10px] font-bold  tracking-wider text-slate-500 mb-1">
                 Global Search
               </label>
               <div className="relative">
@@ -8475,7 +8474,7 @@ export default function POTrackerApp() {
 
             <div className="flex items-center gap-1.5">
               <div className="flex-1">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                <label className="block text-[10px] font-bold  tracking-wider text-slate-500 mb-1">
                   From Date
                 </label>
                 <input
@@ -8486,7 +8485,7 @@ export default function POTrackerApp() {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                <label className="block text-[10px] font-bold  tracking-wider text-slate-500 mb-1">
                   To Date
                 </label>
                 <input
@@ -8581,9 +8580,9 @@ export default function POTrackerApp() {
         {isLoadingList ? (
           <div className="h-80 bg-slate-50/50 rounded-2xl border border-slate-200/70 flex flex-col items-center justify-center gap-3">
             <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-medium text-slate-500">
+            {/* <p className="text-xs font-medium text-slate-500">
               Synchronizing live procurement telemetry from API...
-            </p>
+            </p> */}
           </div>
         ) : apiError ? (
           <div className="bg-rose-50/50 p-10 rounded-2xl border border-rose-200 text-center space-y-3">
@@ -8604,7 +8603,7 @@ export default function POTrackerApp() {
             <p className="text-xs text-slate-500">
               No Purchase Order records returned by{" "}
               <code className="font-mono">
-                /api/PrPoDashboard/GetDashboardV1
+                {/* /api/PrPoDashboard/GetDashboardV1 */}
               </code>
               .
             </p>
@@ -8619,8 +8618,8 @@ export default function POTrackerApp() {
               {/* Card 1: PR Requisitioned */}
               <div className="group relative bg-gradient-to-b from-sky-50/70 to-white p-4 rounded-2xl border border-sky-200/70 border-t-4 border-t-sky-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg hover:border-sky-300 transition-all duration-300 ease-out cursor-pointer">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-800">
-                    PR Requisitioned
+                  <span className="text-[11px] font-bold  tracking-wider text-sky-800">
+                    Purchase Requisition
                   </span>
                   <span className="bg-sky-100 text-sky-700 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
                     Budget
@@ -8658,7 +8657,7 @@ export default function POTrackerApp() {
               {/* Card 2: Committed PO Spend */}
               <div className="group relative bg-gradient-to-b from-indigo-50/70 to-white p-4 rounded-2xl border border-indigo-200/70 border-t-4 border-t-indigo-600 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg hover:border-indigo-300 transition-all duration-300 ease-out cursor-pointer">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-900">
+                  <span className="text-[11px] font-bold  tracking-wider text-indigo-900">
                     Committed PO Spend
                   </span>
                   <span className="bg-indigo-100 text-indigo-700 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
@@ -8692,7 +8691,7 @@ export default function POTrackerApp() {
               {/* Card 3: Invoiced Total */}
               <div className="group relative bg-gradient-to-b from-amber-50/70 to-white p-4 rounded-2xl border border-amber-200/70 border-t-4 border-t-amber-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg hover:border-amber-300 transition-all duration-300 ease-out cursor-pointer">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                  <span className="text-[11px] font-bold  tracking-wider text-amber-900">
                     Invoiced Total
                   </span>
                   <span className="bg-amber-100 text-amber-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
@@ -8724,7 +8723,7 @@ export default function POTrackerApp() {
               {/* Card 4: Paid / Settled */}
               <div className="group relative bg-gradient-to-b from-teal-50/70 to-white p-4 rounded-2xl border border-teal-200/70 border-t-4 border-t-teal-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg hover:border-teal-300 transition-all duration-300 ease-out cursor-pointer">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-teal-900">
+                  <span className="text-[11px] font-bold  tracking-wider text-teal-900">
                     Paid / Settled
                   </span>
                   <span className="bg-teal-100 text-teal-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
@@ -8756,7 +8755,7 @@ export default function POTrackerApp() {
               {/* Card 5: Unbilled Balance */}
               <div className="group relative bg-gradient-to-b from-violet-50/70 to-white p-4 rounded-2xl border border-violet-200/70 border-t-4 border-t-violet-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg hover:border-violet-300 transition-all duration-300 ease-out cursor-pointer">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-violet-900">
+                  <span className="text-[11px] font-bold  tracking-wider text-violet-900">
                     Unbilled Balance
                   </span>
                   <span className="bg-violet-100 text-violet-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
@@ -8794,7 +8793,7 @@ export default function POTrackerApp() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <h2 className="text-xs font-bold tracking-wider text-slate-800">
                         Committed vs. Settled Expenditure
                       </h2>
                     </div>
@@ -8846,7 +8845,7 @@ export default function POTrackerApp() {
                 {/* Compact Inline Context Strip (Eliminates Empty White Space & Adds Value) */}
                 <div className="grid grid-cols-3 gap-2.5 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/60 text-xs">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                    <span className="text-[10px]  font-bold text-slate-400 block">
                       Top{" "}
                       {chartDimension === "vendor" ? "Vendor" : "GL Account"}
                     </span>
@@ -8857,7 +8856,7 @@ export default function POTrackerApp() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                    <span className="text-[10px]  font-bold text-slate-400 block">
                       Top Concentration
                     </span>
                     <span className="font-mono font-bold text-indigo-700">
@@ -8870,7 +8869,7 @@ export default function POTrackerApp() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                    <span className="text-[10px]  font-bold text-slate-400 block">
                       Active Dimension Count
                     </span>
                     <span className="font-mono font-bold text-teal-700">
@@ -8909,7 +8908,7 @@ export default function POTrackerApp() {
                   <div className="flex justify-between items-center mb-2.5">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <h2 className="text-xs font-bold  tracking-wider text-slate-800">
                         Capital Conversion Pipeline
                       </h2>
                     </div>
@@ -8930,7 +8929,7 @@ export default function POTrackerApp() {
                   <div className="flex justify-between items-center mb-2.5">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <h2 className="text-xs font-bold tracking-wider text-slate-800">
                         GL Cost Pool Share
                       </h2>
                     </div>
@@ -8968,7 +8967,7 @@ export default function POTrackerApp() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                      <h2 className="text-xs font-bold  tracking-wider text-slate-900">
                         Purchase Order Register
                       </h2>
                       <span className="bg-indigo-100 text-indigo-800 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full">
@@ -9041,7 +9040,7 @@ export default function POTrackerApp() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="bg-indigo-50/40 text-slate-500 uppercase tracking-wider font-bold border-b border-indigo-100/70 text-[10px]">
+                        <tr className="bg-indigo-50/40 text-slate-500  tracking-wider font-bold border-b border-indigo-100/70 text-[10px]">
                           <th className="py-3 px-4">PO #</th>
                           <th className="py-3 px-4">Vendor</th>
                           <th className="py-3 px-4">PR & Scope</th>
@@ -9216,7 +9215,7 @@ export default function POTrackerApp() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                 <div className="bg-gradient-to-b from-sky-50/75 to-white p-4 rounded-2xl border border-sky-200/80 border-t-4 border-t-sky-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700">
+                    <span className="text-[10px] font-bold  tracking-wider text-sky-700">
                       1 · PR Raised
                     </span>
                     <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-[10px] font-bold">
@@ -9233,7 +9232,7 @@ export default function POTrackerApp() {
 
                 <div className="bg-gradient-to-b from-indigo-50/75 to-white p-4 rounded-2xl border border-indigo-200/80 border-t-4 border-t-indigo-600 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                    <span className="text-[10px] font-bold  tracking-wider text-indigo-700">
                       2 · PO Approved
                     </span>
                     <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold">
@@ -9250,7 +9249,7 @@ export default function POTrackerApp() {
 
                 <div className="bg-gradient-to-b from-teal-50/75 to-white p-4 rounded-2xl border border-teal-200/80 border-t-4 border-t-teal-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700">
+                    <span className="text-[10px] font-bold  tracking-wider text-teal-700">
                       3 · Goods Received
                     </span>
                     <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-[10px] font-bold">
@@ -9269,7 +9268,7 @@ export default function POTrackerApp() {
 
                 <div className="bg-gradient-to-b from-amber-50/75 to-white p-4 rounded-2xl border border-amber-200/80 border-t-4 border-t-amber-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                    <span className="text-[10px] font-bold  tracking-wider text-amber-800">
                       4 · Invoiced
                     </span>
                     <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px] font-bold">
@@ -9286,7 +9285,7 @@ export default function POTrackerApp() {
 
                 <div className="bg-gradient-to-b from-emerald-50/75 to-white p-4 rounded-2xl border border-emerald-200/80 border-t-4 border-t-emerald-500 shadow-2xs hover:-translate-y-1.5 hover:scale-[1.015] hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                    <span className="text-[10px] font-bold  tracking-wider text-emerald-800">
                       5 · Paid / Settled
                     </span>
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">
@@ -9307,7 +9306,7 @@ export default function POTrackerApp() {
                 <div className="lg:col-span-7 bg-white p-5 rounded-2xl border border-indigo-100/90 shadow-2xs flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200/60">
+                      <span className="text-[10px] font-bold  tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200/60">
                         Scope & Cycle-Time Telemetry
                       </span>
                       <span className="text-xs font-mono text-slate-400">
@@ -9404,7 +9403,7 @@ export default function POTrackerApp() {
                 <div className="px-5 py-3.5 bg-gradient-to-r from-indigo-50/60 via-white to-sky-50/50 border-b border-indigo-100/80 flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    <h3 className="text-xs font-bold  tracking-wider text-slate-900">
                       Line Items ({currentRecord.lines.length})
                     </h3>
                   </div>
@@ -9416,7 +9415,7 @@ export default function POTrackerApp() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-indigo-50/35 text-slate-500 uppercase text-[10px] font-bold border-b border-indigo-100/70">
+                      <tr className="bg-indigo-50/35 text-slate-500  text-[10px] font-bold border-b border-indigo-100/70">
                         <th className="py-3 px-4">Item & GL Account</th>
                         <th className="py-3 px-4 text-right">Qty</th>
                         <th className="py-3 px-4 text-right">Unit Price</th>
@@ -9498,7 +9497,7 @@ export default function POTrackerApp() {
                   <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <h3 className="text-xs font-bold  tracking-wider text-slate-800">
                         Goods Receipts (GRNs)
                       </h3>
                     </div>
@@ -9533,7 +9532,7 @@ export default function POTrackerApp() {
                   <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <h3 className="text-xs font-bold  tracking-wider text-slate-800">
                         Vendor Invoices
                       </h3>
                     </div>

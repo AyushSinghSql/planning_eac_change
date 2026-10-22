@@ -484,6 +484,12 @@ import DashboardGraphs from "./components/DashboardGraphs";
 import Settings from "./components/Settings";
 import UserTable from "./components/UserTable";
 import POTrackerApp from "./components/POTrackerApp";
+import AuthorizedDevice from "./components/AuthorizedDevice";
+import GroupManagement from "./components/GroupManagement";
+import EmployeeProjectPlcMapping from "./components/EmployeeProjectPlcMapping";
+import WorkflowUserMapping from "./components/WorkflowUserMapping";
+import ProjectMaster from "./components/ProjectMaster";
+import EmployeeMaster from "./components/EmployeeMaster";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -992,6 +998,17 @@ function App() {
               }
             />
             <Route
+              path="authorize-device"
+              element={
+                <RequireAdmin>
+                  <div className="mt-12 ml-2">
+                    {" "}
+                    <AuthorizedDevice />
+                  </div>
+                </RequireAdmin>
+              }
+            />
+            <Route
               path="project-variance"
               element={
                 <RequireAdmin>
@@ -1016,122 +1033,166 @@ function App() {
             <Route
               path="sub-pstaus"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <POStatusTable />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <POStatusTable />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-create-timesheet"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <MainTable />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <MainTable />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-report"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <Report />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <Report />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-enquiry-approval"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <Approval />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <Approval />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-invoice-export"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <InvoiceExport />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <InvoiceExport />
+                </div>
+                // </RequireAdmin>
+              }
+            />
+            <Route
+              path="sub-employeeplc-mapping"
+              element={
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <EmployeeProjectPlcMapping />
+                </div>
+                // </RequireAdmin>
+              }
+            />
+            <Route
+              path="sub-workflow-mapping"
+              element={
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <WorkflowUserMapping />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-export-table"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <ExportTable />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <ExportTable />
+                </div>
+                // </RequireAdmin>
+              }
+            />
+            <Route
+              path="sub-project-master"
+              element={
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <ProjectMaster />
+                </div>
+                // </RequireAdmin>
+              }
+            />
+            <Route
+              path="sub-employee-master"
+              element={
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <EmployeeMaster />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-dashboards"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <DashboardGraphs />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <DashboardGraphs />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-settings"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <Settings />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <Settings />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-users-table"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <UserTable />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <UserTable />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-po-info"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <GroupsTable />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <GroupsTable />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
               path="sub-work-assign"
               element={
-                <RequireAdmin>
-                  <div className="mt-12 ml-2">
-                    {" "}
-                    <WorkAssignment />
-                  </div>
-                </RequireAdmin>
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <WorkAssignment />
+                </div>
+                // </RequireAdmin>
               }
             />
             <Route
@@ -1210,6 +1271,14 @@ function App() {
               element={
                 <div className="mt-12 ml-2">
                   <BudgetByDept />
+                </div>
+              }
+            />
+            <Route
+              path="group-management"
+              element={
+                <div className="mt-12 ml-2">
+                  <GroupManagement />
                 </div>
               }
             />

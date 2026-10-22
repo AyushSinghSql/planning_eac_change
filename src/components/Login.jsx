@@ -1418,34 +1418,19 @@ const Login = () => {
       (c) => c.name === "enable_device_auth",
     );
 
-    let ipAddress = "";
-      try {
-        const ipRes = await fetch("https://api.ipify.org?format=json");
-        if (ipRes.ok) {
-          const ipData = await ipRes.json();
-          ipAddress = ipData.ip;
-        }
-      } catch (ipError) {
-        console.warn("Failed to retrieve IP address:", ipError);
-        // Optional fallback or leave as empty string
-      }
-
     try {
       if (deviceAuthorizationConfig[0].value === "true") {
         await getDeviceSignature();
       }
 
-      const response = await fetch(
-        `${backendUrl}/api/User/loginV1?clientIp=${encodeURIComponent(ipAddress)}`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
+      const response = await fetch(`${backendUrl}/api/User/loginV1`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ username, password }),
+      });
 
       if (response.status === 429) {
         setError("Too many login attempts. Please try again in 2 minutes.");

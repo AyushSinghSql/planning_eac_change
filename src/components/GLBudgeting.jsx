@@ -5787,7 +5787,7 @@ export default function GLBudgeting() {
         <div className="flex items-center gap-2">
           <Layers className="text-indigo-600 h-5 w-5" />
           <h1 className="text-[15px] font-semibold text-slate-800 flex items-center gap-2">
-            Corporate Budget By GL
+            Corporate Budget By Acconunt
             <span className="bg-indigo-100 text-indigo-800 text-[11px] font-bold px-2 py-0.5 rounded-md">
               FY {selectedYear}
             </span>

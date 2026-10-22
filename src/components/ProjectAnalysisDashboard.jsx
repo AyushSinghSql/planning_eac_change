@@ -1,882 +1,3 @@
-// import React, { useState, useEffect, useRef } from "react";
-// import { backendUrl } from "./config";
-// import { BriefcaseBusiness, LayoutDashboard, TrendingUp } from "lucide-react";
-
-// const formatCurrency = (amount) => {
-//   return new Intl.NumberFormat("en-US", {
-//     style: "currency",
-//     currency: "USD",
-//   }).format(amount || 0);
-// };
-
-// const formatPercent = (amount) => {
-//   const roundedPercentage = Math.ceil((amount || 0) * 100) / 100;
-
-//   return new Intl.NumberFormat("en-US", {
-//     style: "percent",
-//     minimumFractionDigits: 2,
-//     maximumFractionDigits: 2,
-//   }).format(roundedPercentage / 100);
-// };
-
-// export default function ProjectAnalysisDashboard() {
-//   const [analysisMode, setAnalysisMode] = useState("PROJECT");
-//   const [rawData, setRawData] = useState([]); // Keeps V2 data for summary & tracking ring
-//   const [rawDataV1, setRawDataV1] = useState([]);
-//   const [nbData, setNbData] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   const [hoveredLabel, setHoveredLabel] = useState(null);
-//   const [hoveredData, setHoveredData] = useState(null);
-
-//   const [summarySearch, setSummarySearch] = useState("");
-//   const [approvalSearch, setApprovalSearch] = useState("");
-//   const [budgetSearch, setBudgetSearch] = useState("");
-
-//   const [actionLoadingId, setActionLoadingId] = useState(null);
-
-//   const getCurrentUserContext = () => {
-//     try {
-//       const userString = localStorage.getItem("currentUser");
-//       if (!userString) return { userId: "", role: "" };
-//       const userObj = JSON.parse(userString);
-//       return {
-//         userId: userObj.userId ?? "",
-//         role: userObj.role?.toLowerCase() ?? "",
-//       };
-//     } catch {
-//       return { userId: "", role: "" };
-//     }
-//   };
-
-//   const { userId, role } = getCurrentUserContext();
-
-//   // Fetch initial dashboard feed data (V2)
-//   const fetchDashboardData = () => {
-//     return fetch(
-//       `${backendUrl}/Project/GetProjectPlansV2/${userId}/${role}/?status=&type=PROJECT`,
-//     )
-//       .then((res) => {
-//         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-//         return res.json();
-//       })
-//       .then((json) => {
-//         setRawData(json || []);
-//       });
-//   };
-
-//   // Fetch initial dashboard feed data (V1) for pending actions
-//   const fetchDashboardData1 = () => {
-//     return fetch(
-//       `${backendUrl}/Project/GetProjectPlansV1/${userId}/${role}/?status=&type=PROJECT`,
-//     )
-//       .then((res) => {
-//         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-//         return res.json();
-//       })
-//       .then((json) => {
-//         setRawDataV1(json || []); // Target dedicated V1 state array
-//       });
-//   };
-
-//   // NEW: Fetch New Business Data
-//   const fetchNewBusinessData = () => {
-//     return fetch(
-//       `https://planning-api-lumina-test-latest.onrender.com/Project/GetNBPlans/4/admin/n?type=NBBUD`,
-//     )
-//       .then((res) => {
-//         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-//         return res.json();
-//       })
-//       .then((json) => {
-//         setNbData(json || []);
-//       });
-//   };
-
-//   // Trigger loading state updates depending on the active navigation filter
-//   useEffect(() => {
-//     setLoading(true);
-//     setError(null);
-
-//     if (analysisMode === "PROJECT") {
-//       Promise.all([fetchDashboardData1(), fetchDashboardData()])
-//         .then(() => setLoading(false))
-//         .catch((err) => {
-//           setError(err.message);
-//           setLoading(false);
-//         });
-//     } else {
-//       fetchNewBusinessData()
-//         .then(() => setLoading(false))
-//         .catch((err) => {
-//           setError(err.message);
-//           setLoading(false);
-//         });
-//     }
-//   }, [analysisMode]);
-
-//   // useEffect(() => {
-//   //   setLoading(true);
-//   //   // Combine both fetch promises to handle completion smoothly
-//   //   Promise.all([fetchDashboardData1(), fetchDashboardData()])
-//   //     .then(() => setLoading(false))
-//   //     .catch((err) => {
-//   //       setError(err.message);
-//   //       setLoading(false);
-//   //     });
-//   // }, []);
-
-//   // --- INTERACTION WORKFLOW HANDLERS ---
-
-//   const handleApprove = async (projectId) => {
-//     const uniqueId = `approve-${projectId}`;
-//     setActionLoadingId(uniqueId);
-//     try {
-//       // NOTE: Looking into rawDataV1 since this item came from V1 stack
-//       const targetRecord = rawDataV1.find(
-//         (item) =>
-//           item.projId === projectId &&
-//           item.status?.toLowerCase() === "submitted",
-//       );
-
-//       if (!targetRecord) {
-//         throw new Error(
-//           "Target plan record marked as Submitted could not be located.",
-//         );
-//       }
-
-//       let updatedPlanPayload = {
-//         ...targetRecord,
-//         plId: targetRecord.plId || 0,
-//         projId: projectId,
-//         plType: targetRecord.plType,
-//         versionCode: targetRecord.versionCode,
-//         templateId: targetRecord.templateId || 1,
-//         approvedBy: `"${userId}"`,
-//       };
-
-//       updatedPlanPayload.isApproved = true;
-//       updatedPlanPayload.status = updatedPlanPayload.isApproved
-//         ? "Approved"
-//         : "Submitted";
-//       if (!updatedPlanPayload.isApproved) {
-//         updatedPlanPayload.finalVersion = false;
-//       }
-
-//       const response = await fetch(`${backendUrl}/Project/UpdateProjectPlan`, {
-//         method: "PUT",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(updatedPlanPayload),
-//       });
-
-//       if (!response.ok) {
-//         throw new Error("Approval update failed on remote API execution.");
-//       }
-
-//       alert(`Project ${projectId} approved successfully!`);
-
-//       // Refresh both states to reflect changes globally
-//       await Promise.all([fetchDashboardData1(), fetchDashboardData()]);
-//     } catch (err) {
-//       alert(`Error updating project: ${err.message}`);
-//     } finally {
-//       setActionLoadingId(null);
-//     }
-//   };
-
-//   const handleCreate = async (projectId, calculatedType) => {
-//     const uniqueId = `create-${projectId}`;
-//     setActionLoadingId(uniqueId);
-//     try {
-//       // NOTE: Looking into rawDataV1 since this item came from V1 stack
-//       const referencePlan =
-//         rawDataV1.find((item) => item.projId === projectId) || {};
-
-//       const targetStartDate =
-//         referencePlan.projStartDt || referencePlan.startDate || "";
-//       const targetEndDate =
-//         referencePlan.projEndDt || referencePlan.endDate || "";
-
-//       if (!targetStartDate || !targetEndDate) {
-//         throw new Error(
-//           "Cannot initialize creation routine: Project lacks historical bounds (Start / End Date).",
-//         );
-//       }
-
-//       const typeQueryParam = "actual";
-
-//       const payloadTemplate = {
-//         plId: referencePlan.plId || 0,
-//         projId: projectId,
-//         plType: calculatedType,
-//         source: `${referencePlan.plType === "BUD" ? "B" : referencePlan.plType === "EAC" ? "E" : ""}${referencePlan.version || 0}`,
-//         type: referencePlan.type || "A",
-//         version: referencePlan.version || 0,
-//         versionCode: referencePlan.versionCode || "",
-//         finalVersion: false,
-//         isCompleted: false,
-//         isApproved: false,
-//         status: "In Progress",
-//         createdBy: referencePlan.createdBy || "User",
-//         modifiedBy: referencePlan.modifiedBy || "User",
-//         approvedBy: "",
-//         templateId: referencePlan.templateId || 1,
-//         fiscalYear:
-//           referencePlan.fiscalYear || new Date().getFullYear().toString(),
-//         projStartDt: targetStartDate,
-//         projEndDt: targetEndDate,
-//       };
-
-//       const response = await fetch(
-//         `${backendUrl}/Project/AddProjectPlan?type=${typeQueryParam}`,
-//         {
-//           method: "POST",
-//           headers: { "Content-Type": "application/json" },
-//           body: JSON.stringify(payloadTemplate),
-//         },
-//       );
-
-//       if (!response.ok) {
-//         const errorText = await response.text();
-//         throw new Error(
-//           errorText || "AddProjectPlan execution failure on remote endpoint.",
-//         );
-//       }
-
-//       alert(
-//         `${calculatedType} plan successfully initialized for Project ${projectId}!`,
-//       );
-
-//       // Refresh both states to reflect changes globally
-//       await Promise.all([fetchDashboardData1(), fetchDashboardData()]);
-//     } catch (err) {
-//       alert(`Error initializing plan: ${err.message}`);
-//     } finally {
-//       setActionLoadingId(null);
-//     }
-//   };
-
-//   // --- BUSINESS LOGIC & DATA TRANSFORMATIONS ---
-
-//   const processProjectSummary = () => {
-//     const groups = {};
-//     rawData.forEach((item) => {
-//       if (!groups[item.projId]) {
-//         groups[item.projId] = [];
-//       }
-//       groups[item.projId].push(item);
-//     });
-
-//     const summaryList = [];
-
-//     Object.keys(groups).forEach((projId) => {
-//       const plans = groups[projId];
-
-//       let selectedPlan = plans.find(
-//         (p) => p.plType === "EAC" && p.status === "Concluded",
-//       );
-
-//       if (!selectedPlan) {
-//         selectedPlan = plans.find(
-//           (p) => p.plType === "BUD" && p.status === "Concluded",
-//         );
-//       }
-
-//       if (!selectedPlan) {
-//         selectedPlan = plans[0];
-//       }
-
-//       const budget = selectedPlan.budgetRevenue || 0;
-//       const forecast = selectedPlan.forecastRevenue || 0;
-//       const actual = selectedPlan.actualRevenue || 0;
-//       const funded = selectedPlan.proj_f_tot_amt || 0;
-//       const fundedUtilized = selectedPlan.fundingUtilized || 0;
-//       const elapsedMonths = selectedPlan.elapsedMonths || 0;
-//       const variance = selectedPlan.variance || 0;
-//       const source = selectedPlan.projectStatus || 0;
-
-//       summaryList.push({
-//         id: projId,
-//         name: selectedPlan.projName || projId,
-//         funded,
-//         fundedUtilized,
-//         elapsedMonths,
-//         budget,
-//         forecast,
-//         actual,
-//         variance,
-//         source,
-//         eacDate: selectedPlan.updatedAt
-//           ? selectedPlan.updatedAt.split("T")[0]
-//           : "N/A",
-//       });
-//     });
-
-//     return summaryList;
-//   };
-
-//   const projectSummaryData = processProjectSummary();
-
-//   // FIX: Using rawDataV1 for Pending Approvals
-//   const pendingApprovalData = rawDataV1
-//     .filter((item) => item.status?.toLowerCase() === "submitted")
-//     .map((item) => ({
-//       id: item.projId,
-//       dueDate: item.projEndDt || "N/A",
-//     }));
-
-//   // FIX: Using rawDataV1 for Pending Budgets / EACs
-//   // const getPendingBudgetData = () => {
-//   //   // 1. Gather IDs of projects that ALREADY have an active plan/budget assigned
-//   //   const activePlanIds = new Set(
-//   //     rawData
-//   //       .filter(
-//   //         (item) =>
-//   //           item.plId !== undefined && item.plId !== null && item.plId !== "",
-//   //       )
-//   //       .map((item) => item.projId),
-//   //   );
-
-//   //   // Get the start of the current day in YYYY-MM-DD format (local timezone safe)
-//   //   const today = new Date();
-//   //   today.setHours(0, 0, 0, 0);
-
-//   //   return rawData
-//   //     .filter((item) => {
-//   //       // RULE A: Exclude rows that explicitly already have a plan id
-//   //       if (item.plId) return false;
-
-//   //       // RULE B: Exclude if its project ID is already marked as having an active plan
-//   //       if (activePlanIds.has(item.projId)) return false;
-
-//   //       // RULE C: Hierarchical check — exclude parent/child components if either has an active plan
-//   //       const hasActiveChildNode = Array.from(activePlanIds).some(
-//   //         (activeId) =>
-//   //           activeId.startsWith(item.projId + ".") ||
-//   //           item.projId.startsWith(activeId + "."),
-//   //       );
-
-//   //       return !hasActiveChildNode;
-//   //     })
-//   //     .filter((item) => {
-//   //       // 2. TIMELINE VALIDATION: Include only if the project is ongoing or ends today/future
-//   //       if (!item.projEndDt) return false;
-
-//   //       // Normalize the end date string to a safe date object format
-//   //       const endDate = new Date(item.projEndDt);
-//   //       endDate.setHours(0, 0, 0, 0);
-
-//   //       return endDate >= today;
-//   //     })
-//   //     .map((item) => {
-//   //       // 3. CLASSIFICATION: Determine if it should be processed as an EAC or a BUD
-//   //       const currentMonthStr = new Date().toISOString().substring(0, 7); // e.g., "2026-06"
-
-//   //       const isCurrentMonth =
-//   //         item.updatedAt?.startsWith(currentMonthStr) ||
-//   //         item.projStartDt?.startsWith(currentMonthStr);
-
-//   //       return {
-//   //         id: item.projId,
-//   //         dueDate: item.projEndDt,
-//   //         type: isCurrentMonth ? "EAC" : "BUD",
-//   //       };
-//   //     });
-//   // };
-
-//   const getPendingBudgetData = () => {
-//     // 1. Gather IDs of projects that ALREADY have an active plan/budget assigned
-//     const activePlanIds = new Set(
-//       rawDataV1
-//         .filter(
-//           (item) =>
-//             item.plId !== undefined && item.plId !== null && item.plId !== "",
-//         )
-//         .map((item) => item.projId),
-//     );
-
-//     // Get the start of the current day for expiration evaluation
-//     const today = new Date();
-//     today.setHours(0, 0, 0, 0);
-
-//     return rawDataV1
-//       .filter((item) => {
-//         // RULE A: Exclude rows that explicitly already have a plan id assigned
-//         if (item.plId) return false;
-
-//         // RULE B: Exclude if its exact project ID matches an existing plan row tracker
-//         if (activePlanIds.has(item.projId)) return false;
-
-//         // RULE C: Hierarchical Level Check — Exclude parent or child components if either has an active budget
-//         const hasActiveChildNode = Array.from(activePlanIds).some(
-//           (activeId) =>
-//             activeId.startsWith(item.projId + ".") ||
-//             item.projId.startsWith(activeId + "."),
-//         );
-
-//         return !hasActiveChildNode;
-//       })
-//       .filter((item) => {
-//         // 2. TIMELINE FILTER: Include only if project has an end date and it is active (ends today or in the future)
-//         if (!item.projEndDt) return false;
-
-//         const endDate = new Date(item.projEndDt);
-//         endDate.setHours(0, 0, 0, 0);
-
-//         return endDate >= today;
-//       })
-//       .map((item) => {
-//         // 3. MAP VALUE RETURNS: Return clean metadata with standard type identifier
-//         return {
-//           id: item.projId,
-//           dueDate: item.projEndDt,
-//           type: "BUD", // Removed current month EAC conditional filter; defaults all unassigned to BUD
-//         };
-//       });
-//   };
-//   const pendingBudgetData = getPendingBudgetData();
-
-//   // --- UPDATED TRACKING COUNTS: Configured to look at rawDataV1 ---
-//   const inProgressCount = rawDataV1.filter(
-//     (p) => p.status?.toLowerCase() === "in progress",
-//   ).length;
-//   const submittedCount = pendingApprovalData.length;
-//   const approvedCount = rawDataV1.filter(
-//     (p) => p.status?.toLowerCase() === "approved",
-//   ).length;
-//   const concludedCount = rawDataV1.filter(
-//     (p) => p.status?.toLowerCase() === "concluded",
-//   ).length;
-
-//   const totalCount = rawDataV1.length;
-//   const otherCount = Math.max(
-//     0,
-//     inProgressCount + submittedCount + approvedCount + concludedCount,
-//   );
-//   const totalStates = totalCount || 1;
-//   const circ = 2 * Math.PI * 40;
-
-//   const [activeHover, setActiveHover] = useState(null);
-//   const ringRef = useRef(null);
-
-//   const getCenterDisplay = () => {
-//     switch (activeHover) {
-//       case "inProgress":
-//         return { count: inProgressCount, label: "In Progress" };
-//       case "submitted":
-//         return { count: submittedCount, label: "Submitted" };
-//       case "approved":
-//         return { count: approvedCount, label: "Approved" };
-//       case "concluded":
-//         return { count: concludedCount, label: "Concluded" };
-//       default:
-//         return { count: otherCount, label: "Total Records" };
-//     }
-//   };
-
-//   const centerData = getCenterDisplay();
-
-//   const handleRingMouseMove = (e) => {
-//     if (!ringRef.current || totalStates === 0) return;
-
-//     const rect = ringRef.current.getBoundingClientRect();
-//     const centerX = rect.left + rect.width / 2;
-//     const centerY = rect.top + rect.height / 2;
-
-//     let angle =
-//       Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-//     angle = (angle + 90 + 360) % 360;
-
-//     const currentPercentage = (angle / 360) * 100;
-
-//     const ipLimit = (inProgressCount / totalStates) * 100;
-//     const subLimit = ipLimit + (submittedCount / totalStates) * 100;
-//     const appLimit = subLimit + (approvedCount / totalStates) * 100;
-
-//     if (currentPercentage <= ipLimit) {
-//       setActiveHover("inProgress");
-//     } else if (currentPercentage <= subLimit) {
-//       setActiveHover("submitted");
-//     } else if (currentPercentage <= appLimit) {
-//       setActiveHover("approved");
-//     } else {
-//       setActiveHover("concluded");
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-//         <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#005a9c] border-t-transparent" />
-//       </div>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <div className="p-6 text-red-600 font-semibold bg-red-50 rounded-md border border-red-200 m-6">
-//         Error loading project analysis data: {error}
-//       </div>
-//     );
-//   }
-
-//   const filteredSummary = projectSummaryData.filter(
-//     (p) =>
-//       p.id.toLowerCase().includes(summarySearch.toLowerCase()) ||
-//       p.name.toLowerCase().includes(summarySearch.toLowerCase()),
-//   );
-
-//   const filteredApproval = pendingApprovalData.filter((p) =>
-//     p.id.toLowerCase().includes(approvalSearch.toLowerCase()),
-//   );
-
-//   const filteredBudget = pendingBudgetData.filter((p) =>
-//     p.id.toLowerCase().includes(budgetSearch.toLowerCase()),
-//   );
-
-//   return (
-//     <div className="space-y-2 text-sm sm:text-base text-gray-800 font-inter">
-//       <div className="flex flex-col gap-2">
-//         <div className="flex items-center gap-2 bg-white rounded-sm  p-4">
-//           <LayoutDashboard size={20} className="text-blue-600" />
-//           {/* <h2 className="text-lg font-bold text-gray-800">Project Console</h2> */}
-//           <h2 className="text-lg font-bold text-gray-800">
-//             {analysisMode === "PROJECT"
-//               ? "Project Console"
-//               : "New Business Analysis Console"}
-//           </h2>
-//         </div>
-
-//         {/* TOGGLE ELEMENT: Radio button view selection tab */}
-//         <div className="flex items-center bg-slate-100 p-1 rounded-md border border-slate-200 self-end sm:self-auto">
-//           <button
-//             onClick={() => setAnalysisMode("PROJECT")}
-//             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-all ${
-//               analysisMode === "PROJECT"
-//                 ? "bg-white text-blue-600 shadow-xs"
-//                 : "text-slate-600 hover:text-slate-900"
-//             }`}
-//           >
-//             <BriefcaseBusiness size={14} />
-//             Project Analysis
-//           </button>
-//           <button
-//             onClick={() => setAnalysisMode("NEW_BUSINESS")}
-//             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-all ${
-//               analysisMode === "NEW_BUSINESS"
-//                 ? "bg-white text-blue-600 shadow-xs"
-//                 : "text-slate-600 hover:text-slate-900"
-//             }`}
-//           >
-//             <TrendingUp size={14} />
-//             New Business Analysis
-//           </button>
-//         </div>
-
-//         <div className="space-y-4 sm:p-4 rounded p-2 bg-white mb-1">
-//           {/* --- SECTION: PROJECT SUMMARY --- */}
-//           <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-//             {/* <div className="md:col-span-3 rounded border border-gray-200 p-2">
-//               <div className="flex items-center justify-between ">
-//                 <h2 className="mb-2 font-bold text-md">Project Summary</h2>
-//                 <input
-//                   placeholder="Search Project..."
-//                   className="mb-2 p-1 border border-gray-300 rounded w-[300px] text-xs"
-//                   value={summarySearch}
-//                   onChange={(e) => setSummarySearch(e.target.value)}
-//                 />
-//               </div>
-//               <div className="max-h-[300px] md:cols-3 overflow-y-auto border border-gray-200 rounded">
-//                 <table className="min-w-full table-auto divide-gray-200">
-//                   <thead className="bg-gray-200 sticky top-0">
-//                     <tr>
-//                       <th className="th-thead w-10">Project ID</th>
-//                       <th className="th-thead w-10">Project Name</th>
-//                       <th className="th-thead w-10">Funding</th>
-//                       <th className="th-thead w-10">Funding Utilized</th>
-//                       <th className="th-thead w-10">Project Age</th>
-//                       <th className="th-thead w-10">Budget</th>
-//                       <th className="th-thead w-10">Forecast</th>
-//                       <th className="th-thead w-10">Actual to Date</th>
-//                       <th className="th-thead w-10">Variance</th>
-//                       <th className="th-thead w-10">Project Status</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody className="bg-white divide-y divide-gray-100">
-//                     {filteredSummary.map((project, idx) => {
-//                       const isAtRisk = project.source === "At Risk";
-//                       return (
-//                         <tr
-//                           key={`${project.id}-${idx}`}
-//                           className="cursor-pointer hover:bg-blue-50 bg-white"
-//                         >
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-left">
-//                             {project.id}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-left">
-//                             {project.name}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {formatCurrency(project.funded)}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {formatPercent(project.fundedUtilized)}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {project.elapsedMonths} Months
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {formatCurrency(project.budget)}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {formatCurrency(project.forecast)}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {formatCurrency(project.actual)}
-//                           </td>
-//                           <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-right">
-//                             {formatCurrency(project.variance)}
-//                           </td>
-//                           <td className="tbody-td-fun">
-//                             <span
-//                               className={`inline-block w-24 py-1 text-center font-semibold rounded text-[11px] ${
-//                                 isAtRisk
-//                                   ? "bg-red-100 text-red-700 border border-red-200"
-//                                   : "bg-green-100 text-green-700 border border-green-200"
-//                               }`}
-//                             >
-//                               {project.source}
-//                             </span>
-//                           </td>
-//                         </tr>
-//                       );
-//                     })}
-//                   </tbody>
-//                 </table>
-//               </div>
-//             </div> */}
-
-//             {/* ESTIMATE-TO-COMPLETE CONTRACT STATE TRACKING */}
-//             <div className="flex flex-col items-start rounded border border-gray-200 p-2 bg-white">
-//               <h2 className="mb-4 text-md font-bold text-gray-800 self-start">
-//                 Estimate-to-Complete Tracking
-//               </h2>
-//               <div className="flex items-center justify-center w-full h-full">
-//                 <div className="flex flex-col items-center justify-center gap-6 pt-2 pl-2">
-//                   <div
-//                     ref={ringRef}
-//                     onMouseMove={handleRingMouseMove}
-//                     onMouseLeave={() => setActiveHover(null)}
-//                     className={`relative flex h-36 w-36 items-center justify-center rounded-full shadow-sm transition-all duration-300 flex-shrink-0 cursor-pointer bg-slate-50 p-1 ${
-//                       activeHover ? "scale-[1.03] shadow-md" : ""
-//                     }`}
-//                     style={{
-//                       background: `conic-gradient(
-//                         #3182ce 0% ${(inProgressCount / totalStates) * 100}%,
-//                         #dd6b20 ${(inProgressCount / totalStates) * 100}% ${((inProgressCount + submittedCount) / totalStates) * 100}%,
-//                         #319795 ${((inProgressCount + submittedCount) / totalStates) * 100}% ${((inProgressCount + submittedCount + approvedCount) / totalStates) * 100}%,
-//                         #4a5568 ${((inProgressCount + submittedCount + approvedCount) / totalStates) * 100}% 100%
-//                       )`,
-//                     }}
-//                   >
-//                     <div className="h-[96px] w-[96px] rounded-full bg-white flex flex-col items-center justify-center shadow-xs border border-slate-100/40 pointer-events-none select-none">
-//                       <span className="text-3xl font-black text-gray-800 tracking-tight leading-none transition-all duration-150">
-//                         {centerData.count}
-//                       </span>
-//                       <span className="text-[10px] text-gray-400 font-extrabold tracking-widest mt-1.5 text-center px-1 truncate max-w-full">
-//                         {centerData.label}
-//                       </span>
-//                     </div>
-//                   </div>
-
-//                   <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-//                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/40 border border-blue-100/20 hover:bg-blue-50/70 transition-all duration-200">
-//                       <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-//                         <span className="h-2.5 w-2.5 rounded-full bg-[#3182ce] block flex-shrink-0 ring-4 ring-blue-50" />
-//                         <span>In Progress</span>
-//                       </div>
-//                       <span className="text-xs font-black text-blue-700 bg-blue-100/50 px-2 py-0.5 rounded-md min-w-[24px] text-center">
-//                         {inProgressCount}
-//                       </span>
-//                     </div>
-
-//                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-orange-50/40 border border-orange-100/20 hover:bg-orange-50/70 transition-all duration-200">
-//                       <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-//                         <span className="h-2.5 w-2.5 rounded-full bg-[#dd6b20] block flex-shrink-0 ring-4 ring-orange-50" />
-//                         <span>Submitted</span>
-//                       </div>
-//                       <span className="text-xs font-black text-orange-700 bg-orange-100/50 px-2 py-0.5 rounded-md min-w-[24px] text-center">
-//                         {submittedCount}
-//                       </span>
-//                     </div>
-
-//                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/40 border border-teal-100/20 hover:bg-teal-50/70 transition-all duration-200">
-//                       <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-//                         <span className="h-2.5 w-2.5 rounded-full bg-[#319795] block flex-shrink-0 ring-4 ring-teal-50" />
-//                         <span>Approved</span>
-//                       </div>
-//                       <span className="text-xs font-black text-teal-700 bg-teal-100/50 px-2 py-0.5 rounded-md min-w-[24px] text-center">
-//                         {approvedCount}
-//                       </span>
-//                     </div>
-
-//                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/30 hover:bg-slate-100/60 transition-all duration-200">
-//                       <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-//                         <span className="h-2.5 w-2.5 rounded-full bg-[#4a5568] block flex-shrink-0 ring-4 ring-slate-100" />
-//                         <span>Concluded</span>
-//                       </div>
-//                       <span className="text-xs font-black text-slate-700 bg-slate-200/60 px-2 py-0.5 rounded-md min-w-[24px] text-center">
-//                         {concludedCount}
-//                       </span>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//           {/* --- LOWER ROW: LOWER ACTIONS GRID --- */}
-//           <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-//             {/* COLUMN 1: PENDING APPROVAL */}
-//             <div className="md:col-span-5 rounded border border-gray-200 p-2">
-//               <div className="flex items-center justify-between ">
-//                 <h2 className="mb-2 font-bold text-md">Pending Approval</h2>
-//                 <input
-//                   placeholder="Search Project..."
-//                   className="mb-2 p-1 border border-gray-300 rounded w-[300px] text-xs"
-//                   value={approvalSearch}
-//                   onChange={(e) => setApprovalSearch(e.target.value)}
-//                 />
-//               </div>
-//               <div className="max-h-[300px] overflow-y-auto border border-gray-200 rounded">
-//                 <table className="min-w-full table-auto divide-gray-200">
-//                   <thead className="bg-gray-200 sticky top-0">
-//                     <tr>
-//                       <th className="th-thead">Project ID</th>
-//                       <th className="th-thead">Due Date</th>
-//                       <th className="th-thead">Approve</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody className="bg-white divide-y divide-gray-100">
-//                     {filteredApproval.length === 0 ? (
-//                       <tr>
-//                         <td
-//                           colSpan="3"
-//                           className="py-8 text-center text-gray-400 italic"
-//                         >
-//                           <div className="p-8 text-center text-gray-500 text-lg">
-//                             No pending approvals
-//                           </div>
-//                         </td>
-//                       </tr>
-//                     ) : (
-//                       filteredApproval.map((row, index) => {
-//                         const isBtnLoading =
-//                           actionLoadingId === `approve-${row.id}`;
-//                         return (
-//                           <tr
-//                             key={`pending-app-${index}`}
-//                             className="cursor-pointer hover:bg-blue-50 bg-white"
-//                           >
-//                             <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-left">
-//                               {row.id}
-//                             </td>
-//                             <td className="tbody-td-fun">{row.dueDate}</td>
-//                             <td className="tbody-td-fun">
-//                               <button
-//                                 disabled={actionLoadingId !== null}
-//                                 onClick={() => handleApprove(row.id)}
-//                                 className="btn1 btn-blue"
-//                               >
-//                                 {isBtnLoading ? (
-//                                   <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-//                                 ) : (
-//                                   "Approve"
-//                                 )}
-//                               </button>
-//                             </td>
-//                           </tr>
-//                         );
-//                       })
-//                     )}
-//                   </tbody>
-//                 </table>
-//               </div>
-//             </div>
-
-//             {/* COLUMN 2: PENDING BUDGET/EAC */}
-//             <div className="md:col-span-7 rounded border border-gray-200 p-2">
-//               <div className="flex items-center justify-between ">
-//                 <h2 className="mb-2 font-bold text-md">Pending Budget/EAC</h2>
-//                 <input
-//                   placeholder="Search Project..."
-//                   className="mb-2 p-1 border border-gray-300 rounded w-[300px] text-xs"
-//                   value={budgetSearch}
-//                   onChange={(e) => setBudgetSearch(e.target.value)}
-//                 />
-//               </div>
-//               <div className="max-h-[300px] overflow-y-auto border border-gray-200 rounded">
-//                 <table className="min-w-full table-auto divide-gray-200">
-//                   <thead className="bg-gray-200 sticky top-0">
-//                     <tr>
-//                       <th className="th-thead ">Project ID</th>
-//                       <th className="th-thead ">Due Date</th>
-//                       <th className="th-thead ">Type</th>
-//                       <th className="th-thead ">Create</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody className="bg-white divide-y divide-gray-100">
-//                     {filteredBudget.length === 0 ? (
-//                       <tr>
-//                         <td
-//                           colSpan="4"
-//                           className="py-8 text-center text-gray-400 italic"
-//                         >
-//                           No pending budgets or EACs
-//                         </td>
-//                       </tr>
-//                     ) : (
-//                       filteredBudget.map((row, index) => {
-//                         const isBtnLoading =
-//                           actionLoadingId === `create-${row.id}`;
-//                         return (
-//                           <tr
-//                             key={`pending-bud-${index}`}
-//                             className="cursor-pointer hover:bg-blue-50 bg-white"
-//                           >
-//                             <td className="px-2 py-1 text-xs font-normal border-r border-b border-gray-300 text-gray-900 text-left">
-//                               {row.id}
-//                             </td>
-//                             <td className="tbody-td-fun">{row.dueDate}</td>
-//                             <td className="tbody-td-fun">{row.type}</td>
-//                             <td className="tbody-td-fun">
-//                               <button
-//                                 disabled={actionLoadingId !== null}
-//                                 onClick={() => handleCreate(row.id, row.type)}
-//                                 className="btn1 btn-blue"
-//                               >
-//                                 {isBtnLoading ? (
-//                                   <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-//                                 ) : (
-//                                   "Create"
-//                                 )}
-//                               </button>
-//                             </td>
-//                           </tr>
-//                         );
-//                       })
-//                     )}
-//                   </tbody>
-//                 </table>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 import React, { useState, useEffect, useRef } from "react";
 import { backendUrl } from "./config";
 import {
@@ -1539,6 +660,7 @@ export default function ProjectAnalysisDashboard() {
 
   const [activeHover, setActiveHover] = useState(null);
   const ringRef = useRef(null);
+  const [selectedSlice, setSelectedSlice] = useState(null);
 
   const getCenterDisplay = () => {
     switch (activeHover) {
@@ -2480,50 +1602,85 @@ export default function ProjectAnalysisDashboard() {
                   const atRiskPct =
                     averagePct + (atRiskCount / totalSourceStates) * 100;
 
-                  // 3. Dynamic Center Value
-                  const getSourceCenterData = () => {
-                    switch (activeHover) {
-                      case "healthy":
-                        return { count: healthyCount, label: "Healthy" };
-                      case "average":
-                        return { count: averageCount, label: "Average" };
-                      case "atRisk":
-                        return { count: atRiskCount, label: "At Risk" };
-                      case "notStarted":
-                        return { count: notStartedCount, label: "Not Started" };
-                      default:
-                        return {
-                          count: dataSource.length,
-                          label: "Total Projects",
-                        };
-                    }
-                  };
+                  // 3. Click Segment Detection on Pie Chart Ring
+                  const handleSourceRingClick = (e) => {
+                    if (dataSource.length === 0) return;
 
-                  const centerData = getSourceCenterData();
-
-                  // 4. Hover Segment Calculation
-                  const handleSourceRingMouseMove = (e) => {
-                    if (!ringRef.current || dataSource.length === 0) return;
-
-                    const rect = ringRef.current.getBoundingClientRect();
+                    const rect = e.currentTarget.getBoundingClientRect();
                     const centerX = rect.left + rect.width / 2;
                     const centerY = rect.top + rect.height / 2;
+                    const dx = e.clientX - centerX;
+                    const dy = e.clientY - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
 
-                    let angle =
-                      Math.atan2(e.clientY - centerY, e.clientX - centerX) *
-                      (180 / Math.PI);
+                    // Strict boundary: Only trigger if clicked on the donut ring band (48px to 73px)
+                    // Ignore clicks inside the white center circle (< 48px) or outside the circle (> 73px)
+                    if (distance < 48 || distance > 73) {
+                      return;
+                    }
+
+                    let angle = Math.atan2(dy, dx) * (180 / Math.PI);
                     angle = (angle + 90 + 360) % 360;
 
-                    const currentPercentage = (angle / 360) * 100;
+                    const currentPercentage = Math.min(
+                      100,
+                      Math.max(0, (angle / 360) * 100),
+                    );
 
-                    if (currentPercentage <= healthyPct) {
-                      setActiveHover("healthy");
-                    } else if (currentPercentage <= averagePct) {
-                      setActiveHover("average");
-                    } else if (currentPercentage <= atRiskPct) {
-                      setActiveHover("atRisk");
-                    } else {
-                      setActiveHover("notStarted");
+                    const clickX = e.clientX - rect.left;
+                    const clickY = e.clientY - rect.top;
+
+                    const segments = [
+                      {
+                        key: "healthy",
+                        label: "Healthy",
+                        count: healthyCount,
+                        color: "#10b981",
+                        start: 0,
+                        end: healthyPct,
+                      },
+                      {
+                        key: "average",
+                        label: "Average",
+                        count: averageCount,
+                        color: "#f59e0b",
+                        start: healthyPct,
+                        end: averagePct,
+                      },
+                      {
+                        key: "atRisk",
+                        label: "At Risk",
+                        count: atRiskCount,
+                        color: "#ef4444",
+                        start: averagePct,
+                        end: atRiskPct,
+                      },
+                      {
+                        key: "notStarted",
+                        label: "Not Started",
+                        count: notStartedCount,
+                        color: "#6b7280",
+                        start: atRiskPct,
+                        end: 100,
+                      },
+                    ];
+
+                    const matched = segments.find(
+                      (seg) =>
+                        seg.count > 0 &&
+                        currentPercentage >= seg.start &&
+                        currentPercentage <= seg.end,
+                    );
+
+                    if (matched) {
+                      setSelectedSlice({
+                        key: matched.key,
+                        label: matched.label,
+                        count: matched.count,
+                        color: matched.color,
+                        x: clickX,
+                        y: clickY,
+                      });
                     }
                   };
 
@@ -2534,30 +1691,76 @@ export default function ProjectAnalysisDashboard() {
                       </h2>
                       <div className="flex items-center justify-center w-full h-full">
                         <div className="flex flex-col items-center justify-center gap-6 pt-2 pl-2 w-full">
-                          {/* DONUT RING */}
-                          <div
-                            ref={ringRef}
-                            // onMouseMove={handleSourceRingMouseMove}
-                            // onMouseLeave={() => setActiveHover(null)}
-                            className={`relative flex h-36 w-36 items-center justify-center rounded-full shadow-sm transition-all duration-300 flex-shrink-0 cursor-pointer bg-slate-50 p-1 ${
-                              activeHover ? "scale-[1.03] shadow-md" : ""
-                            }`}
-                            style={{
-                              background: `conic-gradient(
-                  #10b981 0% ${healthyPct}%,
-                  #f59e0b ${healthyPct}% ${averagePct}%,
-                  #ef4444 ${averagePct}% ${atRiskPct}%,
-                  #6b7280 ${atRiskPct}% 100%
-                )`,
-                            }}
-                          >
-                            <div className="h-[96px] w-[96px] rounded-full bg-white flex flex-col items-center justify-center shadow-xs border border-slate-100/40 pointer-events-none select-none">
-                              <span className="text-3xl font-black text-gray-800 tracking-tight leading-none transition-all duration-150">
-                                {centerData.count}
-                              </span>
-                              <span className="text-[10px] text-gray-400 font-extrabold tracking-widest mt-1.5 text-center px-1 truncate max-w-full">
-                                {centerData.label}
-                              </span>
+                          {/* PIE CHART WRAPPER */}
+                          <div className="relative flex flex-col items-center justify-center">
+                            {/* DONUT RING */}
+                            <div
+                              ref={ringRef}
+                              onClick={handleSourceRingClick}
+                              className="relative flex h-36 w-36 items-center justify-center rounded-full shadow-sm transition-all duration-300 flex-shrink-0 cursor-pointer bg-slate-50 p-1"
+                              style={{
+                                background: `conic-gradient(
+                   #10b981 0% ${healthyPct}%,
+                   #f59e0b ${healthyPct}% ${averagePct}%,
+                   #ef4444 ${averagePct}% ${atRiskPct}%,
+                   #6b7280 ${atRiskPct}% 100%
+                 )`,
+                              }}
+                            >
+                              {/* FLOATING BADGE DIRECTLY AT CLICKED SECTION */}
+                              {selectedSlice && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute z-30 pointer-events-auto -translate-x-1/2 -translate-y-[calc(100%+6px)] flex flex-col items-center animate-in fade-in zoom-in-95 duration-150"
+                                  style={{
+                                    left: `${selectedSlice.x}px`,
+                                    top: `${selectedSlice.y}px`,
+                                  }}
+                                >
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/95 backdrop-blur-sm text-white rounded-md shadow-xl border border-slate-700 text-xs whitespace-nowrap">
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0"
+                                      style={{
+                                        backgroundColor: selectedSlice.color,
+                                      }}
+                                    />
+                                    <span className="font-medium text-slate-300">
+                                      {selectedSlice.label}:
+                                    </span>
+                                    <span className="font-bold text-white text-xs">
+                                      {selectedSlice.count}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedSlice(null);
+                                      }}
+                                      className="ml-1 text-slate-400 hover:text-white font-bold leading-none cursor-pointer text-sm"
+                                      title="Close"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                  <div className="w-1.5 h-1.5 bg-slate-900 rotate-45 -mt-0.5 border-r border-b border-slate-700" />
+                                </div>
+                              )}
+
+                              {/* CENTER WHITE CIRCLE - TOTAL PROJECTS */}
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSlice(null);
+                                }}
+                                className="h-[96px] w-[96px] rounded-full bg-white flex flex-col items-center justify-center shadow-xs border border-slate-100/40 select-none cursor-default"
+                              >
+                                <span className="text-3xl font-black text-gray-800 tracking-tight leading-none transition-all duration-150">
+                                  {dataSource.length}
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-extrabold tracking-widest mt-1.5 text-center px-1 truncate max-w-full">
+                                  Total Projects
+                                </span>
+                              </div>
                             </div>
                           </div>
 

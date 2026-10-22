@@ -498,7 +498,33 @@ const ActiveReport = ({
       // const data = await response.json();
       const result = mergeEntriesByName(summaryData);
 
-const sortOrder = [
+      // const sortOrder = [
+      //   "Contracts Revenue",
+      //   "Revenue Adjustment",
+      //   "Revenue Total",
+      //   "Direct Labor",
+      //   "Direct Travel",
+      //   "Direct Materials",
+      //   "Subcontracts",
+      //   "Other Direct Costs",
+      //   // "Direct Non Labor",
+      //   "Gross Profit / (Loss)",
+      //   "Fringe Benefits",
+      //   "Overhead",
+      //   "Cost of Goods Sold",
+      //   "General & Administrative",
+      //   "Subcontract & Matl Handling",
+      //   "Misc Income/(Expenses)",
+      //   "Interest Expense",
+      //   "B&P",
+      //   "Business Development",
+      //   "Other Unallowable Expense",
+      //   "Allocations",
+      //   "Income Taxes",
+      //   "Net Profit / (Loss)",
+      // ];
+
+      const sortOrder = [
         "Revenue",
         "Revenue Adjustment",
         "Revenue Total",

@@ -336,6 +336,7 @@ const hideableColumns = [
 
 export default function TimesheetDetailModal({
   timesheetData,
+  currentUser,
 
   onClose,
 
@@ -352,6 +353,7 @@ export default function TimesheetDetailModal({
   const [isLoading, setIsLoading] = useState(true);
 
   const [purchaseOrderData, setPurchaseOrderData] = useState([]);
+  const [employeeProjects, setEmployeeProjects] = useState([]);
 
   const [isEditable, setIsEditable] = useState(false);
 
@@ -363,18 +365,44 @@ export default function TimesheetDetailModal({
 
   const [timesheetDetails, setTimesheetDetails] = useState(null);
 
-  const [hiddenColumns, setHiddenColumns] = useState({
-    "Work Order": false,
-    Description: false,
-    Project: false,
-    PLC: false,
-    "Pay Type": false,
+  // const [hiddenColumns, setHiddenColumns] = useState({
+  //   "Work Order": false,
+  //   Description: false,
+  //   Project: false,
+  //   PLC: false,
+  //   "Pay Type": false,
 
-    "PO Number": false,
-    "RLSE Number": false,
-    "PO Line Number": false,
-    "PO Remaining Hours": false,
-  }); // Config States
+  //   "PO Number": false,
+  //   "RLSE Number": false,
+  //   "PO Line Number": false,
+  //   "PO Remaining Hours": false,
+  // }); // Config States
+
+  const role = currentUser?.role?.toLowerCase(); // Default role, can be dynamically set based on user context
+
+  // Define hideable columns conditionally based on the role
+  const hideableColumns =
+    role === "user"
+      ? ["Project", "PLC", "Pay Type"]
+      : [
+          "Work Order",
+          "Description",
+          "Project",
+          "PLC",
+          "Pay Type",
+          "PO Number",
+          "RLSE Number",
+          "PO Line Number",
+          "PO Remaining Hours",
+        ];
+
+  const [hiddenColumns, setHiddenColumns] = useState(() => {
+    const initial = {};
+    hideableColumns.forEach((col) => {
+      initial[col] = false;
+    });
+    return initial;
+  });
 
   const [periodType, setPeriodType] = useState("Weekly");
 
@@ -417,6 +445,28 @@ export default function TimesheetDetailModal({
     const date = d.getUTCDate(); // Create a new Date object representing the start of the current UTC calendar day
     return new Date(Date.UTC(year, month, date));
   }, []); // 1. Fetch Config (Updated)
+
+  useEffect(() => {
+    if (role === "user") {
+      const fetchEmployeeProjects = async () => {
+        try {
+          const response = await fetch(
+            // `${backendUrl}/api/user-projects/projects/${userId}`,
+            `${backendUrl}/api/ProjEmployeeLabcat/employee/${currentUser?.name}`,
+          );
+          if (!response.ok)
+            throw new Error("Failed to fetch employee projects");
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            setEmployeeProjects(data);
+          }
+        } catch (err) {
+          console.error("Error fetching employee projects:", err);
+        }
+      };
+      fetchEmployeeProjects();
+    }
+  }, [role]);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -1733,34 +1783,36 @@ export default function TimesheetDetailModal({
                   <td className="px-2 py-1 text-center whitespace-nowrap border-r border-b border-gray-300 text-black font-medium">
                     {index + 1}
                   </td>
-                  {!hiddenColumns["Work Order"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[250px]">
-                      <CascadingSelect
-                        label="Work Order"
-                        options={workOrderOptions}
-                        value={line.workOrder}
-                        onChange={(e) =>
-                          handleSelectChange(
-                            line.id,
-                            "workOrder",
-                            e.target.value,
-                          )
-                        }
-                        disabled={isDisabled}
-                      />
-                    </td>
-                  )}
-                  {!hiddenColumns["Description"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[200px]">
-                      <input
-                        type="text"
-                        value={line.description}
-                        className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
-                        readOnly
-                      />
-                    </td>
-                  )}
-                  {!hiddenColumns["Project"] && (
+                  {hideableColumns.includes("Work Order") &&
+                    !hiddenColumns["Work Order"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[250px]">
+                        <CascadingSelect
+                          label="Work Order"
+                          options={workOrderOptions}
+                          value={line.workOrder}
+                          onChange={(e) =>
+                            handleSelectChange(
+                              line.id,
+                              "workOrder",
+                              e.target.value,
+                            )
+                          }
+                          disabled={isDisabled}
+                        />
+                      </td>
+                    )}
+                  {hideableColumns.includes("Description") &&
+                    !hiddenColumns["Description"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[200px]">
+                        <input
+                          type="text"
+                          value={line.description}
+                          className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
+                          readOnly
+                        />
+                      </td>
+                    )}
+                  {/* {!hiddenColumns["Project"] && (
                     <td className="p-1 border-r border-b border-gray-300 min-w-[150px]">
                       <input
                         type="text"
@@ -1769,8 +1821,57 @@ export default function TimesheetDetailModal({
                         readOnly
                       />
                     </td>
-                  )}
-                  {!hiddenColumns["PLC"] && (
+                  )} */}
+                  {hideableColumns.includes("Project") &&
+                    !hiddenColumns["Project"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[150px]">
+                        {role === "user" ? (
+                          <select
+                            value={line.project}
+                            onChange={(e) => {
+                              const selectedProjId = e.target.value;
+                              // Find matching entry from employeeProjects data to automatically map the billLabCatCd to plc
+                              const matchedEntry = employeeProjects.find(
+                                (proj) => proj.projId === selectedProjId,
+                              );
+
+                              setLines((currentLines) =>
+                                currentLines.map((l) =>
+                                  l.id === line.id
+                                    ? {
+                                        ...l,
+                                        project: selectedProjId,
+                                        plc: matchedEntry
+                                          ? matchedEntry.billLabCatCd
+                                          : "",
+                                      }
+                                    : l,
+                                ),
+                              );
+                            }}
+                            disabled={isDisabled}
+                            className={`w-full bg-white px-2 py-1 text-xs border border-gray-300 rounded shadow-inner text-black ${
+                              isDisabled ? "bg-gray-100 cursor-not-allowed" : ""
+                            }`}
+                          >
+                            <option value="">Select Project</option>
+                            {employeeProjects.map((proj) => (
+                              <option key={proj.projId} value={proj.projId}>
+                                {proj.projId} (LabCat: {proj.billLabCatCd})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={line.project}
+                            className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
+                            readOnly
+                          />
+                        )}
+                      </td>
+                    )}
+                  {hideableColumns.includes("PLC") && !hiddenColumns["PLC"] && (
                     <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
                       <input
                         type="text"
@@ -1780,78 +1881,88 @@ export default function TimesheetDetailModal({
                       />
                     </td>
                   )}
-                  {!hiddenColumns["Pay Type"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
-                      <select
-                        value={line.payType}
-                        onChange={(e) =>
-                          handleSelectChange(line.id, "payType", e.target.value)
-                        }
-                        className={`w-full bg-white px-2 py-1 text-xs border border-gray-300 rounded shadow-inner text-black ${
-                          isDisabled
-                            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                            : ""
-                        }`}
-                        disabled={isDisabled}
-                      >
-                        <option value="SR">Regular</option>
-                        <option value="SO">Overtime</option>
-                      </select>
-                    </td>
-                  )}
-                  {!hiddenColumns["PO Number"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[150px]">
-                      <input
-                        type="text"
-                        value={line.poNumber}
-                        className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
-                        readOnly
-                      />
-                    </td>
-                  )}
-                  {!hiddenColumns["RLSE Number"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
-                      <input
-                        type="text"
-                        value={line.rlseNumber}
-                        className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
-                        readOnly
-                      />
-                    </td>
-                  )}
-                  {!hiddenColumns["PO Line Number"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
-                      <input
-                        type="text"
-                        value={line.poLineNumber}
-                        className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
-                        readOnly
-                      />
-                    </td>
-                  )}
-                  {isAdmin && !hiddenColumns["PO Remaining Hours"] && (
-                    <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
-                      {line.poLineNumber &&
-                      remainingPoHours[String(line.poLineNumber).trim()] !==
-                        undefined ? (
-                        <div className="text-xs font-medium text-center">
-                          <span
-                            className={`font-semibold ${
-                              parseFloat(getRemainingHoursForLine(line)) < 0
-                                ? "text-red-600"
-                                : "text-green-600"
-                            }`}
-                          >
-                            {getRemainingHoursForLine(line)} hrs
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="text-xs font-medium text-center text-gray-400">
-                          -
-                        </div>
-                      )}
-                    </td>
-                  )}
+                  {hideableColumns.includes("Pay Type") &&
+                    !hiddenColumns["Pay Type"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
+                        <select
+                          value={line.payType}
+                          onChange={(e) =>
+                            handleSelectChange(
+                              line.id,
+                              "payType",
+                              e.target.value,
+                            )
+                          }
+                          className={`w-full bg-white px-2 py-1 text-xs border border-gray-300 rounded shadow-inner text-black ${
+                            isDisabled
+                              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                              : ""
+                          }`}
+                          disabled={isDisabled}
+                        >
+                          <option value="SR">Regular</option>
+                          <option value="SO">Overtime</option>
+                        </select>
+                      </td>
+                    )}
+                  {hideableColumns.includes("PO Number") &&
+                    !hiddenColumns["PO Number"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[150px]">
+                        <input
+                          type="text"
+                          value={line.poNumber}
+                          className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
+                          readOnly
+                        />
+                      </td>
+                    )}
+                  {hideableColumns.includes("RLSE Number") &&
+                    !hiddenColumns["RLSE Number"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
+                        <input
+                          type="text"
+                          value={line.rlseNumber}
+                          className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
+                          readOnly
+                        />
+                      </td>
+                    )}
+                  {hideableColumns.includes("PO Line Number") &&
+                    !hiddenColumns["PO Line Number"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
+                        <input
+                          type="text"
+                          value={line.poLineNumber}
+                          className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
+                          readOnly
+                        />
+                      </td>
+                    )}
+                  {isAdmin &&
+                    hideableColumns.includes("PO Remaining Hours") &&
+                    !hiddenColumns["PO Remaining Hours"] && (
+                      <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
+                        {line.poLineNumber &&
+                        remainingPoHours[String(line.poLineNumber).trim()] !==
+                          undefined ? (
+                          <div className="text-xs font-medium text-center">
+                            <span
+                              className={`font-semibold ${
+                                parseFloat(getRemainingHoursForLine(line)) < 0
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              {getRemainingHoursForLine(line)} hrs
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-xs font-medium text-center text-gray-400">
+                            -
+                          </div>
+                        )}
+                      </td>
+                    )}
                   {periodDates.map((dateInfo, dayIndex) => {
                     const days = [
                       "sunday",
