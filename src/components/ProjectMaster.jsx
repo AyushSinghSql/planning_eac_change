@@ -102,7 +102,7 @@ function ProjectMaster() {
   // Fetch employees for manager dropdown suggestions with deduplication
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`${backendUrl}/Employee/GetAllEmployees`);
+      const response = await fetch(`${backendUrl}/api/EmployeeMaster`);
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -110,7 +110,7 @@ function ProjectMaster() {
           const uniqueEmployees = [];
           for (const emp of data) {
             const id = String(
-              emp.emplId || emp.employeeid || emp.id || "",
+              emp.emplId || emp.employeeId || emp.id || "",
             ).trim();
             if (id && !seen.has(id.toLowerCase())) {
               seen.add(id.toLowerCase());
