@@ -1179,9 +1179,9 @@ export default function GroupManagement({ onClose }) {
                       <th className="px-2 py-1.5 border-b border-r border-gray-300 text-left font-semibold bg-[#e5f3fb]">
                         Email
                       </th>
-                      {/* <th className="w-28 px-2 py-1.5 border-b border-gray-300 text-center font-semibold bg-[#e5f3fb]">
+                      <th className="w-28 px-2 py-1.5 border-b border-gray-300 text-center font-semibold bg-[#e5f3fb]">
                         Approval Level
-                      </th> */}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1245,7 +1245,7 @@ export default function GroupManagement({ onClose }) {
                             <td className="px-2 py-1.5 border-b border-r border-gray-300 text-gray-500">
                               {user.email}
                             </td>
-                            {/* <td
+                            <td
                               className="w-28 px-2 py-1.5 border-b border-gray-300 text-center"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -1272,7 +1272,7 @@ export default function GroupManagement({ onClose }) {
                                   -
                                 </span>
                               )}
-                            </td> */}
+                            </td>
                           </tr>
                         );
                       })
