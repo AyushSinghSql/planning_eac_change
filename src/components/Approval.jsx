@@ -1800,6 +1800,19 @@ export default function Approval() {
                     Rejected
                   </label>
 
+                  {isAdmin && (
+                    <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={searchStatus.includes("processed")}
+                        value="processed"
+                        onChange={handleStatusCheckboxChange}
+                        className="cursor-pointer accent-blue-600"
+                      />
+                      Processed
+                    </label>
+                  )}
+
                   <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
