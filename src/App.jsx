@@ -490,6 +490,7 @@ import EmployeeProjectPlcMapping from "./components/EmployeeProjectPlcMapping";
 import WorkflowUserMapping from "./components/WorkflowUserMapping";
 import ProjectMaster from "./components/ProjectMaster";
 import EmployeeMaster from "./components/EmployeeMaster";
+import ProjectUserMapping from "./components/ProjectUserMapping";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -1136,6 +1137,17 @@ function App() {
                 <div className="mt-12 ml-2">
                   {" "}
                   <EmployeeMaster />
+                </div>
+                // </RequireAdmin>
+              }
+            />
+            <Route
+              path="sub-project-user-mapping"
+              element={
+                // <RequireAdmin>
+                <div className="mt-12 ml-2">
+                  {" "}
+                  <ProjectUserMapping />
                 </div>
                 // </RequireAdmin>
               }

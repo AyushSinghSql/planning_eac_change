@@ -1020,8 +1020,8 @@ const NavigationSidebar = ({
                     )}
                     {showSubScreen && (
                       <NavItem
-                        label="Employee Project PLC Mapping"
-                        path="/dashboard/sub-employeeplc-mapping"
+                        label="Employee Project Mapping"
+                        path="/dashboard/sub-project-user-mapping"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}

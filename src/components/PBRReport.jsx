@@ -52,6 +52,7 @@ import {
    API ENDPOINTS & CONSTANTS
 ======================================================= */
 const COMPANY_ID = 1;
+const EMPTY_PBR_FILTERS = Object.freeze({});
 // const FY_CD = new Date().getFullYear();
 const CURRENT_FY = new Date().getFullYear();
 const FY_OPTIONS = Array.from({ length: 4 }, (_, i) => CURRENT_FY + i); // Current year + 3 years ahead
@@ -70,6 +71,7 @@ const LAB_HS_API = `${backendUrl}/api/ForecastReport/GetLabHSData`;
 const EMP_API = `${backendUrl}/api/ForecastReport/GetAllEmployee`;
 const VEND_EMP_API = `${backendUrl}/VendorEmployee`;
 const ORGS_API = `${backendUrl}/Orgnization/GetAllOrgs`;
+const PBR_CONFIG_API = `${backendUrl}/api/Configuration/GetAllConfigValuesByProject/xxxxx`;
 const GL_DATA_API = `${backendUrl}/api/ForecastReport/GetGlPostDetail`;
 
 // SSAI Active Report account mapping. Revenue is sourced only from the Revenue section.
@@ -328,9 +330,9 @@ const REPORT_INDIRECT_COST_GROUPS = new Set([
 ]);
 
 function getReportAccountGroup(row, isRevenueSection = false) {
+  if (isRevenueSection) return "Contracts Revenue";
   const acctId = String(row.acctId ?? "").trim();
   if (acctId === "410-009") return null;
-  if (isRevenueSection) return "Contracts Revenue";
   return REPORT_ACCOUNT_GROUPS[acctId] || "Other Expenses";
 }
 
@@ -463,6 +465,411 @@ function splitPbrMonthlyRecords(group, fiscalYear) {
   }));
 }
 
+function pbrBusinessKey(row, type = row.type) {
+  const normalizedType = String(type ?? row.pbrType ?? "")
+    .replace(/[^a-z]/gi, "")
+    .toUpperCase();
+  const norm = (value) =>
+    String(value ?? "")
+      .trim()
+      .toUpperCase();
+  const isLabor = normalizedType === "LABOR";
+  return JSON.stringify([
+    normalizedType,
+    norm(getTopLevelProj(row.projId) || "NA"),
+    norm(row.acctId),
+    norm(row.orgId),
+    norm(row.emplRVendId ?? (isLabor ? row.empId : row.vendorId)),
+    isLabor ? norm(row.plcCode || row.laborCat || "NA") : "NA",
+  ]);
+}
+
+// Only a GL detail identifier identifies a source transaction. GL `id` is a person/vendor ID.
+function groupPbrActuals(
+  sourceRows,
+  type,
+  fiscalYear,
+  closingPeriod,
+  lookups = {},
+) {
+  const grouped = new Map();
+  const seenSourceDetails = new Map();
+  const norm = (value) =>
+    String(value ?? "")
+      .trim()
+      .toUpperCase();
+  sourceRows.forEach((source) => {
+    const isLabor = type === "Labor";
+    if ((norm(source.sIdType) === "E") !== isLabor) return;
+    const year = Number(source.fyCd ?? fiscalYear);
+    const period = Number(source.pdNo);
+    if (
+      year !== Number(fiscalYear) ||
+      !Number.isInteger(period) ||
+      period < 1 ||
+      period > 12
+    )
+      return;
+    if (isExcludedActualAccount(source.acctId)) return;
+    const project = getTopLevelProj(source.projId) || "NA";
+    const acctId = String(source.acctId ?? "").trim();
+    const orgId = String(source.orgId ?? "").trim();
+    const personId = String(source.id ?? "").trim();
+    const coa = lookups.coaMap?.[acctId] || {};
+    const mapped = lookups.mappingData?.find(
+      (row) => norm(row.acctId) === norm(acctId),
+    );
+    const candidate = {
+      type,
+      projId: project,
+      acctId,
+      orgId,
+      empId: isLabor ? personId : "",
+      vendorId: isLabor ? "" : personId,
+      laborCat: isLabor ? String(source.billLabCatCd || "NA").trim() : "NA",
+    };
+    const key = pbrBusinessKey(candidate);
+    const detailId =
+      source.glPostDetailId ?? source.glDetailId ?? source.transactionLineId;
+    if (detailId != null && String(detailId).trim() !== "") {
+      const detailKey = JSON.stringify([key, year, period, String(detailId)]);
+      const values = JSON.stringify([
+        Number(source.hrs1 ?? source.hrs ?? 0),
+        Number(source.amt1 ?? source.actAmt ?? source.amt ?? 0),
+      ]);
+      if (seenSourceDetails.has(detailKey)) {
+        if (seenSourceDetails.get(detailKey) !== values)
+          throw new Error(
+            `Conflicting GL values for detail ${detailId}. Import stopped.`,
+          );
+        return;
+      }
+      seenSourceDetails.set(detailKey, values);
+    }
+    if (!grouped.has(key)) {
+      const row = {
+        ...candidate,
+        uid: `actual_${key}`,
+        id: `temp_actual_${key}`,
+        projName:
+          lookups.allProjects?.find(
+            (projectRow) => projectRow.projectId === project,
+          )?.name || "NA",
+        acctName: coa.name || "",
+        orgName: lookups.orgNameMap?.[norm(orgId)] || "",
+        empName: isLabor ? source.name || "" : "",
+        empStatus: isLabor ? "Active" : "",
+        vendorName: isLabor ? "" : source.name || "Unknown Vendor",
+        pbrGroup: mapped?.pbrAcctGrp || coa.pbrGroup || "",
+        rate: 0,
+        inflationRate: 0,
+        _isDirty: true,
+        _actualImport: true,
+        _sourceActuals: true,
+        _importedPeriods: [],
+        _baseAmounts: {},
+      };
+      months.forEach((month) => {
+        row[`${month}Hours`] = 0;
+        row[`${month}Amount`] = 0;
+      });
+      grouped.set(key, row);
+    }
+    const target = grouped.get(key);
+    const month = months[period - 1];
+    target[`${month}Hours`] += isLabor
+      ? Number(source.hrs1 ?? source.hrs ?? 0)
+      : 0;
+    target[`${month}Amount`] += Number(
+      source.amt1 ?? source.actAmt ?? source.amt ?? 0,
+    );
+    if (!target._importedPeriods.includes(period))
+      target._importedPeriods.push(period);
+  });
+  return Array.from(grouped.values(), (row) => {
+    months.forEach((month) => {
+      row[`${month}Hours`] = Number(row[`${month}Hours`].toFixed(2));
+      row[`${month}Amount`] = Number(row[`${month}Amount`].toFixed(2));
+      row._baseAmounts[month] = row[`${month}Amount`];
+    });
+    const total = totalPbrRow(row);
+    total.rate =
+      total.type === "Labor" && total.totalHours !== 0
+        ? Number((total.totalAmount / total.totalHours).toFixed(4))
+        : 0;
+    return total;
+  });
+}
+
+function mergePbrActuals(previous, imported, fiscalYear, closingPeriod) {
+  // Replace old, unsaved raw-GL snapshots; persisted IDs are always retained.
+  const rows = previous.filter(
+    (row) => !(String(row.id).startsWith("temp_gl_") && !row._isPersisted),
+  );
+  let skippedAmbiguousPeriods = 0;
+  imported.forEach((incoming) => {
+    const key = pbrBusinessKey(incoming);
+    incoming._importedPeriods.forEach((period) => {
+      const matches = rows
+        .map((row, index) => ({ row, index }))
+        .filter(({ row }) => pbrBusinessKey(row) === key);
+      const savedMatches = matches.filter(({ row }) =>
+        row.monthlyRecords?.some(
+          (saved) =>
+            Number(saved.fyCd ?? fiscalYear) === Number(fiscalYear) &&
+            Number(saved.pdNo) === period,
+        ),
+      );
+      if (
+        savedMatches.length > 1 ||
+        (savedMatches.length === 0 && matches.length > 1)
+      ) {
+        skippedAmbiguousPeriods += 1;
+        return; // Do not pick an arbitrary DB ID or insert another copy.
+      }
+      const match = savedMatches[0] || matches[0];
+      if (!match) {
+        const created = {
+          ...incoming,
+          _importedPeriods: [],
+          _baseAmounts: {},
+          _baseAmountInputs: {},
+        };
+        months.forEach((month) => {
+          created[`${month}Hours`] = 0;
+          created[`${month}Amount`] = 0;
+        });
+        rows.push(created);
+      }
+      const index = match ? match.index : rows.length - 1;
+      const original = rows[index];
+      const month = months[period - 1];
+      const hours = Number(incoming[`${month}Hours`] || 0);
+      const amount = Number(incoming[`${month}Amount`] || 0);
+      const changed =
+        Number(original[`${month}Hours`] || 0) !== hours ||
+        Number(original[`${month}Amount`] || 0) !== amount;
+      const factor = 1 + getPbrPeriodInflation(original, month) / 100;
+      rows[index] = totalPbrRow({
+        ...original,
+        [`${month}Hours`]: hours,
+        [`${month}Amount`]: amount,
+        _isDirty: original._isDirty || changed,
+        _sourceActuals: true,
+        _baseAmounts: {
+          ...(original._baseAmounts || {}),
+          [month]: amount / factor,
+        },
+        _baseAmountInputs: {
+          ...(original._baseAmountInputs || {}),
+          [month]: Number((amount / factor).toFixed(2)),
+        },
+        _importedPeriods: Array.from(
+          new Set([...(original._importedPeriods || []), period]),
+        ),
+      });
+    });
+  });
+  return { rows, skippedAmbiguousPeriods };
+}
+
+// Repeated GET copies of the same persisted ID are one record. Distinct IDs remain visible.
+function uniquePbrMonthlyIds(groups) {
+  const seen = new Set();
+  return groups
+    .map((group) => ({
+      ...group,
+      _hadMonthlyRecords: Boolean(group.monthlyData?.length),
+      monthlyData: (group.monthlyData || []).filter((period) => {
+        if (period.id == null) return true;
+        const key = String(period.id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }),
+    }))
+    .filter(
+      (group) => group.monthlyData.length > 0 || !group._hadMonthlyRecords,
+    )
+    .map(({ _hadMonthlyRecords, ...group }) => group);
+}
+
+function ensurePbrSaveUniqueness(requests, currentRows, fiscalYear) {
+  const updates = new Map();
+  const inserts = new Map();
+  const existing = new Set();
+  currentRows.forEach((row) =>
+    (row.monthlyRecords || []).forEach((period) => {
+      if (
+        period.id != null &&
+        Number(period.fyCd ?? fiscalYear) === Number(fiscalYear)
+      ) {
+        existing.add(
+          `${pbrBusinessKey(row)}|${Number(fiscalYear)}|${Number(period.pdNo)}`,
+        );
+      }
+    }),
+  );
+  requests
+    .flatMap((request) => request.updates)
+    .forEach((record) => {
+      const key = String(record.id);
+      if (
+        updates.has(key) &&
+        JSON.stringify(updates.get(key)) !== JSON.stringify(record)
+      ) {
+        throw new Error(
+          `Conflicting updates for monthly record ${key}. Reload before saving.`,
+        );
+      }
+      updates.set(key, record);
+    });
+  requests
+    .flatMap((request) => request.inserts)
+    .forEach((record) => {
+      const header = { ...record, monthlyData: [] };
+      record.monthlyData.forEach((period) => {
+        const key = `${pbrBusinessKey(record, record.pbrType)}|${Number(period.fyCd)}|${Number(period.pdNo)}`;
+        if (existing.has(key))
+          throw new Error(
+            `A saved ${record.pbrType} record already exists for period ${period.pdNo}. Edit the existing record instead of inserting another.`,
+          );
+        const item = { ...header, monthlyData: [period] };
+        if (
+          inserts.has(key) &&
+          JSON.stringify(inserts.get(key)) !== JSON.stringify(item)
+        ) {
+          throw new Error(
+            `Conflicting new ${record.pbrType} records for period ${period.pdNo}. Resolve duplicate rows before saving.`,
+          );
+        }
+        inserts.set(key, item);
+      });
+    });
+  // Recombine validated insert periods by their complete request header.
+  const insertGroups = new Map();
+  inserts.forEach((record) => {
+    const { monthlyData, ...header } = record;
+    const key = JSON.stringify(header);
+    if (!insertGroups.has(key))
+      insertGroups.set(key, { ...header, monthlyData: [] });
+    insertGroups.get(key).monthlyData.push(...monthlyData);
+  });
+  return {
+    updates: Array.from(updates.values()),
+    inserts: Array.from(insertGroups.values()),
+  };
+}
+
+function isPbrPeriodClosed(fiscalYear, monthIndex, closingPeriod) {
+  if (!closingPeriod) return false;
+  const match = /^(\d{4})-(\d{2})/.exec(String(closingPeriod));
+  if (!match) throw new Error("Invalid closing_period configuration.");
+  return (
+    Number(fiscalYear) * 12 + monthIndex <=
+    Number(match[1]) * 12 + Number(match[2]) - 1
+  );
+}
+
+function getPbrPeriodInflation(row, month) {
+  const rate = Number(row.inflationRate || 0);
+  const saved = row.monthlyRecords?.find(
+    (period) => Number(period.pdNo) === months.indexOf(month) + 1,
+  );
+  return rate === Number(row._savedInflationRate || 0) && saved
+    ? Number(saved.infRt || 0)
+    : rate;
+}
+
+function getPbrBaseAmount(row, month) {
+  if (row._baseAmounts?.[month] != null) return Number(row._baseAmounts[month]);
+  return (
+    Number(row[`${month}Amount`] || 0) /
+    (1 + getPbrPeriodInflation(row, month) / 100)
+  );
+}
+
+function totalPbrRow(row) {
+  return {
+    ...row,
+    totalHours: Number(
+      months
+        .reduce((sum, month) => sum + Number(row[`${month}Hours`] || 0), 0)
+        .toFixed(2),
+    ),
+    totalAmount: Number(
+      months
+        .reduce((sum, month) => sum + Number(row[`${month}Amount`] || 0), 0)
+        .toFixed(2),
+    ),
+  };
+}
+
+function recalculatePbrInflation(
+  row,
+  type,
+  changes,
+  fiscalYear,
+  closingPeriod,
+) {
+  const updated = {
+    ...row,
+    ...changes,
+    _isDirty: true,
+    _baseAmounts: { ...(row._baseAmounts || {}) },
+  };
+  months.forEach((month, index) => {
+    if (isPbrPeriodClosed(fiscalYear, index, closingPeriod)) return;
+    const factor = 1 + getPbrPeriodInflation(updated, month) / 100;
+    if (type === "Labor") {
+      updated[`${month}Amount`] = Number(
+        (
+          Number(updated[`${month}Hours`] || 0) *
+          Number(updated.rate || 0) *
+          factor
+        ).toFixed(2),
+      );
+    } else if (type === "Non-Labor") {
+      const base = getPbrBaseAmount(row, month);
+      updated._baseAmounts[month] = base;
+      updated[`${month}Amount`] = Number((base * factor).toFixed(2));
+    }
+  });
+  return totalPbrRow(updated);
+}
+
+function editPbrMonth(row, month, value, type, fiscalYear, closingPeriod) {
+  const index = months.indexOf(month);
+  if (index < 0 || isPbrPeriodClosed(fiscalYear, index, closingPeriod))
+    return row;
+  const amount = Number(value) || 0;
+  const updated = { ...row, _isDirty: true };
+  if (row._actualImport)
+    updated._importedPeriods = Array.from(
+      new Set([...(row._importedPeriods || []), index + 1]),
+    );
+  if (type === "Labor") {
+    updated[`${month}Hours`] = value;
+    updated[`${month}Amount`] = Number(
+      (
+        amount *
+        Number(row.rate || 0) *
+        (1 + getPbrPeriodInflation(row, month) / 100)
+      ).toFixed(2),
+    );
+  } else if (type === "Non-Labor") {
+    updated._baseAmounts = { ...(row._baseAmounts || {}), [month]: amount };
+    updated._baseAmountInputs = {
+      ...(row._baseAmountInputs || {}),
+      [month]: value,
+    };
+    updated[`${month}Amount`] = Number(
+      (amount * (1 + getPbrPeriodInflation(row, month) / 100)).toFixed(2),
+    );
+  } else updated[`${month}Amount`] = value;
+  return totalPbrRow(updated);
+}
+
 function pbrRowMetadata(row) {
   return JSON.stringify([
     row.projId,
@@ -476,7 +883,14 @@ function pbrRowMetadata(row) {
   ]);
 }
 
-function buildPbrSaveRequests(rows, type, fiscalYear, version, status) {
+function buildPbrSaveRequests(
+  rows,
+  type,
+  fiscalYear,
+  version,
+  status,
+  closingPeriod = "",
+) {
   const updates = [];
   const inserts = [];
   rows
@@ -503,12 +917,15 @@ function buildPbrSaveRequests(rows, type, fiscalYear, version, status) {
       const metadataChanged = row._savedMetadata !== pbrRowMetadata(row);
       const newPeriods = [];
       months.forEach((month, index) => {
+        if (isPbrPeriodClosed(fiscalYear, index, closingPeriod)) return;
+        if (row._actualImport && !row._importedPeriods?.includes(index + 1))
+          return;
         const period = {
           fyCd: Number(fiscalYear),
           pdNo: index + 1,
           hrs: isLabor ? Number(row[`${month}Hours`] || 0) : 0,
           amt: Number(row[`${month}Amount`] || 0),
-          infRt: isLabor ? 0 : Number(row.inflationRate || 0),
+          infRt: type === "REVENUE" ? 0 : getPbrPeriodInflation(row, month),
         };
         const existing = savedPeriods.find(
           (saved) =>
@@ -523,7 +940,7 @@ function buildPbrSaveRequests(rows, type, fiscalYear, version, status) {
             );
           }
           if (
-            !isLabor &&
+            type !== "REVENUE" &&
             Number(row.inflationRate || 0) ===
               Number(row._savedInflationRate || 0)
           ) {
@@ -1090,6 +1507,8 @@ function FinancialRow({
    MAIN COMPONENT
 ======================================================= */
 export default function PBRReport() {
+  const [closingPeriod, setClosingPeriod] = useState("");
+  const [configurationLoaded, setConfigurationLoaded] = useState(false);
   const [poolDefinitions, setPoolDefinitions] = useState([]);
   const [showEscalationOverride, setShowEscalationOverride] = useState(false);
   const [escalationMode, setEscalationMode] = useState("uniform");
@@ -1190,10 +1609,31 @@ export default function PBRReport() {
   const rightPaneRef = useRef(null);
   const leftPaneRef = useRef(null);
   const fileInputRef = useRef(null);
+  const savingRecordsRef = useRef(false);
+  const importingActualsRef = useRef(false);
+  const importingLaborRef = useRef(false);
+  const importingNonLaborRef = useRef(false);
 
   // const selectedYear = String(FY_CD);
   const [selectedFY, setSelectedFY] = useState(CURRENT_FY);
   const selectedYear = String(selectedFY);
+  const isMonthLocked = (month) =>
+    !configurationLoaded ||
+    isPbrPeriodClosed(selectedFY, months.indexOf(month), closingPeriod);
+  const hasOpenPeriods =
+    configurationLoaded &&
+    months.some(
+      (_, index) => !isPbrPeriodClosed(selectedFY, index, closingPeriod),
+    );
+  const hasClosedSavedPeriods = (row) =>
+    !configurationLoaded ||
+    (row.monthlyRecords || []).some((period) =>
+      isPbrPeriodClosed(
+        Number(period.fyCd ?? selectedFY),
+        Number(period.pdNo) - 1,
+        closingPeriod,
+      ),
+    );
 
   const handleFYChange = (e) => {
     const hasUnsaved = [...laborData, ...nonLaborData, ...revenueData].some(
@@ -1257,7 +1697,17 @@ export default function PBRReport() {
 
   const [selectedRowUids, setSelectedRowUids] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [columnFilters, setColumnFilters] = useState({});
+  const [filtersByTab, setFiltersByTab] = useState({
+    Labor: {},
+    "Non-Labor": {},
+    Revenue: {},
+  });
+  const laborColumnFilters = filtersByTab.Labor;
+  const nonLaborColumnFilters = filtersByTab["Non-Labor"];
+  const revenueColumnFilters = filtersByTab.Revenue;
+  const columnFilters = filtersByTab[activeTab] || EMPTY_PBR_FILTERS;
+  const setColumnFilters = (filters) =>
+    setFiltersByTab((previous) => ({ ...previous, [activeTab]: filters }));
 
   const [laborLeftCols, setLaborLeftCols] = useState([
     { key: "select", label: "☑", w: 40 },
@@ -1488,32 +1938,32 @@ export default function PBRReport() {
 
   const filteredLaborData = useMemo(() => {
     const filtered = laborData.filter((row) =>
-      Object.entries(columnFilters).every(([key, val]) => {
+      Object.entries(laborColumnFilters).every(([key, val]) => {
         if (!val) return true;
         return safeString(row[key]).toLowerCase().includes(val.toLowerCase());
       }),
     );
     return sortRows(filtered);
-  }, [laborData, columnFilters, sortRows]);
+  }, [laborData, laborColumnFilters, sortRows]);
 
   const filteredNonLaborData = useMemo(() => {
     const filtered = nonLaborData.filter((row) =>
-      Object.entries(columnFilters).every(([key, val]) => {
+      Object.entries(nonLaborColumnFilters).every(([key, val]) => {
         if (!val) return true;
         return safeString(row[key]).toLowerCase().includes(val.toLowerCase());
       }),
     );
     return sortRows(filtered);
-  }, [nonLaborData, columnFilters, sortRows]);
+  }, [nonLaborData, nonLaborColumnFilters, sortRows]);
 
   const filteredRevenueData = useMemo(() => {
     return revenueData.filter((row) =>
-      Object.entries(columnFilters).every(([key, val]) => {
+      Object.entries(revenueColumnFilters).every(([key, val]) => {
         if (!val) return true;
         return safeString(row[key]).toLowerCase().includes(val.toLowerCase());
       }),
     );
-  }, [revenueData, columnFilters]);
+  }, [revenueData, revenueColumnFilters]);
 
   // =========================================================================
   // PAGINATION LOGIC
@@ -2620,6 +3070,22 @@ export default function PBRReport() {
     try {
       setLoading(true);
       setError("");
+      setConfigurationLoaded(false);
+      const configResponse = await axios.get(PBR_CONFIG_API);
+      const closingConfig = unwrapApiArray(configResponse.data).find(
+        (config) =>
+          String(config.name ?? "")
+            .trim()
+            .toLowerCase() === "closing_period",
+      );
+      const fetchedClosingPeriod = String(closingConfig?.value ?? "").trim();
+      if (!/^\d{4}-(0[1-9]|1[0-2])-\d{2}$/.test(fetchedClosingPeriod)) {
+        throw new Error(
+          "Missing or invalid closing_period. Records remain locked until configuration is available.",
+        );
+      }
+      setClosingPeriod(fetchedClosingPeriod);
+      setConfigurationLoaded(true);
 
       const safeExtract = (res) => {
         const d = res?.value?.data || res?.data;
@@ -2815,6 +3281,11 @@ export default function PBRReport() {
       });
       setAllProjects([...masterProjList]);
 
+      if (lnlRes.status !== "fulfilled") {
+        throw new Error(
+          "Could not reload saved PBR records. Reload before editing or saving.",
+        );
+      }
       if (lnlRes.status === "fulfilled") {
         const allData = safeExtract(lnlRes);
         console.log(
@@ -2906,7 +3377,9 @@ export default function PBRReport() {
 
         setAllProjects([...masterProjList]);
 
-        const parsedData = combinePbrNonLaborGroups(versionData)
+        const parsedData = combinePbrNonLaborGroups(
+          uniquePbrMonthlyIds(versionData),
+        )
           .flatMap((group) => splitPbrMonthlyRecords(group, selectedFY))
           .map((dbRow) => {
             const monthlyCols = {};
@@ -2914,7 +3387,10 @@ export default function PBRReport() {
             let totalAmount = 0;
 
             const isLabor = dbRow.pbrType?.toUpperCase() === "LABOR";
-            const isRevenue = dbRow.pbrType?.toUpperCase() === "REVENUE";
+            const isRevenue =
+              String(dbRow.pbrType ?? "")
+                .trim()
+                .toUpperCase() === "REVENUE";
             const rowType = isLabor
               ? "Labor"
               : isRevenue
@@ -3012,7 +3488,18 @@ export default function PBRReport() {
                   ? vendMatch.vendEmplName ||
                     `${vendMatch.firstName || ""} ${vendMatch.lastName || ""}`.trim()
                   : "",
-              inflationRate: dbRow.monthlyData?.[0]?.infRt || 0,
+              inflationRate: Number(
+                (dbRow.monthlyData || []).find(
+                  (period) =>
+                    !isPbrPeriodClosed(
+                      selectedFY,
+                      Number(period.pdNo) - 1,
+                      fetchedClosingPeriod,
+                    ),
+                )?.infRt ??
+                  dbRow.monthlyData?.[0]?.infRt ??
+                  0,
+              ),
               totalHours: Number(totalHours.toFixed(2)),
               totalAmount: Number(totalAmount.toFixed(2)),
               _isDirty: false,
@@ -3039,9 +3526,14 @@ export default function PBRReport() {
       // useEffect(() => {
       //   fetchData();
       // }, [fetchData]);
+      return true;
     } catch (err) {
       console.error("PBR API Error:", err);
-      setError("Failed to load report sections. Please try again.");
+      setConfigurationLoaded(false);
+      setError(
+        err.message || "Failed to load report sections. Please try again.",
+      );
+      return false;
     } finally {
       setLoading(false);
     }
@@ -3235,6 +3727,24 @@ export default function PBRReport() {
 
   const handleBulkDelete = async () => {
     if (isApproved || selectedRowUids.length === 0) return;
+    const selectedData =
+      activeTab === "Labor"
+        ? laborData
+        : activeTab === "Revenue"
+          ? revenueData
+          : nonLaborData;
+    if (
+      selectedData.some(
+        (row) =>
+          selectedRowUids.includes(row.uid) && hasClosedSavedPeriods(row),
+      )
+    ) {
+      showToast(
+        "Rows containing closed-period records cannot be deleted.",
+        "error",
+      );
+      return;
+    }
 
     if (
       !window.confirm(
@@ -3344,6 +3854,13 @@ export default function PBRReport() {
 
   const handleDeleteRow = async (targetRow) => {
     if (isApproved) return;
+    if (hasClosedSavedPeriods(targetRow)) {
+      showToast(
+        "Rows containing closed-period records cannot be deleted.",
+        "error",
+      );
+      return;
+    }
     if (
       !window.confirm("Are you sure you want to permanently delete this row?")
     )
@@ -3388,6 +3905,7 @@ export default function PBRReport() {
   };
 
   const handleLeftPaneChange = (rowUid, field, value) => {
+    if (isApproved || !hasOpenPeriods) return;
     const setter =
       activeTab === "Labor"
         ? setLaborData
@@ -3397,6 +3915,20 @@ export default function PBRReport() {
     setter((prev) =>
       prev.map((row) => {
         if (row.uid !== rowUid) return row;
+        if (field === "inflationRate" || field === "rate") {
+          if (
+            value !== "" &&
+            (!Number.isFinite(Number(value)) || Number(value) < 0)
+          )
+            return row;
+          return recalculatePbrInflation(
+            row,
+            activeTab,
+            { [field]: value },
+            selectedFY,
+            closingPeriod,
+          );
+        }
         let updated = { ...row, [field]: value, _isDirty: true };
 
         if (field === "acctId") {
@@ -3879,122 +4411,86 @@ export default function PBRReport() {
   //     setLoading(false);
   //   }
   // };
-  const handleAddSelectedEmployees = async (employeeIds, importAll = false) => {
-    // DEBUG MODE: raw GL import. One table row per GL record.
-    // No employee-master check, no grouping, no dedup.
-    const manualIds = Array.isArray(employeeIds)
-      ? employeeIds
-      : selectedEmployees;
-    if (!importAll && manualIds.length === 0) {
+  const handleAddSelectedEmployees = async (
+    selectedIds,
+    importAll = false,
+    providedSource = null,
+  ) => {
+    if (
+      isApproved ||
+      !configurationLoaded ||
+      savingRecordsRef.current ||
+      importingLaborRef.current
+    )
+      return;
+    const ids = Array.isArray(selectedIds) ? selectedIds : selectedEmployees;
+    if (!importAll && ids.length === 0) {
       showToast("Select at least one employee.", "error");
       return;
     }
-
+    importingLaborRef.current = true;
     setShowAddLabor(false);
     setLoading(true);
-
     try {
-      const normId = (v) =>
-        String(v ?? "")
-          .trim()
-          .toUpperCase();
-      const allowed = new Set(manualIds.map(normId));
-
-      const glResponse = await axios.get(GL_DATA_API, {
-        params: { sIdType: "E" },
-      });
-      const rawGl = unwrapApiArray(glResponse.data);
-
-      const glRows = rawGl.filter((r) => {
-        if (
-          String(r.sIdType ?? "")
+      const source =
+        providedSource || unwrapApiArray((await axios.get(GL_DATA_API)).data);
+      const allowed = new Set(
+        ids.map((id) =>
+          String(id ?? "")
             .trim()
-            .toUpperCase() !== "E"
-        )
-          return false;
-        if (isExcludedActualAccount(r.acctId)) return false;
-        // Manual "Add Selected" still respects the ticked employees.
-        if (!importAll && !allowed.has(normId(r.id))) return false;
-        return true;
-      });
-
-      const badPd = glRows.filter((r) => {
-        const p = Number(r.pdNo);
-        return !(p >= 1 && p <= 12);
-      });
-
-      console.log("RAW LABOR IMPORT", {
-        totalGl: rawGl.length,
-        typeE: rawGl.filter(
-          (r) =>
-            String(r.sIdType ?? "")
-              .trim()
-              .toUpperCase() === "E",
-        ).length,
-        imported: glRows.length,
-        pdOutsideRange: badPd.length,
-        fyValues: [...new Set(glRows.map((r) => r.fyCd))],
-        sumHrs: glRows.reduce((s, r) => s + Number(r.hrs1 || 0), 0),
-        sumAmt: glRows.reduce((s, r) => s + Number(r.amt1 || 0), 0),
-      });
-
-      const newRows = glRows.map((r, i) => {
-        const hrs = Number(r.hrs1 || 0);
-        const amt = Number(r.amt1 || 0);
-        const pd = Number(r.pdNo);
-        const topId = getTopLevelProj(r.projId) || "NA";
-        const acctInfo = coaMap[r.acctId] || {};
-        const mapped = mappingData.find((m) => m.acctId === r.acctId);
-
-        const monthly = {};
-        months.forEach((m, idx) => {
-          monthly[`${m}Hours`] = idx + 1 === pd ? Number(hrs.toFixed(2)) : 0;
-          monthly[`${m}Amount`] = idx + 1 === pd ? Number(amt.toFixed(2)) : 0;
-        });
-
-        return {
-          uid: `ui_${Math.random().toString(36).substring(2, 9)}`,
-          id: `temp_gl_${Date.now()}_${i}`,
-          type: "Labor",
-          empId: String(r.id ?? "").trim(),
-          empName: r.name || "",
-          empStatus: "Active",
-          // empStatus: empMatch?.status || "",
-          laborCat: r.billLabCatCd || "",
-          projId: topId,
-          projName:
-            allProjects.find((p) => p.projectId === topId)?.name || "NA",
-          acctId: r.acctId || "",
-          acctName: acctInfo.name || "",
-          orgId: r.orgId || "",
-          orgName:
-            orgNameMap[normalizeOrgId(r.orgId)] || resolveOrgName(r.orgId),
-          pbrGroup: mapped?.pbrAcctGrp || acctInfo.pbrGroup || "",
-          rate: hrs > 0 ? Number((amt / hrs).toFixed(2)) : 0,
-          _isDirty: true,
-          totalHours: Number(hrs.toFixed(2)),
-          totalAmount: Number(amt.toFixed(2)),
-          ...monthly,
-        };
-      });
-
-      if (newRows.length > 0) {
-        // Replace rows from a previous raw import so re-running doesn't double up.
-        setLaborData((prev) => [
-          ...prev.filter((r) => !String(r.id).startsWith("temp_gl_")),
-          ...newRows,
-        ]);
-        showToast(`${newRows.length} raw GL labor rows loaded.`, "success");
-      } else {
-        showToast("No labor records found in GL data.", "error");
+            .toUpperCase(),
+        ),
+      );
+      const selectedSource = importAll
+        ? source
+        : source.filter((row) =>
+            allowed.has(
+              String(row.id ?? "")
+                .trim()
+                .toUpperCase(),
+            ),
+          );
+      const imported = groupPbrActuals(
+        selectedSource,
+        "Labor",
+        selectedFY,
+        closingPeriod,
+        { coaMap, mappingData, allProjects, orgNameMap },
+      );
+      if (imported.length === 0) {
+        showToast(
+          "No eligible labor actuals in open periods for the selected fiscal year.",
+          "success",
+        );
+        return;
       }
-    } catch (err) {
-      console.error("Error adding employees:", err);
-      showToast("Error processing employee selection.", "error");
+      const preview = mergePbrActuals(
+        laborData,
+        imported,
+        selectedFY,
+        closingPeriod,
+      );
+      setLaborData(
+        (previous) =>
+          mergePbrActuals(previous, imported, selectedFY, closingPeriod).rows,
+      );
+      const skipped = preview.skippedAmbiguousPeriods;
+      showToast(
+        skipped
+          ? `${skipped} period(s) skipped because multiple saved records match. No duplicate rows were inserted.`
+          : `Labor actuals reconciled into ${imported.length} unique row(s).`,
+        skipped ? "error" : "success",
+      );
+      return { skippedAmbiguousPeriods: skipped };
+    } catch (error) {
+      console.error("Labor actuals import failed:", error);
+      showToast(error.message || "Failed to import labor actuals.", "error");
+      if (importAll) throw error;
     } finally {
+      importingLaborRef.current = false;
       setSelectedEmployees([]);
       setEmployeeSearchTerm("");
-      setLoading(false);
+      if (!importingActualsRef.current) setLoading(false);
     }
   };
 
@@ -4217,100 +4713,102 @@ export default function PBRReport() {
   //     }
   //   };
 
-  const handleAddSelectedVendors = async (vendorIds, importAll = false) => {
-    // DEBUG MODE: raw GL import. One table row per GL record, no grouping.
-    const manualIds = Array.isArray(vendorIds) ? vendorIds : selectedVendors;
-    if (!importAll && manualIds.length === 0) {
+  const handleAddSelectedVendors = async (
+    selectedIds,
+    importAll = false,
+    providedSource = null,
+  ) => {
+    if (
+      isApproved ||
+      !configurationLoaded ||
+      savingRecordsRef.current ||
+      importingNonLaborRef.current
+    )
+      return;
+    const ids = Array.isArray(selectedIds) ? selectedIds : selectedVendors;
+    if (!importAll && ids.length === 0) {
       showToast("Select at least one vendor.", "error");
       return;
     }
-
+    importingNonLaborRef.current = true;
     setShowAddNonLabor(false);
     setLoading(true);
-
     try {
-      const norm = (v) =>
-        String(v ?? "")
-          .trim()
-          .toUpperCase();
-      const allowed = new Set(manualIds.map(norm));
-
-      const glRows = glRawData.filter((r) => {
-        if (norm(r.sIdType) === "E") return false; // everything except Employee
-        if (isExcludedActualAccount(r.acctId)) return false; // skip 1-4 accounts
-        if (r.fyCd != null && Number(r.fyCd) !== Number(selectedFY))
-          return false;
-        if (!importAll && !allowed.has(norm(r.id))) return false;
-        return true;
-      });
-
-      console.log("RAW NON-LABOR IMPORT", {
-        glRowsTotal: glRawData.length,
-        notE: glRawData.filter((r) => norm(r.sIdType) !== "E").length,
-        imported: glRows.length,
-        sIdTypes: [...new Set(glRows.map((r) => r.sIdType))],
-        noId: glRows.filter((r) => !norm(r.id)).length,
-        pdOutsideRange: glRows.filter(
-          (r) => !(Number(r.pdNo) >= 1 && Number(r.pdNo) <= 12),
-        ).length,
-        sumAmt: glRows.reduce((s, r) => s + Number(r.amt1 || r.actAmt || 0), 0),
-      });
-
-      const newRows = glRows.map((r, i) => {
-        const amt = Number(r.amt1 || r.actAmt || 0);
-        const pd = Number(r.pdNo);
-        const topId = getTopLevelProj(r.projId) || "NA";
-        const acctInfo = coaMap[r.acctId] || {};
-        const mapped = mappingData.find((m) => m.acctId === r.acctId);
-
-        const monthly = {};
-        months.forEach((m, idx) => {
-          monthly[`${m}Amount`] = idx + 1 === pd ? Number(amt.toFixed(2)) : 0;
-        });
-
-        return {
-          uid: `ui_${Math.random().toString(36).substring(2, 9)}`,
-          id: `temp_gl_${Date.now()}_${i}`,
-          type: "Non-Labor",
-          vendorId: String(r.id ?? "").trim(),
-          vendorName: r.name || "Unknown Vendor",
-          projId: topId,
-          projName:
-            allProjects.find((p) => p.projectId === topId)?.name || "NA",
-          acctId: r.acctId || "",
-          acctName: acctInfo.name || "",
-          orgId: r.orgId || "",
-          orgName:
-            orgNameMap[normalizeOrgId(r.orgId)] || resolveOrgName(r.orgId),
-          pbrGroup: mapped?.pbrAcctGrp || acctInfo.pbrGroup || "",
-          inflationRate: 0,
-          _isDirty: true,
-          totalAmount: Number(amt.toFixed(2)),
-          ...monthly,
-        };
-      });
-
-      if (newRows.length > 0) {
-        setNonLaborData((prev) => [
-          ...prev.filter((r) => !String(r.id).startsWith("temp_gl_")),
-          ...newRows,
-        ]);
-        showToast(`${newRows.length} raw GL non-labor rows loaded.`, "success");
-      } else {
-        showToast("No non-labor records found in GL data.", "error");
+      const source =
+        providedSource || unwrapApiArray((await axios.get(GL_DATA_API)).data);
+      const allowed = new Set(
+        ids.map((id) =>
+          String(id ?? "")
+            .trim()
+            .toUpperCase(),
+        ),
+      );
+      const selectedSource = importAll
+        ? source
+        : source.filter((row) =>
+            allowed.has(
+              String(row.id ?? "")
+                .trim()
+                .toUpperCase(),
+            ),
+          );
+      const imported = groupPbrActuals(
+        selectedSource,
+        "Non-Labor",
+        selectedFY,
+        closingPeriod,
+        { coaMap, mappingData, allProjects, orgNameMap },
+      );
+      if (imported.length === 0) {
+        showToast(
+          "No eligible non-labor actuals in open periods for the selected fiscal year.",
+          "success",
+        );
+        return;
       }
-    } catch (err) {
-      console.error("Error adding vendors:", err);
-      showToast("Error processing vendor selection.", "error");
+      const preview = mergePbrActuals(
+        nonLaborData,
+        imported,
+        selectedFY,
+        closingPeriod,
+      );
+      setNonLaborData(
+        (previous) =>
+          mergePbrActuals(previous, imported, selectedFY, closingPeriod).rows,
+      );
+      const skipped = preview.skippedAmbiguousPeriods;
+      showToast(
+        skipped
+          ? `${skipped} period(s) skipped because multiple saved records match. No duplicate rows were inserted.`
+          : `Non-Labor actuals reconciled into ${imported.length} unique row(s).`,
+        skipped ? "error" : "success",
+      );
+      return { skippedAmbiguousPeriods: skipped };
+    } catch (error) {
+      console.error("Non-Labor actuals import failed:", error);
+      showToast(
+        error.message || "Failed to import non-labor actuals.",
+        "error",
+      );
+      if (importAll) throw error;
     } finally {
+      importingNonLaborRef.current = false;
       setSelectedVendors([]);
       setVendorSearchTerm("");
-      setLoading(false);
+      if (!importingActualsRef.current) setLoading(false);
     }
   };
 
   const handleImportActuals = async () => {
-    if (isApproved) return;
+    if (
+      isApproved ||
+      !configurationLoaded ||
+      savingRecordsRef.current ||
+      importingActualsRef.current ||
+      importingLaborRef.current ||
+      importingNonLaborRef.current
+    )
+      return;
     if (
       !importActualsLabor &&
       !importActualsNonLabor &&
@@ -4323,66 +4821,24 @@ export default function PBRReport() {
       return;
     }
 
+    importingActualsRef.current = true;
     setShowImportActuals(false);
     setLoading(true);
     try {
-      // if (importActualsLabor) {
-      //   const allEmployeeIds = filteredEmployees.map((emp) => emp.emplId);
-      //   await handleAddSelectedEmployees(allEmployeeIds);
-      // }
-      if (importActualsLabor) {
-        await handleAddSelectedEmployees([], true);
-      }
+      const source =
+        importActualsLabor || importActualsNonLabor
+          ? unwrapApiArray((await axios.get(GL_DATA_API)).data)
+          : [];
+      let skipped = 0;
+      if (importActualsLabor)
+        skipped +=
+          (await handleAddSelectedEmployees([], true, source))
+            ?.skippedAmbiguousPeriods || 0;
+      if (importActualsNonLabor)
+        skipped +=
+          (await handleAddSelectedVendors([], true, source))
+            ?.skippedAmbiguousPeriods || 0;
 
-      // if (importActualsNonLabor) {
-      //   const allVendorIds = filteredVendors.map((vendor) =>
-      //     String(vendor.vendId),
-      //   );
-      //   await handleAddSelectedVendors(allVendorIds);
-      // }
-      if (importActualsNonLabor) {
-        await handleAddSelectedVendors([], true);
-      }
-
-      //       if (importActualsRevenue) {
-      //         const topLevelProjects = new Map();
-      //         [...(allProjects || []), ...laborData, ...nonLaborData]
-      //           .filter(Boolean)
-      //           .forEach((item) => {
-      //             const rawId = item.projectId ?? item.projId;
-      //             const topId = getTopLevelProj(rawId);
-      //             if (topId && topId !== "NA" && !topLevelProjects.has(topId)) {
-      //               topLevelProjects.set(topId, item.name ?? item.projName ?? topId);
-      //             }
-      //           });
-      //         if (topLevelProjects.size === 0) {
-      //           throw new Error("No top-level projects are available for Revenue import.");
-      //         }
-      //         const psrResponses = await Promise.allSettled(
-      //           [...topLevelProjects.entries()].map(async ([projId, projName]) => {
-      //             // const response = await axios.get(PSR_DATA_API, {
-      //             //   params: { proj_id: projId, rate_type: "A", subTotTypeNumber: 1 },
-      //             // });
-      //             const response = await axios.get(PSR_DATA_API, {
-      //   params: { rate_type: "A", subTotTypeNumber: 1 },
-      // });
-      //             return normalizePsrRevenueRows(response.data, projId, selectedFY, projName);
-      //           }),
-      //         );
-      //         const importedRevenue = psrResponses.flatMap((result) =>
-      //           result.status === "fulfilled" ? result.value : [],
-      //         ).map((row) => {
-      //           const account = coaMap[row.acctId];
-      //           return { ...row, acctName: row.acctName || account?.name || "", _isDirty: true };
-      //         });
-      //         if (importedRevenue.length === 0) {
-      //           throw new Error("PSR Data returned no importable rows for the selected projects and fiscal year.");
-      //         }
-      //         setRevenueData((prev) => {
-      //           const keys = new Set(prev.map((r) => `${r.projId}|${r.acctId}|${r.orgId}`));
-      //           return [...prev, ...importedRevenue.filter((r) => !keys.has(`${r.projId}|${r.acctId}|${r.orgId}`))];
-      //         });
-      //       }
       if (importActualsRevenue) {
         const response = await axios.get(PSR_DATA_API, {
           params: {
@@ -4436,14 +4892,16 @@ export default function PBRReport() {
         });
       }
 
-      showToast(
-        "Actuals imported successfully for the selected record types.",
-        "success",
-      );
+      if (!skipped)
+        showToast(
+          "Actuals reconciled without adding duplicate rows.",
+          "success",
+        );
     } catch (err) {
       console.error("Automated actuals import failed:", err);
       showToast("Failed to import actuals. Please try again.", "error");
     } finally {
+      importingActualsRef.current = false;
       setLoading(false);
       setSelectedEmployees([]);
       setSelectedVendors([]);
@@ -4617,101 +5075,57 @@ export default function PBRReport() {
   //   const setter = activeTab === "Labor" ? setLaborData : activeTab === "Revenue" ? setRevenueData : setNonLaborData;
 
   const handleAmountChange = (rowUid, month, value) => {
-    // Allow empty value while typing, otherwise max 2 decimal places
-    if (value !== "" && !/^\d*\.?\d{0,2}$/.test(value)) {
-      return;
-    }
-
+    if (isApproved || isMonthLocked(month)) return;
+    if (value !== "" && !/^\d*\.?\d{0,2}$/.test(value)) return;
     const setter =
       activeTab === "Labor"
         ? setLaborData
         : activeTab === "Revenue"
           ? setRevenueData
           : setNonLaborData;
-
     setter((prev) =>
-      prev.map((row) => {
-        if (row.uid !== rowUid) return row;
-
-        let updatedRow;
-        if (activeTab === "Labor") {
-          const numVal = Number(value) || 0;
-          const newMonthAmount = (numVal * (row.rate || 0)).toFixed(2);
-          updatedRow = {
-            ...row,
-            [`${month}Hours`]: value,
-            [`${month}Amount`]: newMonthAmount,
-            _isDirty: true,
-          };
-        } else {
-          updatedRow = { ...row, [`${month}Amount`]: value, _isDirty: true };
-        }
-
-        let newTotalHours = 0;
-        let newTotalAmount = 0;
-        months.forEach((m) => {
-          if (activeTab === "Labor")
-            newTotalHours += Number(updatedRow[`${m}Hours`] || 0);
-          newTotalAmount += Number(updatedRow[`${m}Amount`] || 0);
-        });
-
-        return activeTab === "Labor"
-          ? {
-              ...updatedRow,
-              totalHours: newTotalHours.toFixed(2),
-              totalAmount: newTotalAmount.toFixed(2),
-            }
-          : { ...updatedRow, totalAmount: newTotalAmount.toFixed(2) };
-      }),
+      prev.map((row) =>
+        row.uid === rowUid
+          ? editPbrMonth(
+              row,
+              month,
+              value,
+              activeTab,
+              selectedFY,
+              closingPeriod,
+            )
+          : row,
+      ),
     );
   };
 
   const handleFillRowForward = (rowUid, startMonth, value) => {
-    const val = Number(value) || 0;
+    if (isApproved || !configurationLoaded) return;
     const startIndex = months.indexOf(startMonth);
+    if (startIndex < 0) return;
     const setter =
       activeTab === "Labor"
         ? setLaborData
         : activeTab === "Revenue"
           ? setRevenueData
           : setNonLaborData;
-
     setter((prev) =>
       prev.map((row) => {
         if (row.uid !== rowUid) return row;
-        let newTotalHours = 0;
-        let newTotalAmount = 0;
-        const newMonthly = {};
-        months.forEach((m, idx) => {
-          if (activeTab === "Labor") {
-            const mVal =
-              idx >= startIndex ? val : Number(row[`${m}Hours`] || 0);
-            newMonthly[`${m}Hours`] = mVal;
-            const amt = mVal * (row.rate || 0);
-            newMonthly[`${m}Amount`] = amt;
-            newTotalHours += mVal;
-            newTotalAmount += amt;
-          } else {
-            const mVal =
-              idx >= startIndex ? val : Number(row[`${m}Amount`] || 0);
-            newMonthly[`${m}Amount`] = mVal;
-            newTotalAmount += mVal;
-          }
-        });
-        return activeTab === "Labor"
-          ? {
-              ...row,
-              ...newMonthly,
-              totalHours: newTotalHours.toFixed(2),
-              totalAmount: newTotalAmount.toFixed(2),
-              _isDirty: true,
-            }
-          : {
-              ...row,
-              ...newMonthly,
-              totalAmount: newTotalAmount.toFixed(2),
-              _isDirty: true,
-            };
+        return months
+          .slice(startIndex)
+          .reduce(
+            (updated, month) =>
+              editPbrMonth(
+                updated,
+                month,
+                value,
+                activeTab,
+                selectedFY,
+                closingPeriod,
+              ),
+            row,
+          );
       }),
     );
     setHighlightedRow(rowUid);
@@ -4719,64 +5133,56 @@ export default function PBRReport() {
   };
 
   const handleFillColumnDown = (rowUid, month, value) => {
-    const val = Number(value) || 0;
-    const isLabor = activeTab === "Labor";
-    const dataToFilter = isLabor
-      ? filteredLaborData
-      : activeTab === "Revenue"
-        ? filteredRevenueData
-        : filteredNonLaborData;
-    const setter = isLabor
-      ? setLaborData
-      : activeTab === "Revenue"
-        ? setRevenueData
-        : setNonLaborData;
-
-    const currentIndex = dataToFilter.findIndex((r) => r.uid === rowUid);
-    if (currentIndex === -1) return;
-    const targetUids = new Set(
-      dataToFilter.slice(currentIndex).map((r) => r.uid),
-    );
-
+    if (isApproved || isMonthLocked(month)) return;
+    const rows =
+      activeTab === "Labor"
+        ? filteredLaborData
+        : activeTab === "Revenue"
+          ? filteredRevenueData
+          : filteredNonLaborData;
+    const index = rows.findIndex((row) => row.uid === rowUid);
+    if (index < 0) return;
+    const targets = new Set(rows.slice(index).map((row) => row.uid));
+    const setter =
+      activeTab === "Labor"
+        ? setLaborData
+        : activeTab === "Revenue"
+          ? setRevenueData
+          : setNonLaborData;
     setter((prev) =>
-      prev.map((row) => {
-        if (targetUids.has(row.uid)) {
-          if (isLabor) {
-            const oldMonthHours = Number(row[`${month}Hours`] || 0);
-            const oldMonthAmount = Number(row[`${month}Amount`] || 0);
-            const newMonthAmount = val * (row.rate || 0);
-            const newTotalHours =
-              Number(row.totalHours || 0) - oldMonthHours + val;
-            const newTotalAmount =
-              Number(row.totalAmount || 0) - oldMonthAmount + newMonthAmount;
-            return {
-              ...row,
-              [`${month}Hours`]: value,
-              [`${month}Amount`]: newMonthAmount.toFixed(2),
-              totalHours: newTotalHours.toFixed(2),
-              totalAmount: newTotalAmount.toFixed(2),
-              _isDirty: true,
-            };
-          } else {
-            const oldMonthAmount = Number(row[`${month}Amount`] || 0);
-            const newTotalAmount =
-              Number(row.totalAmount || 0) - oldMonthAmount + val;
-            return {
-              ...row,
-              [`${month}Amount`]: value,
-              totalAmount: newTotalAmount.toFixed(2),
-              _isDirty: true,
-            };
-          }
-        }
-        return row;
-      }),
+      prev.map((row) =>
+        targets.has(row.uid)
+          ? editPbrMonth(
+              row,
+              month,
+              value,
+              activeTab,
+              selectedFY,
+              closingPeriod,
+            )
+          : row,
+      ),
     );
     setHighlightedRow("column_flash");
     setTimeout(() => setHighlightedRow(null), 1200);
   };
 
   const handleSaveRecords = async () => {
+    if (
+      savingRecordsRef.current ||
+      importingActualsRef.current ||
+      importingLaborRef.current ||
+      importingNonLaborRef.current
+    )
+      return;
+    if (!configurationLoaded) {
+      showToast(
+        "Closing-period configuration is unavailable. Reload before saving.",
+        "error",
+      );
+      return;
+    }
+    savingRecordsRef.current = true;
     try {
       // const laborSet = new Set();
       // for (let row of laborData) {
@@ -4831,6 +5237,7 @@ export default function PBRReport() {
           selectedFY,
           selectedVersion,
           currentVersionStatus,
+          closingPeriod,
         ),
         buildPbrSaveRequests(
           nonLaborData,
@@ -4838,6 +5245,7 @@ export default function PBRReport() {
           selectedFY,
           selectedVersion,
           currentVersionStatus,
+          closingPeriod,
         ),
         buildPbrSaveRequests(
           revenueData,
@@ -4845,10 +5253,16 @@ export default function PBRReport() {
           selectedFY,
           selectedVersion,
           currentVersionStatus,
+          closingPeriod,
         ),
       ];
-      const recordsToUpdate = requests.flatMap((request) => request.updates);
-      const recordsToInsert = requests.flatMap((request) => request.inserts);
+      const uniqueRequests = ensurePbrSaveUniqueness(
+        requests,
+        [...laborData, ...nonLaborData, ...revenueData],
+        selectedFY,
+      );
+      const recordsToUpdate = uniqueRequests.updates;
+      const recordsToInsert = uniqueRequests.inserts;
       const combinedRequests = [...recordsToUpdate, ...recordsToInsert];
 
       const dirtyMapping = mappingData.filter((m) => m._isDirty);
@@ -4877,7 +5291,14 @@ export default function PBRReport() {
       }
 
       showToast("Records saved successfully.", "success");
-      await fetchData();
+      const refreshed = await fetchData();
+      if (refreshed === false) {
+        setConfigurationLoaded(false);
+        showToast(
+          "Records saved, but refresh failed. Reload before saving again.",
+          "error",
+        );
+      }
     } catch (err) {
       console.error("Save failed:", err);
       let errorMsg = err.message || "Failed to save records. Please try again.";
@@ -4899,6 +5320,7 @@ export default function PBRReport() {
       }
       showToast(errorMsg, "error");
     } finally {
+      savingRecordsRef.current = false;
       setSavingRecords(false);
     }
   };
@@ -5298,7 +5720,7 @@ export default function PBRReport() {
           "Employee Name",
           "Status",
           "Labor Category",
-          "Hourly Rate",
+          "Base Hourly Rate",
           "Project ID",
           "Project Name",
           "Account ID",
@@ -5306,6 +5728,8 @@ export default function PBRReport() {
           "Organization ID",
           "Organization Name",
           "PBR Account Group",
+          "Inflation Rate %",
+          "Inflated Hourly Rate",
           "Total Hours",
           "Total Amount",
           ...months.flatMap((m) => [`${m} Hrs`, `${m} Amt`]),
@@ -5323,16 +5747,18 @@ export default function PBRReport() {
           r.orgId,
           orgNameMap[normalizeOrgId(r.orgId)] || "",
           r.pbrGroup,
+          n2(r.inflationRate),
+          n2(Number(r.rate || 0) * (1 + Number(r.inflationRate || 0) / 100)),
           n2(r.totalHours),
           n2(r.totalAmount),
           ...months.flatMap((m) => [n2(r[`${m}Hours`]), n2(r[`${m}Amount`])]),
         ]);
-        const { rows, rowStyles } = withTotals(base, 12, headers.length);
+        const { rows, rowStyles } = withTotals(base, 14, headers.length);
         add(
           "Labor",
           buildStyledSheet(headers, rows, {
-            money: [4, 13, ...monthIdx(15, 2)],
-            num: [12, ...monthIdx(14, 2)],
+            money: [4, 13, 15, ...monthIdx(17, 2)],
+            num: [12, 14, ...monthIdx(16, 2)],
             rowStyles,
             widths: [14, 22, 10, 16, 12, 16, 30, 14, 26, 14, 26, 30],
           }),
@@ -5880,6 +6306,16 @@ export default function PBRReport() {
           </div>
         </div>
       </div>
+
+      {configurationLoaded &&
+        ["Labor", "Non-Labor", "Revenue"].includes(activeTab) && (
+          <div className="px-6 py-2 text-xs text-slate-600 bg-slate-50 border-b border-slate-200">
+            Closed through {closingPeriod.slice(0, 7)}. Closed-period values are
+            read-only.
+            {activeTab === "Non-Labor" &&
+              " Enter base amounts; inflated amounts appear beside them."}
+          </div>
+        )}
 
       {/* Tabs */}
       <div className="flex-none flex justify-between items-end border-b border-slate-200 bg-white px-6 pt-2 z-10">
@@ -7571,7 +8007,12 @@ export default function PBRReport() {
                 <button
                   type="button"
                   onClick={handleSaveRecords}
-                  disabled={savingRecords || isApproved}
+                  disabled={
+                    savingRecords ||
+                    isApproved ||
+                    loading ||
+                    !configurationLoaded
+                  }
                   className="px-5 py-2 bg-indigo-600 text-white font-medium text-[13px] rounded-md hover:bg-indigo-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingRecords ? "Saving..." : "Save Records"}
@@ -7666,9 +8107,12 @@ export default function PBRReport() {
                         type="button"
                         onClick={handleImportActuals}
                         disabled={
-                          !importActualsLabor &&
-                          !importActualsNonLabor &&
-                          !importActualsRevenue
+                          loading ||
+                          savingRecords ||
+                          !configurationLoaded ||
+                          (!importActualsLabor &&
+                            !importActualsNonLabor &&
+                            !importActualsRevenue)
                         }
                         className="px-4 py-1.5 bg-indigo-600 text-white rounded-md text-[12px] font-medium hover:bg-indigo-700 disabled:opacity-50"
                       >
@@ -7938,36 +8382,14 @@ export default function PBRReport() {
                                     type="number"
                                     step="0.01"
                                     value={row.rate === 0 ? "" : row.rate}
-                                    onChange={(e) => {
-                                      const newRate =
-                                        Number(e.target.value) || 0;
-                                      setLaborData((prev) =>
-                                        prev.map((r) => {
-                                          if (r.uid !== row.uid) return r;
-                                          let newTotalAmount = 0;
-                                          const newMonthly = {};
-                                          months.forEach((m) => {
-                                            const hrs = Number(
-                                              r[`${m}Hours`] || 0,
-                                            );
-                                            const amt = Number(
-                                              (hrs * newRate).toFixed(2),
-                                            );
-                                            newMonthly[`${m}Amount`] = amt;
-                                            newTotalAmount += amt;
-                                          });
-                                          return {
-                                            ...r,
-                                            rate: e.target.value,
-                                            totalAmount: Number(
-                                              newTotalAmount.toFixed(2),
-                                            ),
-                                            _isDirty: true,
-                                            ...newMonthly,
-                                          };
-                                        }),
-                                      );
-                                    }}
+                                    disabled={!hasOpenPeriods}
+                                    onChange={(e) =>
+                                      handleLeftPaneChange(
+                                        row.uid,
+                                        "rate",
+                                        e.target.value,
+                                      )
+                                    }
                                     placeholder="0.00"
                                     className="w-full h-full min-h-[34px] outline-none focus:ring-inset focus:ring-1 focus:ring-indigo-500 px-3 text-[12px] truncate transition-colors bg-transparent hover:bg-white text-slate-700 focus:bg-white rounded-sm"
                                   />
@@ -8161,6 +8583,12 @@ export default function PBRReport() {
                     <tr className="text-slate-500 text-[11px] font-semibold tracking-wider">
                       {activeTab === "Labor" ? (
                         <>
+                          <th className="px-3 py-2 text-right border-r border-slate-200 min-w-[120px]">
+                            Inflation Rate %
+                          </th>
+                          <th className="px-3 py-2 text-right border-r border-slate-200 min-w-[140px]">
+                            Inflated Hourly Rate
+                          </th>
                           <th className="px-3 py-2 text-right border-r border-slate-200 min-w-[100px]">
                             Total Hours
                           </th>
@@ -8182,7 +8610,7 @@ export default function PBRReport() {
                         <>
                           {activeTab !== "Revenue" && (
                             <th className="px-3 py-2 text-right border-r border-slate-200 min-w-[120px]">
-                              Inflation Rate
+                              Inflation Rate %
                             </th>
                           )}
                           <th className="px-3 py-2 text-right border-r border-slate-200 min-w-[120px]">
@@ -8193,7 +8621,9 @@ export default function PBRReport() {
                               key={m}
                               className="px-3 py-2 text-right border-r border-slate-200 min-w-[100px]"
                             >
-                              {m} Amt
+                              {activeTab === "Non-Labor"
+                                ? `${m} Base Amt / Inflated Amt`
+                                : `${m} Amt`}
                             </th>
                           ))}
                         </>
@@ -8205,6 +8635,8 @@ export default function PBRReport() {
                       <tr className="bg-slate-100 border-b border-slate-200">
                         {activeTab === "Labor" ? (
                           <>
+                            <th className="px-2 py-1.5 border-r border-slate-200"></th>
+                            <th className="px-2 py-1.5 border-r border-slate-200"></th>
                             <th className="px-2 py-1.5 border-r border-slate-200">
                               <div className="h-[26px]"></div>
                             </th>
@@ -8250,6 +8682,30 @@ export default function PBRReport() {
                           >
                             {activeTab === "Labor" ? (
                               <>
+                                <td className="border-r border-slate-100 h-[36px] p-0">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={row.inflationRate ?? 0}
+                                    disabled={isApproved || !hasOpenPeriods}
+                                    onChange={(e) =>
+                                      handleLeftPaneChange(
+                                        row.uid,
+                                        "inflationRate",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full min-h-[34px] px-3 text-right text-[12px] bg-transparent outline-none focus:ring-1 focus:ring-indigo-500 disabled:text-slate-400"
+                                  />
+                                </td>
+                                <td className="px-3 py-1.5 border-r border-slate-100 text-right text-slate-600">
+                                  {formatCurrency(
+                                    Number(row.rate || 0) *
+                                      (1 +
+                                        Number(row.inflationRate || 0) / 100),
+                                  )}
+                                </td>
                                 {/* <td className="px-3 py-1.5 border-r border-slate-100 text-right font-medium text-slate-800 h-[36px]">{row.totalHours || "0.00"}</td> */}
                                 <td className="px-3 py-1.5 border-r border-slate-100 text-right font-medium text-slate-800 h-[36px]">
                                   {" "}
@@ -8265,7 +8721,9 @@ export default function PBRReport() {
                                         <input
                                           type="number"
                                           step="0.01"
-                                          disabled={isApproved}
+                                          disabled={
+                                            isApproved || isMonthLocked(m)
+                                          }
                                           value={
                                             row[`${m}Hours`] === undefined ||
                                             row[`${m}Hours`] === null
@@ -8281,7 +8739,7 @@ export default function PBRReport() {
                                           }
                                           className="w-full h-full min-h-[34px] border-none px-3 text-right text-[12px] text-slate-700 outline-none focus:ring-inset focus:ring-1 focus:ring-indigo-500 bg-transparent hover:bg-white focus:bg-white disabled:text-slate-400 rounded-sm"
                                         />
-                                        {!isApproved && (
+                                        {!isApproved && !isMonthLocked(m) && (
                                           <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity absolute left-1">
                                             <button
                                               type="button"
@@ -8322,8 +8780,22 @@ export default function PBRReport() {
                             ) : (
                               <>
                                 {activeTab !== "Revenue" && (
-                                  <td className="px-3 py-1.5 border-r border-slate-100 text-right font-medium text-slate-600 h-[36px]">
-                                    {row.inflationRate || "0.00"}%
+                                  <td className="border-r border-slate-100 h-[36px] p-0">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={row.inflationRate ?? 0}
+                                      disabled={isApproved || !hasOpenPeriods}
+                                      onChange={(e) =>
+                                        handleLeftPaneChange(
+                                          row.uid,
+                                          "inflationRate",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full min-h-[34px] px-3 text-right text-[12px] bg-transparent outline-none focus:ring-1 focus:ring-indigo-500 disabled:text-slate-400"
+                                    />
                                   </td>
                                 )}
                                 <td className="px-3 py-1.5 border-r border-slate-100 text-right font-semibold text-indigo-700 h-[36px]">
@@ -8336,12 +8808,21 @@ export default function PBRReport() {
                                         <input
                                           type="number"
                                           step="0.01"
-                                          disabled={isApproved}
+                                          disabled={
+                                            isApproved || isMonthLocked(m)
+                                          }
                                           value={
-                                            row[`${m}Amount`] === undefined ||
-                                            row[`${m}Amount`] === null
-                                              ? ""
-                                              : row[`${m}Amount`]
+                                            activeTab === "Non-Labor"
+                                              ? isMonthLocked(m)
+                                                ? Number(row[`${m}Amount`] || 0)
+                                                : (row._baseAmountInputs?.[m] ??
+                                                  Number(
+                                                    getPbrBaseAmount(
+                                                      row,
+                                                      m,
+                                                    ).toFixed(2),
+                                                  ))
+                                              : (row[`${m}Amount`] ?? "")
                                           }
                                           onChange={(e) =>
                                             handleAmountChange(
@@ -8352,7 +8833,18 @@ export default function PBRReport() {
                                           }
                                           className="w-full h-full min-h-[34px] border-none px-3 text-right text-[12px] text-slate-700 outline-none focus:ring-inset focus:ring-1 focus:ring-indigo-500 bg-transparent hover:bg-white focus:bg-white disabled:text-slate-400 rounded-sm"
                                         />
-                                        {!isApproved && (
+                                        {activeTab === "Non-Labor" &&
+                                          !isMonthLocked(m) && (
+                                            <span
+                                              className="px-2 text-[12px] font-medium text-indigo-700"
+                                              title="Amount after inflation"
+                                            >
+                                              {formatCurrency(
+                                                row[`${m}Amount`],
+                                              )}
+                                            </span>
+                                          )}
+                                        {!isApproved && !isMonthLocked(m) && (
                                           <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity absolute left-1">
                                             <button
                                               type="button"
@@ -8360,7 +8852,9 @@ export default function PBRReport() {
                                                 handleFillRowForward(
                                                   row.uid,
                                                   m,
-                                                  row[`${m}Amount`],
+                                                  activeTab === "Non-Labor"
+                                                    ? getPbrBaseAmount(row, m)
+                                                    : row[`${m}Amount`],
                                                 )
                                               }
                                               className="text-slate-400 hover:text-indigo-600 focus:outline-none"
@@ -8373,7 +8867,9 @@ export default function PBRReport() {
                                                 handleFillColumnDown(
                                                   row.uid,
                                                   m,
-                                                  row[`${m}Amount`],
+                                                  activeTab === "Non-Labor"
+                                                    ? getPbrBaseAmount(row, m)
+                                                    : row[`${m}Amount`],
                                                 )
                                               }
                                               className="text-slate-400 hover:text-indigo-600 focus:outline-none"
@@ -8400,6 +8896,12 @@ export default function PBRReport() {
                     <tr className="bg-slate-50 border-t border-slate-200 font-semibold text-[13px] sticky bottom-0 z-40 shadow-[0_-1px_0_0_#e2e8f0]">
                       {activeTab === "Labor" ? (
                         <>
+                          <td className="px-3 py-2 border-r border-slate-200 text-right">
+                            -
+                          </td>
+                          <td className="px-3 py-2 border-r border-slate-200 text-right">
+                            -
+                          </td>
                           <td className="px-3 py-2 border-r border-slate-200 text-right text-slate-800">
                             {getActiveFilteredData()
                               .reduce(
