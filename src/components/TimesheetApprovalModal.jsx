@@ -758,6 +758,7 @@ export default function TimesheetApprovalView({
   timesheetDate,
   onClose,
   resourceType,
+  userId,
 }) {
   const [lines, setLines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -808,17 +809,36 @@ export default function TimesheetApprovalView({
 
       const dataArray = Array.isArray(data) ? data : [];
 
+      // const filteredData = dataArray.filter((item) => {
+      //   if (!timesheetDate) return true;
+
+      //   const itemDate = new Date(item.timesheet_Date);
+      //   const selectedDate = new Date(timesheetDate);
+
+      //   return (
+      //     itemDate.getFullYear() === selectedDate.getFullYear() &&
+      //     itemDate.getMonth() === selectedDate.getMonth() &&
+      //     itemDate.getDate() === selectedDate.getDate()
+      //   );
+      // });
+
       const filteredData = dataArray.filter((item) => {
         if (!timesheetDate) return true;
 
         const itemDate = new Date(item.timesheet_Date);
         const selectedDate = new Date(timesheetDate);
 
-        return (
+        const matchesDate =
           itemDate.getFullYear() === selectedDate.getFullYear() &&
           itemDate.getMonth() === selectedDate.getMonth() &&
-          itemDate.getDate() === selectedDate.getDate()
-        );
+          itemDate.getDate() === selectedDate.getDate();
+
+        // Filter by userId if userId is passed/available
+        const matchesUser = userId
+          ? String(item.pm_User_Id || item.pm_User_Id || "") === String(userId)
+          : true;
+
+        return matchesDate && matchesUser;
       });
 
       if (filteredData.length > 0) {

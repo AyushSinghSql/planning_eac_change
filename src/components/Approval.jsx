@@ -237,6 +237,8 @@ export default function Approval() {
   const colWidth = 150;
   const minTableWidth = columns.length * colWidth;
 
+  const userId = currentUser?.name || "";
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
     try {
@@ -2286,6 +2288,7 @@ export default function Approval() {
                 resourceId={selectedResourceId}
                 timesheetDate={selectedTimesheetDate}
                 resourceType={selectedResourceType}
+                userId={userId}
                 onClose={() => {
                   setSelectedResourceId(null);
                   setCurrentSelectedRowId(null);

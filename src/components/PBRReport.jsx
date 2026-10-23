@@ -74,8 +74,16 @@ const ORGS_API = `${backendUrl}/Orgnization/GetAllOrgs`;
 const PBR_CONFIG_API = `${backendUrl}/api/Configuration/GetAllConfigValuesByProject/xxxxx`;
 const GL_DATA_API = `${backendUrl}/api/ForecastReport/GetGlPostDetail`;
 
+const MAINTENANCE_API = `${backendUrl}/api/PbrMaintenance`;
+
+const MAINTENANCE_CATEGORY = {
+  PBR_GROUP: "PBR_GROUP",
+  PROJECT_PERFORMANCE: "PROJECT_PERFORMANCE",
+};
+
 // SSAI Active Report account mapping. Revenue is sourced only from the Revenue section.
 const REPORT_ACCOUNT_GROUPS = {
+  "410-009": "Revenue",
   "500-001-110": "Direct Labor",
   "500-001-120": "Direct Labor",
   "500-002-110": "Direct Labor",
@@ -148,14 +156,14 @@ const REPORT_ACCOUNT_GROUPS = {
   "802-005-105": "Fringe Benefits",
   "802-007-105": "Fringe Benefits",
   "802-008-105": "Fringe Benefits",
-  "803-001-100": "Fringe Benefits",
-  "803-002-100": "Fringe Benefits",
-  "803-003-100": "Fringe Benefits",
-  "803-005-100": "Fringe Benefits",
-  "804-001-100": "Fringe Benefits",
-  "804-002-100": "Fringe Benefits",
-  "804-003-100": "Fringe Benefits",
-  "804-004-100": "Fringe Benefits",
+  "803-001-100": "Statutory & 401K",
+  "803-002-100": "Statutory & 401K",
+  "803-003-100": "Statutory & 401K",
+  "803-005-100": "Statutory & 401K",
+  "804-001-100": "Statutory & 401K",
+  "804-002-100": "Statutory & 401K",
+  "804-003-100": "Statutory & 401K",
+  "804-004-100": "Statutory & 401K",
   "805-001-105": "Fringe Benefits",
   "805-003-105": "Fringe Benefits",
   "805-005-105": "Fringe Benefits",
@@ -627,6 +635,12 @@ function mergePbrActuals(previous, imported, fiscalYear, closingPeriod) {
         skippedAmbiguousPeriods += 1;
         return; // Do not pick an arbitrary DB ID or insert another copy.
       }
+      // Historical actuals may be loaded initially, but saved closed records stay frozen.
+      if (
+        isPbrPeriodClosed(fiscalYear, period - 1, closingPeriod) &&
+        savedMatches.length > 0
+      )
+        return;
       const match = savedMatches[0] || matches[0];
       if (!match) {
         const created = {
@@ -654,7 +668,12 @@ function mergePbrActuals(previous, imported, fiscalYear, closingPeriod) {
         ...original,
         [`${month}Hours`]: hours,
         [`${month}Amount`]: amount,
-        _isDirty: original._isDirty || changed,
+        _isDirty: Boolean(
+          original._isDirty ||
+          changed ||
+          ((original._isPersisted || original.monthlyRecords?.length > 0) &&
+            savedMatches.length === 0),
+        ),
         _sourceActuals: true,
         _baseAmounts: {
           ...(original._baseAmounts || {}),
@@ -917,21 +936,29 @@ function buildPbrSaveRequests(
       const metadataChanged = row._savedMetadata !== pbrRowMetadata(row);
       const newPeriods = [];
       months.forEach((month, index) => {
-        if (isPbrPeriodClosed(fiscalYear, index, closingPeriod)) return;
         if (row._actualImport && !row._importedPeriods?.includes(index + 1))
           return;
-        const period = {
-          fyCd: Number(fiscalYear),
-          pdNo: index + 1,
-          hrs: isLabor ? Number(row[`${month}Hours`] || 0) : 0,
-          amt: Number(row[`${month}Amount`] || 0),
-          infRt: type === "REVENUE" ? 0 : getPbrPeriodInflation(row, month),
-        };
         const existing = savedPeriods.find(
           (saved) =>
             Number(saved.fyCd ?? fiscalYear) === Number(fiscalYear) &&
             Number(saved.pdNo) === index + 1,
         );
+        const isClosed = isPbrPeriodClosed(fiscalYear, index, closingPeriod);
+        const isImportedActual = Boolean(
+          row._sourceActuals && row._importedPeriods?.includes(index + 1),
+        );
+        // Permit initial actuals insertion, including history. Never overwrite a saved closed record.
+        if (isClosed && (existing || !isImportedActual)) return;
+        const period = {
+          fyCd: Number(fiscalYear),
+          pdNo: index + 1,
+          hrs: isLabor ? Number(row[`${month}Hours`] || 0) : 0,
+          amt: Number(row[`${month}Amount`] || 0),
+          infRt:
+            isClosed || type === "REVENUE"
+              ? 0
+              : getPbrPeriodInflation(row, month),
+        };
         if (existing) {
           const id = Number(existing.id);
           if (existing.id == null || !Number.isSafeInteger(id) || id <= 0) {
@@ -954,8 +981,13 @@ function buildPbrSaveRequests(
           if (!changed) return;
           // Both the update envelope and its monthly record identify the same DB record.
           updates.push({ ...fields, id, monthlyData: [{ ...period, id }] });
-        } else if (!isPersisted || period.hrs !== 0 || period.amt !== 0) {
-          // Existing rows only insert populated months that have no saved record.
+        } else if (
+          !isPersisted ||
+          isImportedActual ||
+          period.hrs !== 0 ||
+          period.amt !== 0
+        ) {
+          // Insert missing actual periods, including explicit zeros, or populated manual open periods.
           newPeriods.push(period);
         }
       });
@@ -1032,11 +1064,18 @@ function normalizePsrRevenueRows(
       source.account_description ??
       source.name ??
       "";
-    const acctId = String(sourceAcctId ?? "").trim();
+    // const acctId = String(sourceAcctId ?? "").trim();
+    // const orgId = String(source.orgId ?? source.org_id ?? source.organizationId ?? "").trim();
+    // const key = `${topProject}_${acctId}_${orgId}`;
+    const acctId = "410-009";
     const orgId = String(
       source.orgId ?? source.org_id ?? source.organizationId ?? "",
     ).trim();
-    const key = `${topProject}_${acctId}_${orgId}`;
+
+    if (!orgId.startsWith("1")) return;
+
+    // const key = `${topProject}_${acctId}_${orgId}`;
+    const key = topProject;
     if (!byKey.has(key)) {
       const row = {
         uid: `psr_${topProject}_${acctId}_${orgId}_${rowIndex}`,
@@ -1051,15 +1090,20 @@ function normalizePsrRevenueRows(
           projectName ??
           topProject,
         acctId,
-        acctName: sourceAcctName || (acctId ? `Account ${acctId}` : "Revenue"),
+        // acctName: sourceAcctName || (acctId ? `Account ${acctId}` : "Revenue"),
+        acctName: "Revenue",
         orgId,
         orgName:
           source.orgName ?? source.org_name ?? source.organizationName ?? "",
         pbrGroup:
           source.pbrGroup ?? source.pbrAcctGrp ?? source.budgetSheet ?? "",
+        // inflationRate: 0, _isDirty: false, totalAmount: 0,
         inflationRate: 0,
         _isDirty: false,
         totalAmount: 0,
+        _actualImport: true,
+        _sourceActuals: true,
+        _importedPeriods: [],
       };
       monthNames.forEach((m) => {
         row[`${m}Amount`] = 0;
@@ -1073,58 +1117,93 @@ function normalizePsrRevenueRows(
       : Array.isArray(source.periods)
         ? source.periods
         : null;
+    //     if (periodRows) {
+    //       periodRows.forEach((period) => {
+    //         const year = Number(period.fyCd ?? period.fy_cd ?? period.year ?? selectedFY);
+    //         const periodNo = Number(period.pdNo ?? period.pd_no ?? period.period ?? period.month ?? 0);
+    //         if (year !== Number(selectedFY) || periodNo < 1 || periodNo > 12) return;
+    //         // const amount = Number(period.ptdIncurAmt ?? 0) || 0;
+    //         const amount = Number(period.ptdIncurAmt ?? 0) || 0;
+    //         target[`${monthNames[periodNo - 1]}Amount`] += amount;
+    //       });
+    //     } else {
+    //       monthNames.forEach((m, index) => {
+    //         const value = source[`${m}Amount`] ?? source[`${m.toLowerCase()}Amount`] ?? source[`${m.toLowerCase()}_amount`];
+    //         if (value !== undefined && value !== null) target[`${m}Amount`] += Number(value) || 0;
+    //         // else {
+    //         //   const periodNo = Number(source.pdNo ?? source.pd_no ?? source.period ?? source.month ?? 0);
+    //         //   const year = Number(source.fyCd ?? source.fy_cd ?? source.year ?? selectedFY);
+    //         //   if (periodNo === index + 1 && year === Number(selectedFY)) {
+    //         //     target[`${m}Amount`] += Number(source.pyIncurAmt ?? source.py_incur_amt ?? source.revAmt ?? source.rev_amt ?? source.amount ?? source.amt ?? source.ptdIncurAmt ?? 0) || 0;
+    //         //   }
+    //         // }
+    //         else {
+    //   const periodNo = Number(
+    //     source.pdNo ?? source.pd_no ?? source.period ?? source.month ?? 0
+    //   );
+
+    //   const year = Number(
+    //     source.fyCd ?? source.fy_cd ?? source.year ?? selectedFY
+    //   );
+
+    //   if (
+    //     year === Number(selectedFY) &&
+    //     Number.isInteger(periodNo) &&
+    //     periodNo >= 1 &&
+    //     periodNo <= 12
+    //   ) {
+    //     target[`${monthNames[periodNo - 1]}Amount`] +=
+    //       Number(source.ptdIncurAmt ?? 0) || 0;
+    //   }
+    // }
+    //       });
+    //     }
+    //   });
     if (periodRows) {
       periodRows.forEach((period) => {
         const year = Number(
           period.fyCd ?? period.fy_cd ?? period.year ?? selectedFY,
         );
+
         const periodNo = Number(
           period.pdNo ?? period.pd_no ?? period.period ?? period.month ?? 0,
         );
-        if (year !== Number(selectedFY) || periodNo < 1 || periodNo > 12)
+
+        if (
+          year !== Number(selectedFY) ||
+          !Number.isInteger(periodNo) ||
+          periodNo < 1 ||
+          periodNo > 12
+        )
           return;
-        const amount =
-          Number(
-            period.amt ??
-              period.amount ??
-              period.revAmt ??
-              period.rev_amt ??
-              period.revenue ??
-              period.ptdIncurAmt ??
-              0,
-          ) || 0;
-        target[`${monthNames[periodNo - 1]}Amount`] += amount;
-      });
-    } else {
-      monthNames.forEach((m, index) => {
-        const value =
-          source[`${m}Amount`] ??
-          source[`${m.toLowerCase()}Amount`] ??
-          source[`${m.toLowerCase()}_amount`];
-        if (value !== undefined && value !== null)
-          target[`${m}Amount`] += Number(value) || 0;
-        else {
-          const periodNo = Number(
-            source.pdNo ?? source.pd_no ?? source.period ?? source.month ?? 0,
-          );
-          const year = Number(
-            source.fyCd ?? source.fy_cd ?? source.year ?? selectedFY,
-          );
-          if (periodNo === index + 1 && year === Number(selectedFY)) {
-            target[`${m}Amount`] +=
-              Number(
-                source.pyIncurAmt ??
-                  source.py_incur_amt ??
-                  source.revAmt ??
-                  source.rev_amt ??
-                  source.amount ??
-                  source.amt ??
-                  source.ptdIncurAmt ??
-                  0,
-              ) || 0;
-          }
+
+        target[`${monthNames[periodNo - 1]}Amount`] +=
+          Number(period.ptdIncurAmt ?? 0) || 0;
+        if (!target._importedPeriods.includes(periodNo)) {
+          target._importedPeriods.push(periodNo);
         }
       });
+    } else {
+      const year = Number(
+        source.fyCd ?? source.fy_cd ?? source.year ?? selectedFY,
+      );
+
+      const periodNo = Number(
+        source.pdNo ?? source.pd_no ?? source.period ?? source.month ?? 0,
+      );
+
+      if (
+        year === Number(selectedFY) &&
+        Number.isInteger(periodNo) &&
+        periodNo >= 1 &&
+        periodNo <= 12
+      ) {
+        target[`${monthNames[periodNo - 1]}Amount`] +=
+          Number(source.ptdIncurAmt ?? 0) || 0;
+        if (!target._importedPeriods.includes(periodNo)) {
+          target._importedPeriods.push(periodNo);
+        }
+      }
     }
   });
 
@@ -4459,7 +4538,7 @@ export default function PBRReport() {
       );
       if (imported.length === 0) {
         showToast(
-          "No eligible labor actuals in open periods for the selected fiscal year.",
+          "No eligible labor actuals for the selected fiscal year.",
           "success",
         );
         return;
@@ -4761,7 +4840,7 @@ export default function PBRReport() {
       );
       if (imported.length === 0) {
         showToast(
-          "No eligible non-labor actuals in open periods for the selected fiscal year.",
+          "No eligible non-labor actuals for the selected fiscal year.",
           "success",
         );
         return;
@@ -4842,7 +4921,7 @@ export default function PBRReport() {
       if (importActualsRevenue) {
         const response = await axios.get(PSR_DATA_API, {
           params: {
-            rate_type: "A",
+            rate_type: "T",
             subTotTypeNumber: 1,
           },
         });
@@ -4852,7 +4931,7 @@ export default function PBRReport() {
           "",
           selectedFY,
         )
-          .filter((row) => !isExcludedActualAccount(row.acctId))
+          // .filter((row) => !isExcludedActualAccount(row.acctId))
           .map((row) => {
             const account = coaMap[row.acctId];
             const proj = allProjects.find((p) => p.projectId === row.projId);
@@ -6307,15 +6386,12 @@ export default function PBRReport() {
         </div>
       </div>
 
-      {configurationLoaded &&
-        ["Labor", "Non-Labor", "Revenue"].includes(activeTab) && (
-          <div className="px-6 py-2 text-xs text-slate-600 bg-slate-50 border-b border-slate-200">
-            Closed through {closingPeriod.slice(0, 7)}. Closed-period values are
-            read-only.
-            {activeTab === "Non-Labor" &&
-              " Enter base amounts; inflated amounts appear beside them."}
-          </div>
-        )}
+      {/* {configurationLoaded && ["Labor", "Non-Labor", "Revenue"].includes(activeTab) && (
+        <div className="px-6 py-2 text-xs text-slate-600 bg-slate-50 border-b border-slate-200">
+          Closed through {closingPeriod.slice(0, 7)}. Saved closed-period values are read-only. New historical actuals can be imported and saved.
+          {activeTab === "Non-Labor" && " Enter base amounts; inflated amounts appear beside them."}
+        </div>
+      )} */}
 
       {/* Tabs */}
       <div className="flex-none flex justify-between items-end border-b border-slate-200 bg-white px-6 pt-2 z-10">
@@ -6431,20 +6507,16 @@ export default function PBRReport() {
               </span>
             </button>
           ))}
-          <button
+          {/* <button
             type="button"
             onClick={() => {
-              setUniformEscalationRate(
-                String(
-                  getEffectivePoolEscalation(activeRateTab, selectedFY) ?? 0,
-                ),
-              );
+              setUniformEscalationRate(String(getEffectivePoolEscalation(activeRateTab, selectedFY) ?? 0));
               setShowEscalationOverride(true);
             }}
             className="ml-auto mb-2 shrink-0 rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
           >
             Override Escalations
-          </button>
+          </button> */}
         </div>
       )}
 
@@ -8622,7 +8694,7 @@ export default function PBRReport() {
                               className="px-3 py-2 text-right border-r border-slate-200 min-w-[100px]"
                             >
                               {activeTab === "Non-Labor"
-                                ? `${m} Base Amt / Inflated Amt`
+                                ? `${m}  Amt / Inflated Amt`
                                 : `${m} Amt`}
                             </th>
                           ))}

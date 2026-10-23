@@ -393,7 +393,7 @@ export default function DashboardView({
           icon: <Users size={18} />,
           label: "Employees",
           value: formatNumber(analytics.employeeCount),
-          hint: `${formatNumber(analytics.activeEmployeeCount)} active`,
+          // hint: `${formatNumber(analytics.activeEmployeeCount)} active`,
           tone: "teal",
         },
         {

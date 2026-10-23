@@ -732,11 +732,25 @@ export default function TimesheetDetailModal({
 
       const normalizedTimesheetDate = normalizeTargetDate(timesheetData.Date);
 
+      // const filteredData = dataArray.filter((item) => {
+      //   // item.timesheet_Date is typically an ISO string from the API (e.g., '2025-10-12T00:00:00')
+      //   const itemDateOnly = item.timesheet_Date.split("T")[0]; // Direct string comparison (YYYY-MM-DD) bypasses local timezone issues
+      //   return itemDateOnly === normalizedTimesheetDate;
+      // });
       const filteredData = dataArray.filter((item) => {
-        // item.timesheet_Date is typically an ISO string from the API (e.g., '2025-10-12T00:00:00')
-        const itemDateOnly = item.timesheet_Date.split("T")[0]; // Direct string comparison (YYYY-MM-DD) bypasses local timezone issues
-        return itemDateOnly === normalizedTimesheetDate;
-      }); // --- END: FIX FOR TIMEZONE-INDEPENDENT DATE COMPARISON ---
+        const itemDateOnly = item.timesheet_Date.split("T")[0];
+        const matchesDate = itemDateOnly === normalizedTimesheetDate;
+
+        // Filter by userId if userId is provided/available
+        const matchesUser = userId
+          ? String(item.pm_User_Id || item.pm_User_Id || "") ===
+            String(currentUser?.name)
+          : true;
+
+        return matchesDate && matchesUser;
+      });
+
+      // --- END: FIX FOR TIMEZONE-INDEPENDENT DATE COMPARISON ---
 
       if (filteredData.length > 0) {
         setTimesheetDetails(filteredData[0]);
@@ -1571,9 +1585,9 @@ export default function TimesheetDetailModal({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 md:p-6 w-full max-w-[95vw] font-inter">
-      {showReasonPrompt && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[10001] flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md border border-gray-200">
+      {/* {showReasonPrompt && (
+        <div className="bg-white rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl border border-gray-100 animate-premium-popup">
+          <div className="mb-4">
             <h3 className="text-base font-bold text-gray-900 mb-3">
               Reason for Timesheet Update
             </h3>
@@ -1603,8 +1617,42 @@ export default function TimesheetDetailModal({
             </div>
           </div>
         </div>
+      )} */}
+      {showReasonPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl border border-gray-100 animate-premium-popup">
+            <div className="mb-4">
+              <h3 className="text-base font-bold text-gray-900 mb-3">
+                Reason for Timesheet Update
+              </h3>
+              <textarea
+                rows="3"
+                className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none text-xs text-black"
+                value={updateReason}
+                onChange={(e) => setUpdateReason(e.target.value)}
+                placeholder="E.g., Corrected hours for Monday, switched project code."
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <ActionButton
+                  onClick={() => {
+                    setShowReasonPrompt(false);
+                    setUpdateReason("");
+                    setIsCurrentlySaving(false);
+                  }}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton
+                  onClick={() => handleSave(updateReason)}
+                  disabled={!updateReason.trim() || isCurrentlySaving}
+                >
+                  {isCurrentlySaving ? "Saving..." : "Confirm & Save"}
+                </ActionButton>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
-
       <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
         <div className="flex flex-col">
           <h2 className="text-lg font-bold text-gray-800 mb-1">
