@@ -775,6 +775,10 @@ export default function MainTable() {
   const [filterMonth, setFilterMonth] = useState(currentMonth);
   const [filterYear, setFilterYear] = useState(currentYear);
 
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveData, setLeaveData] = useState([]);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+
   const userRole = currentUser?.role?.toLowerCase();
   const canNotify = !!currentUser;
 
@@ -1335,6 +1339,39 @@ export default function MainTable() {
     navigate("/");
   };
 
+  const handleLeaveBalance = async () => {
+    if (!currentUser || !currentUser.name) {
+      showToast("User session not found.", "error");
+      return;
+    }
+
+    const currentYear = new Date().getFullYear();
+    setShowLeaveModal(true);
+    setLeaveLoading(true);
+
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/EmployeeLeaveBeginningBalance/GetByEmployeeLeaves/${currentUser.name}?leaveYear=${currentYear}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLeaveData(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showToast(`Error fetching leave balance: ${error.message}`, "error");
+      setLeaveData([]);
+    } finally {
+      setLeaveLoading(false);
+    }
+  };
+
   const handleCreateClick = () => {
     // Close any open detail modal first
     setSelectedTimesheetData(null);
@@ -1497,6 +1534,12 @@ export default function MainTable() {
                 {canNotify && (
                   <div className="flex gap-2">
                     <button
+                      onClick={handleLeaveBalance}
+                      className="btn1 btn-blue cursor-pointer"
+                    >
+                      Leave
+                    </button>
+                    <button
                       onClick={handleCreateClick}
                       className="btn1 btn-blue cursor-pointer"
                     >
@@ -1588,6 +1631,119 @@ export default function MainTable() {
               </div>
             </div>
           </div>
+
+          {/* Leave Balance Modal */}
+          {showLeaveModal && (
+            <div
+              className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowLeaveModal(false)}
+            >
+              <div
+                className="bg-white rounded-xl p-6 w-full max-w-4xl shadow-2xl border border-gray-100 font-inter"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                  <h3 className="text-base font-bold text-gray-900">
+                    Employee Leave Balances ({new Date().getFullYear()})
+                  </h3>
+                  <button
+                    onClick={() => setShowLeaveModal(false)}
+                    className="btn1 btn-blue !py-1 !px-3 text-xs cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="overflow-auto max-h-[60vh] border border-gray-300 rounded-lg">
+                  {leaveLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-xs font-medium text-gray-600">
+                        Loading leave data...
+                      </span>
+                    </div>
+                  ) : (
+                    <table className="w-full text-xs border-collapse">
+                      <thead className="sticky top-0 bg-[#e5f3fb] z-10">
+                        <tr>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
+                            Leave Code
+                          </th>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-left">
+                            Leave Type Name
+                          </th>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
+                            Beginning Balance
+                          </th>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
+                            Carried Forward
+                          </th>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
+                            Adjustments
+                          </th>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
+                            Accrued Hours
+                          </th>
+                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
+                            Leave Taken
+                          </th>
+                          <th className="px-3 py-2 border-b border-gray-300 font-semibold text-black text-center">
+                            Available Balance
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {leaveData.length > 0 ? (
+                          leaveData.map((item, idx) => (
+                            <tr
+                              key={idx}
+                              className={
+                                idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                              }
+                            >
+                              <td className="px-3 py-2 text-center border-r border-b border-gray-300 font-bold text-blue-700">
+                                {item.leaveTypeCode}
+                              </td>
+                              <td className="px-3 py-2 text-left border-r border-b border-gray-300 font-medium text-gray-800">
+                                {item.leaveTypeName}
+                              </td>
+                              <td className="px-3 py-2 text-center border-r border-b border-gray-300">
+                                {item.beginningBalance}
+                              </td>
+                              <td className="px-3 py-2 text-center border-r border-b border-gray-300">
+                                {item.carriedForward}
+                              </td>
+                              <td className="px-3 py-2 text-center border-r border-b border-gray-300">
+                                {item.beginningAdjustments}
+                              </td>
+                              <td className="px-3 py-2 text-center border-r border-b border-gray-300">
+                                {item.accruedHours}
+                              </td>
+                              <td className="px-3 py-2 text-center border-r border-b border-gray-300">
+                                {item.leaveTakenHours}
+                              </td>
+                              <td className="px-3 py-2 text-center border-b border-gray-300 font-bold text-green-600 bg-green-50/40">
+                                {item.availableBalance}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan="8"
+                              className="text-center p-8 italic text-gray-500"
+                            >
+                              No leave balance records found.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Inline TimesheetLine - Renders below the main table */}
           {isModalOpen && (

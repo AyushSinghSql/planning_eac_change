@@ -759,6 +759,7 @@ export default function TimesheetApprovalView({
   onClose,
   resourceType,
   userId,
+  currentUser,
 }) {
   const [lines, setLines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -833,10 +834,16 @@ export default function TimesheetApprovalView({
           itemDate.getMonth() === selectedDate.getMonth() &&
           itemDate.getDate() === selectedDate.getDate();
 
+        const isProjectManager =
+          currentUser?.role?.toUpperCase() === "PROJECT MANAGER" ||
+          currentUser?.role === "PM";
+
         // Filter by userId if userId is passed/available
-        const matchesUser = userId
-          ? String(item.pm_User_Id || item.pm_User_Id || "") === String(userId)
-          : true;
+        const matchesUser =
+          isProjectManager && userId
+            ? String(item.pm_User_Id || item.pm_User_Id || "") ===
+              String(userId)
+            : true;
 
         return matchesDate && matchesUser;
       });

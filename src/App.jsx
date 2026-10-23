@@ -491,6 +491,7 @@ import WorkflowUserMapping from "./components/WorkflowUserMapping";
 import ProjectMaster from "./components/ProjectMaster";
 import EmployeeMaster from "./components/EmployeeMaster";
 import ProjectUserMapping from "./components/ProjectUserMapping";
+import ApprovalEnquiry from "./components/ApprovalEnquiry";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -1070,7 +1071,8 @@ function App() {
                 // <RequireAdmin>
                 <div className="mt-12 ml-2">
                   {" "}
-                  <Approval />
+                  {/* <Approval /> */}
+                  {isAdmin ? <Approval /> : <ApprovalEnquiry />}
                 </div>
                 // </RequireAdmin>
               }

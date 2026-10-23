@@ -741,11 +741,15 @@ export default function TimesheetDetailModal({
         const itemDateOnly = item.timesheet_Date.split("T")[0];
         const matchesDate = itemDateOnly === normalizedTimesheetDate;
 
+        const isProjectManager =
+          currentUser?.role?.toUpperCase() === "PROJECT MANAGER" || currentUser?.role === "PM";
+
         // Filter by userId if userId is provided/available
-        const matchesUser = userId
-          ? String(item.pm_User_Id || item.pm_User_Id || "") ===
-            String(currentUser?.name)
-          : true;
+        const matchesUser =
+          isProjectManager && userId
+            ? String(item.pm_User_Id || item.pm_User_Id || "") ===
+              String(currentUser?.name)
+            : true;
 
         return matchesDate && matchesUser;
       });
