@@ -1351,12 +1351,19 @@ export default function MainTable() {
 
     try {
       const response = await fetch(
-        `${backendUrl}/api/EmployeeLeaveBeginningBalance/GetByEmployeeLeaves/${currentUser.name}?leaveYear=${currentYear}`,
+        `${backendUrl}/api/EmployeeLeaveBeginningBalance/GetByEmployeeLeaves/E001?leaveYear=2026`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         },
       );
+      // const response = await fetch(
+      //   `${backendUrl}/api/EmployeeLeaveBeginningBalance/GetByEmployeeLeaves/${currentUser.name}?leaveYear=${currentYear}`,
+      //   {
+      //     method: "GET",
+      //     headers: { "Content-Type": "application/json" },
+      //   },
+      // );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
