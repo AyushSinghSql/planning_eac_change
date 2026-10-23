@@ -21,7 +21,7 @@ import CostStructureDashboard from "./CostStructureDashboard";
 
 import CashFlowDashboard from "./CashFlowDashboard";
 import { backendUrl } from "./config";
-import BalanceSheetDashboard from "./BalancesheetDashboard";
+import BalanceSheetDashboard from "./BalanceSheetDashboard";
 
 const FinancialDashboard = () => {
   // Added 'is_report' to the state logic
