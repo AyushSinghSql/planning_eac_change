@@ -976,27 +976,97 @@ const ProjectPlanTable = forwardRef(
       //   return;
       // }
 
-      if (
-        lastFetchedProjectId.current === projectId &&
-        lastFetchedPage.current === currentPage
-      ) {
-        setLoading(false);
-        return;
-      }
+      // if (
+      //   lastFetchedProjectId.current === projectId &&
+      //   lastFetchedPage.current === currentPage
+      // ) {
+      //   setLoading(false);
+      //   return;
+      // }
 
       fullProjectId.current = projectId;
       const encodedProjId = encodeURIComponent(projectId);
 
       setLoading(true);
       const apiType = type === "NBBUDPRICING" ? "NBBUD" : type;
-      try {
-        const response = await axios.get(
-          // `${backendUrl}/Project/GetProjectPlans/${projectId}`
-          `${backendUrl}/Project/GetProjectPlansV1/${userId}/${role}/${encodedProjId}?status=${status}&type=${apiType}`,
-          // `${backendUrl}/Project/GetProjectPlansPaged/${userId}/${role}/${encodedProjId}?fetchNewBussiness=N&pageNumber=${currentPage}&pageSize=${pageSize}`,
-        );
 
-        const transformedPlans = response.data.map((plan, idx) => ({
+      try {
+        // const response = await axios.get(
+        //   // `${backendUrl}/Project/GetProjectPlans/${projectId}`
+        //   // `${backendUrl}/Project/GetProjectPlansV1/${userId}/${role}/${encodedProjId}?status=${status}&type=${apiType}`,
+        //   // `${backendUrl}/Project/GetProjectPlansPaged/${userId}/${role}/${encodedProjId}?fetchNewBussiness=N&pageNumber=${currentPage}&pageSize=${pageSize}`,
+
+        //   `${backendUrl}/Project/GetProjectPlansPaged/${userId}/${role}/${encodedProjId}?planstatus=${statusFilter}&planType=${typeFilter}&fetchNewBussiness=N&pageNumber=${currentPage}&pageSize=${pageSize}`,
+        // );
+        let response;
+
+        if (type === "NBBUD" || type === "NBBUDPRICING") {
+          response = await axios.get(
+            `${backendUrl}/Project/GetProjectPlansV1/${userId}/${role}/${encodedProjId}?status=${statusFilter}&type=${apiType}`,
+          );
+        } else if (type === "PROJECT") {
+          response = await axios.get(
+            `${backendUrl}/Project/GetProjectPlansPaged/${userId}/${role}/${encodedProjId}?planstatus=${statusFilter}&planType=${typeFilter}&fetchNewBussiness=N&pageNumber=${currentPage}&pageSize=${pageSize}`,
+          );
+        }
+
+        // const transformedPlans = response.data.data.map((plan, idx) => ({
+        //   plId: plan.plId || plan.id || 0,
+        //   projId:
+        //     plan.fullProjectId ||
+        //     plan.projId ||
+        //     plan.project_id ||
+        //     plan.projectId ||
+        //     projectId,
+        //   // projName: plan.projName || "",
+        //   projName: plan.projName || plan.description || plan.desc || "",
+        //   plType:
+        //     plan.plType === "Budget"
+        //       ? "BUD"
+        //       : plan.plType === "EAC"
+        //         ? "EAC"
+        //         : plan.plType || "",
+        //   source: plan.source || "",
+        //   version: plan.version || 0,
+        //   versionCode: plan.versionCode || "",
+        //   finalVersion: !!plan.finalVersion,
+        //   isCompleted: !!plan.isCompleted,
+        //   isApproved: !!plan.isApproved,
+        //   status:
+        //     plan.plType && plan.version
+        //       ? (plan.status || "In Progress")
+        //           .replace("Working", "In Progress")
+        //           .replace("Completed", "Submitted")
+        //       : "",
+        //   closedPeriod: plan.closedPeriod || "",
+        //   templateId: plan.templateId || "",
+        //   type: plan.type || "",
+        //   createdAt: plan.createdAt || "",
+        //   updatedAt: plan.updatedAt || "",
+        //   modifiedBy: plan.modifiedBy || "",
+        //   approvedBy: plan.approvedBy || "",
+        //   createdBy: plan.createdBy || "",
+        //   // templateId: plan.templateId || 0,
+        //   projStartDt: plan.projStartDt || "",
+        //   projEndDt: plan.projEndDt || "",
+        //   orgId: plan.orgId || "",
+        //   fundedCost: plan.proj_f_cst_amt || "",
+        //   fundedFee: plan.proj_f_fee_amt || "",
+        //   fundedRev: plan.proj_f_tot_amt || "",
+        //   revenueAccount: plan.revenueAccount || "",
+        //   Rev: plan.revenue || plan.Rev || "",
+        //   revenue: plan.revenue !== undefined ? Number(plan.revenue) : 0,
+        //   revenueFormula: plan.revenueFormula || "",
+        //   acctGrpCd: plan.acctGrpCd || "",
+        // }));
+        const plansData =
+          type === "NBBUD" || type === "NBBUDPRICING"
+            ? response.data
+            : type === "PROJECT"
+              ? response.data.data
+              : [];
+
+        const transformedPlans = plansData.map((plan, idx) => ({
           plId: plan.plId || plan.id || 0,
           projId:
             plan.fullProjectId ||
@@ -1004,7 +1074,6 @@ const ProjectPlanTable = forwardRef(
             plan.project_id ||
             plan.projectId ||
             projectId,
-          // projName: plan.projName || "",
           projName: plan.projName || plan.description || plan.desc || "",
           plType:
             plan.plType === "Budget"
@@ -1032,7 +1101,6 @@ const ProjectPlanTable = forwardRef(
           modifiedBy: plan.modifiedBy || "",
           approvedBy: plan.approvedBy || "",
           createdBy: plan.createdBy || "",
-          // templateId: plan.templateId || 0,
           projStartDt: plan.projStartDt || "",
           projEndDt: plan.projEndDt || "",
           orgId: plan.orgId || "",
@@ -1090,7 +1158,7 @@ const ProjectPlanTable = forwardRef(
     // }, [type]);
     useEffect(() => {
       fetchPlans();
-    }, [type, pageSize, currentPage]);
+    }, [type, pageSize, currentPage, statusFilter, typeFilter]);
 
     useEffect(() => {
       if (budEacFilter) {
@@ -4263,125 +4331,125 @@ const ProjectPlanTable = forwardRef(
             </div>
 
             {/* PAGINATION CONTROLS */}
-            {/* <div className="w-full bg-[#e5f3fb] text-white flex items-center justify-center ">
-              <div className="flex items-center justify-end gap-2 px-4 py-2  border-gray-100 w-fit ml-auto mb-1 text-sm text-gray-900">
-                <button
-                  onClick={() => handlePageClick(currentPage - 1)}
-                  className="text-[#17414d] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft size={18} />
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {(() => {
-                    const pages = [];
-                    const showMax = 5; // Adjustment for number of visible page buttons
-                    if (totalPages <= showMax + 2) {
-                      // If total pages are few, show all of them
-                      for (let i = 1; i <= totalPages; i++) pages.push(i);
-                    } else {
-                      // Logic for large page counts (like 50)
-                      pages.push(1); // Always show first page
-
-                      if (currentPage > 3) {
-                        pages.push("...");
-                      }
-
-                      // Show pages around the current page
-                      let start = Math.max(2, currentPage - 1);
-                      let end = Math.min(totalPages - 1, currentPage + 1);
-
-                      // Keep a consistent number of buttons when at the edges
-                      if (currentPage <= 2) end = 4;
-                      if (currentPage >= totalPages - 1) start = totalPages - 3;
-
-                      for (let i = start; i <= end; i++) {
-                        pages.push(i);
-                      }
-
-                      if (currentPage < totalPages - 2) {
-                        pages.push("...");
-                      }
-
-                      pages.push(totalPages); // Always show last page
-                    }
-
-                    return pages.map((page, index) => (
-                      <button
-                        key={index}
-                        onClick={() =>
-                          typeof page === "number" && handlePageClick(page)
-                        }
-                        disabled={page === "..."}
-                        className={`w-8 h-8 flex items-center cursor-pointer justify-center rounded-full transition-all ${
-                          currentPage === page
-                            ? "bg-[#17414d] text-white font-bold "
-                            : page === "..."
-                              ? "cursor-default text-gray-400"
-                              : "hover:bg-white hover:text-[#17414d]"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ));
-                  })()}
-                </div>
-
-           
-                <button
-                  onClick={() => handlePageClick(currentPage + 1)}
-                  className="text-[#17414d] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight size={18} />
-                </button>
- 
-                <div className="relative flex items-center rounded px-2 bg-white transition-colors">
-             
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="appearance-none bg-transparent py-1 pr-4 pl-1 
-                           focus:outline-none cursor-pointer text-black"
+            {type === "PROJECT" && (
+              <div className="w-full bg-[#e5f3fb] text-white flex items-center justify-center ">
+                <div className="flex items-center justify-end gap-2 px-4 py-2  border-gray-100 w-fit ml-auto mb-1 text-sm text-gray-900">
+                  <button
+                    onClick={() => handlePageClick(currentPage - 1)}
+                    className="text-[#17414d] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                    disabled={currentPage === 1}
                   >
-                    <option value={30} className="text-black bg-white">
-                      30 / page
-                    </option>
-                    <option value={60} className="text-black bg-white">
-                      60 / page
-                    </option>
-                    <option value={90} className="text-black bg-white">
-                      90 / page
-                    </option>
-                  </select>
+                    <ChevronLeft size={18} />
+                  </button>
 
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-2 text-gray-400 pointer-events-none"
-                  />
-                </div>
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const pages = [];
+                      const showMax = 5; // Adjustment for number of visible page buttons
+                      if (totalPages <= showMax + 2) {
+                        // If total pages are few, show all of them
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        // Logic for large page counts (like 50)
+                        pages.push(1); // Always show first page
 
-                
-                <div className="flex items-center gap-2 ml-2">
-                  <span className="text-black font-semibold">Go to</span>
-                  <input
-                    type="text"
-                    value={goToValue}
-                    onChange={(e) =>
-                      setGoToValue(e.target.value.replace(/\D/g, ""))
-                    }
-                    onKeyDown={handleGoTo}
-                    placeholder="#"
-                    className="w-12 border border-gray-200 outline-none bg-white rounded py-1 text-center transition-all "
-                  />
-                  <span className="text-black font-semibold">Page</span>
+                        if (currentPage > 3) {
+                          pages.push("...");
+                        }
+
+                        // Show pages around the current page
+                        let start = Math.max(2, currentPage - 1);
+                        let end = Math.min(totalPages - 1, currentPage + 1);
+
+                        // Keep a consistent number of buttons when at the edges
+                        if (currentPage <= 2) end = 4;
+                        if (currentPage >= totalPages - 1)
+                          start = totalPages - 3;
+
+                        for (let i = start; i <= end; i++) {
+                          pages.push(i);
+                        }
+
+                        if (currentPage < totalPages - 2) {
+                          pages.push("...");
+                        }
+
+                        pages.push(totalPages); // Always show last page
+                      }
+
+                      return pages.map((page, index) => (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            typeof page === "number" && handlePageClick(page)
+                          }
+                          disabled={page === "..."}
+                          className={`w-8 h-8 flex items-center cursor-pointer justify-center rounded-full transition-all ${
+                            currentPage === page
+                              ? "bg-[#17414d] text-white font-bold "
+                              : page === "..."
+                                ? "cursor-default text-gray-400"
+                                : "hover:bg-white hover:text-[#17414d]"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ));
+                    })()}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageClick(currentPage + 1)}
+                    className="text-[#17414d] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <div className="relative flex items-center rounded px-2 bg-white transition-colors">
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="appearance-none bg-transparent py-1 pr-4 pl-1 
+                           focus:outline-none cursor-pointer text-black"
+                    >
+                      <option value={30} className="text-black bg-white">
+                        30 / page
+                      </option>
+                      <option value={60} className="text-black bg-white">
+                        60 / page
+                      </option>
+                      <option value={90} className="text-black bg-white">
+                        90 / page
+                      </option>
+                    </select>
+
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 ml-2">
+                    <span className="text-black font-semibold">Go to</span>
+                    <input
+                      type="text"
+                      value={goToValue}
+                      onChange={(e) =>
+                        setGoToValue(e.target.value.replace(/\D/g, ""))
+                      }
+                      onKeyDown={handleGoTo}
+                      placeholder="#"
+                      className="w-12 border border-gray-200 outline-none bg-white rounded py-1 text-center transition-all "
+                    />
+                    <span className="text-black font-semibold">Page</span>
+                  </div>
                 </div>
               </div>
-            </div> */}
+            )}
           </div>
           {showForm && (
             <div
