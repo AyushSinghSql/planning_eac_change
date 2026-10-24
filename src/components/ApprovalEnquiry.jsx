@@ -3276,6 +3276,7 @@ export default function ApprovalEnquiry() {
             rawHoursData: timesheetEntry.timesheetHours || [],
             resource_Type:
               timesheetEntry.resource_Type || timesheetEntry.type || "",
+            createdBy: timesheetEntry.createdBy || "",
           };
 
           flattenedData.push(row);
@@ -4317,10 +4318,28 @@ export default function ApprovalEnquiry() {
                           (row) => row["Status"]?.toLowerCase() === "processed",
                         );
 
+                      //   const hasApprovedSelected = selectedRows.some(
+                      //     (row) => row["Status"]?.toLowerCase() === "approved",
+                      //   );
                       const hasApprovedSelected = selectedRows.some(
                         (row) => row["Status"]?.toLowerCase() === "approved",
                       );
+                      const hasOwnTimesheetSelected = selectedRows.some(
+                        (row) => {
+                          const createdBy = String(row.createdBy || "")
+                            .trim()
+                            .toLowerCase();
+                          const currentUserName = String(
+                            currentUser?.name || "",
+                          )
+                            .trim()
+                            .toLowerCase();
 
+                          return (
+                            createdBy !== "" && createdBy === currentUserName
+                          );
+                        },
+                      );
                       return (
                         <>
                           {/* Approve button */}
@@ -4331,7 +4350,8 @@ export default function ApprovalEnquiry() {
                               approveEligibleCount === 0 ||
                               hasApprovedSelected ||
                               hasProcessedSelected ||
-                              allProcessedSelected
+                              allProcessedSelected ||
+                              hasOwnTimesheetSelected
                             }
                             className="btn1 btn-blue cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                           >

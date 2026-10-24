@@ -785,10 +785,13 @@ export default function MainTable() {
   const [selectedRole, setSelectedRole] = useState("");
 
   const userRole = currentUser?.role?.toLowerCase();
+  const Id = currentUser?.userId;
   console.log(userRole);
   const showEmplSuggestion = userRole != "user" || userRole != "subk_user";
   const canNotify = !!currentUser;
 
+  console.log(currentUser?.userId);
+  console.log(currentUser);
   const dateToYyyyMmDd = (date) => {
     if (!date || !(date instanceof Date)) return "";
     const year = date.getUTCFullYear();
@@ -824,30 +827,64 @@ export default function MainTable() {
 
   useEffect(() => {
     const fetchBaseData = async () => {
+      if (!currentUser?.userId) return;
+
       try {
         setEmployeeLoading(true);
-        const [userRes] = await Promise.all([
-          axios.get(`${backendUrl}/api/User`),
-        ]);
+        // Fetch members for approver ID 18 (or generalize as needed)
+        const userRes = await axios.get(
+          `${backendUrl}/api/UserGroups/approver/${Id}/members`,
+        );
 
-        const userData = Array.isArray(userRes.data) ? userRes.data : [];
+        // Access the 'members' array from the response body structure
+        const membersData = Array.isArray(userRes.data?.members)
+          ? userRes.data.members
+          : [];
+
         setUserOptions(
-          userData.map((u) => ({
-            value: u.username, // maps to the employee resource identifier (e.g. "002668")
-            label: `${u.fullName} (${u.username})`,
-            role: u.role, // captures user role from the API response
-            userId: u.userId,
+          membersData.map((u) => ({
+            value: u.username, // maps to the employee resource identifier (e.g. "10001" or "000002")
+            label: `${u.fullName} (${u.username}) - ${u.groupName}`,
+            role: u.role, // mapping groupName or relevant role context
+            userId: u.userId, // maps to userId (e.g. 59, 58)
           })),
         );
       } catch (e) {
         console.error("Base data fetch failed", e);
-        // Fallback or handle error cleanly
       } finally {
         setEmployeeLoading(false);
       }
     };
     fetchBaseData();
-  }, []);
+  }, [Id]);
+
+  // useEffect(() => {
+  //   const fetchBaseData = async () => {
+  //     try {
+  //       setEmployeeLoading(true);
+  //       const [userRes] = await Promise.all([
+  //         axios.get(`${backendUrl}/api/User`),
+  //       ]);
+
+  //       const userData = Array.isArray(userRes.data) ? userRes.data : [];
+  //       setUserOptions(
+  //         userData.map((u) => ({
+  //           value: u.username, // maps to the employee resource identifier (e.g. "002668")
+  //           label: `${u.fullName} (${u.username})`,
+  //           role: u.role, // captures user role from the API response
+  //           userId: u.userId,
+  //         })),
+  //       );
+  //     } catch (e) {
+  //       console.error("Base data fetch failed", e);
+  //       // Fallback or handle error cleanly
+  //     } finally {
+  //       setEmployeeLoading(false);
+  //     }
+  //   };
+  //   fetchBaseData();
+  // }, []);
+
   // const getStatusStyle = (status) => {
   //   const baseStyle =
   //     "px-2.5 py-1 text-xs font-semibold rounded-full text-center inline-block";
@@ -942,7 +979,7 @@ export default function MainTable() {
     if (userLoaded && currentUser && currentUser.name) {
       fetchData();
     }
-  }, [userLoaded, currentUser, filterMonth, filterYear]);
+  }, [userLoaded, currentUser, filterMonth, filterYear, selectedEmployeeId]);
 
   useEffect(() => {
     if (!searchDate) return;
@@ -1877,6 +1914,7 @@ export default function MainTable() {
                 onClose={handleCloseDetail}
                 onSave={handleSaveDetails}
                 currentUser={currentUser}
+                resourceId={selectedEmployeeId || currentUser?.name}
                 userId={selectedEmployeeId || currentUser?.name}
                 role={
                   selectedRole?.toLocaleLowerCase() ||
