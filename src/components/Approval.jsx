@@ -230,6 +230,7 @@ export default function Approval() {
     return `${month}/${day}/${year}`;
   }
 
+  console.log(currentUser);
   const isAdmin = currentUser?.role.toUpperCase() === "ADMIN";
   const isUser = currentUser?.role === "user" || currentUser?.role === "User";
   const isPM = currentUser?.role === "pm";
@@ -1373,7 +1374,9 @@ export default function Approval() {
   ).length;
 
   const processedEligibleCount = selectedRows.filter(
-    (row) => row.status?.toLowerCase() === "approved",
+    (row) =>
+      row.status?.toLowerCase() === "approved" ||
+      row.status?.toLowerCase() === "submitted",
   ).length;
 
   const handleBulkRejectClick = () => {
@@ -1876,13 +1879,13 @@ export default function Approval() {
                       return (
                         <>
                           {/* Approve button */}
-                          <button
+                          {/* <button
                             onClick={handleBulkApproveClick}
                             disabled={
                               approveLoading ||
                               approveEligibleCount === 0 ||
                               hasApprovedSelected ||
-                              hasProcessedSelected ||
+                              hasProcessedSelected || 
                               allProcessedSelected
                             }
                             className="btn1 btn-blue cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1890,7 +1893,7 @@ export default function Approval() {
                             {approveLoading
                               ? "Processing..."
                               : `Approve (${approveEligibleCount})`}
-                          </button>
+                          </button> */}
 
                           {/* Reject button */}
                           <button
@@ -1959,7 +1962,7 @@ export default function Approval() {
                   </div>
                 </div>
               ) : (
-                <table className="w-full text-xs border-collapse table-fixed">
+                <table className="w-full text-xs border-collapse table-auto">
                   <thead className="sticky top-0 z-20">
                     <tr>
                       {columns.map((col) => (

@@ -1082,7 +1082,10 @@ export default function GroupManagement({ onClose }) {
                         />
                       </th>
                       <th className="px-2 py-1.5 border-b border-r border-gray-300 text-left font-semibold bg-[#e5f3fb]">
-                        Full Name / Username
+                        Username
+                      </th>
+                      <th className="px-2 py-1.5 border-b border-r border-gray-300 text-left font-semibold bg-[#e5f3fb]">
+                        Full Name
                       </th>
                       <th className="px-2 py-1.5 border-b border-gray-300 text-left font-semibold bg-[#e5f3fb]">
                         Email
@@ -1133,6 +1136,9 @@ export default function GroupManagement({ onClose }) {
                               />
                             </td>
                             <td className="px-2 py-1.5 border-b border-r border-gray-300 font-semibold text-black">
+                              {user.username || user.userName}
+                            </td>
+                            <td className="px-2 py-1.5 border-b border-r border-gray-300 font-semibold text-black">
                               {user.fullName || user.username}
                               {isApprover && (
                                 <span className="ml-1.5 text-[10px] text-amber-600 font-normal">
@@ -1174,14 +1180,17 @@ export default function GroupManagement({ onClose }) {
                         Select
                       </th>
                       <th className="px-2 py-1.5 border-b border-r border-gray-300 text-left font-semibold bg-[#e5f3fb]">
-                        Approver Name / Username
+                        Username
+                      </th>
+                      <th className="px-2 py-1.5 border-b border-r border-gray-300 text-left font-semibold bg-[#e5f3fb]">
+                        Approver Name
                       </th>
                       <th className="px-2 py-1.5 border-b border-r border-gray-300 text-left font-semibold bg-[#e5f3fb]">
                         Email
                       </th>
-                      {/* <th className="w-28 px-2 py-1.5 border-b border-gray-300 text-center font-semibold bg-[#e5f3fb]">
+                      <th className="w-28 px-2 py-1.5 border-b border-gray-300 text-center font-semibold bg-[#e5f3fb]">
                         Approval Level
-                      </th> */}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1233,6 +1242,9 @@ export default function GroupManagement({ onClose }) {
                                 }
                                 className="rounded border-gray-300 cursor-pointer accent-blue-600 disabled:cursor-not-allowed"
                               />
+                            </td>
+                            <td className="px-2 py-1.5 border-b border-r border-gray-300 font-semibold text-black">
+                              {user.username || user.userName}
                             </td>
                             <td className="px-2 py-1.5 border-b border-r border-gray-300 font-semibold text-black">
                               {user.fullName || user.username}

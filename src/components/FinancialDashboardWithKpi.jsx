@@ -2482,9 +2482,15 @@ const MONTHS = [
 const DIRECT_NAMES = [
   "Direct Labor",
   "Direct Travel",
+  "Consultation",
   "Direct Materials",
+  "Materials",
+  "Material Handling",
+  "Travel",
   "Subcontracts",
   "Other Direct Costs",
+  "Equipment",
+  "Unallowable Direct - ODCs",
 ];
 
 const INDIRECT_NAMES = [
@@ -2506,6 +2512,12 @@ const INDIRECT_NAMES_WITH_UNALLOWABLE = [
   "Overhead",
   "Cost of Goods Sold",
   "General & Administrative",
+  "General & Administration Exp",
+  "HR/Payroll Allocation",
+  "Unallowables",
+  "Subcont, Material & Equipment",
+  "Project Specific Overhead",
+  "IT/Facilities",
   "Subcontract & Matl Handling",
   "Misc Income/(Expenses)",
   "Interest Expense",
@@ -2592,8 +2604,7 @@ const nameMatchesAny = (node, list) => {
 };
 
 /* Same node classification as ReportingScreen (top-level nodes only) */
-const isRevenueRoot = (node) =>
-  normalizeName(node?.name) === "contracts revenue";
+const isRevenueRoot = (node) => normalizeName(node?.name) === "revenue";
 const isAdjustmentNode = (node) =>
   normalizeName(node?.name).includes("adjustment");
 const isDirectNode = (node) => nameMatchesAny(node, DIRECT_NAMES);
@@ -2867,8 +2878,13 @@ const calculateMetricsForMonth = (
 
   const rawRevenue = val(groups.revenueNode);
 
+  const clientId = import.meta.env.VITE_CLIENT_ID;
   const revenue = round2(
-    isBeforeOrAtClosingPeriod ? rawRevenue * -1 : rawRevenue,
+    isBeforeOrAtClosingPeriod
+      ? clientId
+        ? rawRevenue
+        : rawRevenue * -1
+      : rawRevenue,
   );
 
   /*

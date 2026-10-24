@@ -44,7 +44,8 @@ const EMPLOYEE_COLUMNS = [
   // { key: "effectiveDate", label: "Escalation Month" },
   { key: "escllationDate", label: "Escalation Month" },
   { key: "esc_Percent", label: "Esc Rate(%)" },
-  { key: "total", label: "Total" },
+  // { key: "total", label: "Total Hrs" },
+  // { key: "totalCost", label: "Total Cost" },
 ];
 
 const ID_TYPE_OPTIONS = [
@@ -74,7 +75,8 @@ export const HOURS_EMPLOYEE_COLUMNS = [
   // { key: "effectiveDate", label: "Effective Dt" },
   { key: "escllationDate", label: "Escalation Month" },
   { key: "esc_Percent", label: "Esc Rate(%)" },
-  { key: "total", label: "Total" },
+  // { key: "total", label: "Total" },
+  // { key: "totalCost", label: "Total Cost" },
 ];
 
 // in ConfigureField parent:
@@ -4074,7 +4076,7 @@ const ProjectHoursDetails = forwardRef(
         "Hour Rate",
         "Effective Dt",
         "Esc Rate(%)",
-        "Total",
+        // "Total",
       ];
 
       const monthMetadata = [];
@@ -4133,7 +4135,7 @@ const ProjectHoursDetails = forwardRef(
             canEdit("perHourRate") ? entry.perHourRate || "-" : "-",
             entry.escllationDate || "",
             entry.esc_Percent || "",
-            total.toFixed(2),
+            // total.toFixed(2),
           ];
 
           allAvailableDurations.forEach((duration) => {
@@ -4179,7 +4181,7 @@ const ProjectHoursDetails = forwardRef(
             // emp.emple.effectiveDate,
             emp.emple.escllationDate,
             emp.emple.esc_Percent,
-            employeeRow.total,
+            // employeeRow.total,
           ];
 
           // Add monthly hours
@@ -4529,7 +4531,7 @@ const ProjectHoursDetails = forwardRef(
           // effectiveDate,
           escllationDate,
           esc_Percent,
-          total, // Position 12
+          // total, // Position 12
           ...monthValues
         ] = rowData;
 
@@ -5015,7 +5017,7 @@ const ProjectHoursDetails = forwardRef(
         brd,
         status,
         hourRate,
-        total,
+        // total,
         ...monthValues
       ] = row;
 
@@ -5642,7 +5644,8 @@ const ProjectHoursDetails = forwardRef(
           status: "-",
           perHourRate: "0",
           effectDt: "",
-          total: "0",
+          // total: "0",
+          // totalCost: "0",
         };
       }
 
@@ -5686,10 +5689,21 @@ const ProjectHoursDetails = forwardRef(
         ID_TYPE_OPTIONS.find((opt) => opt.value === rawType)?.label || rawType;
 
       const monthHours = getMonthHours(emp);
+      const monthCost = getMonthCost(emp);
       const totalHours = sortedDurations.reduce((sum, duration) => {
         const uniqueKey = `${duration.monthNo}_${duration.year}`;
         const inputValue = inputValues[`${idx}_${uniqueKey}`];
         const forecastValue = monthHours[uniqueKey]?.value;
+        const value =
+          inputValue !== undefined && inputValue !== ""
+            ? inputValue
+            : forecastValue;
+        return sum + (value && !isNaN(value) ? Number(value) : 0);
+      }, 0);
+      const totalCosts = sortedDurations.reduce((sum, duration) => {
+        const uniqueKey = `${duration.monthNo}_${duration.year}`;
+        const inputValue = inputValues[`${idx}_${uniqueKey}`];
+        const forecastValue = monthCost[uniqueKey]?.value;
         const value =
           inputValue !== undefined && inputValue !== ""
             ? inputValue
@@ -5911,6 +5925,7 @@ const ProjectHoursDetails = forwardRef(
             ? Number(emp.emple.perHourRate).toFixed(2)
             : "0",
         total: totalHours.toFixed(2) || "-",
+        totalCost: totalCosts.toFixed(2) || "-",
         // effectiveDate: effectiveDate,
         escllationDate: escllationDate,
         esc_Percent: Number(esc_Percent).toFixed(2),
@@ -12979,16 +12994,16 @@ const ProjectHoursDetails = forwardRef(
                                   placeholder="0.00"
                                 />
                               </td>
-                              <td className="tbody-td">
-                                {Object.values(
-                                  newEntryPeriodHoursArray[entryIndex] || {},
-                                )
-                                  .reduce(
-                                    (sum, val) => sum + parseFloat(val || 0),
-                                    0,
-                                  )
-                                  .toFixed(2)}
-                              </td>
+                              {/* <td className="tbody-td">
+                                                                {Object.values(
+                                                                    newEntryPeriodHoursArray[entryIndex] || {},
+                                                                )
+                                                                    .reduce(
+                                                                        (sum, val) => sum + parseFloat(val || 0),
+                                                                        0,
+                                                                    )
+                                                                    .toFixed(2)}
+                                                            </td> */}
                             </tr>
                           </React.Fragment>
                         );
@@ -13917,9 +13932,12 @@ const ProjectHoursDetails = forwardRef(
                                 disabled={!isEditable}
                               />
                             </td>
-                            <td className="tbody-td min-w-[70px]">
+                            {/* <td className="tbody-td min-w-[70px]">
                               {row.total}
                             </td>
+                            <td className="tbody-td min-w-[70px]">
+                              {row.totalCost}
+                            </td> */}
                           </tr>
                         );
                       })}
@@ -14028,6 +14046,28 @@ const ProjectHoursDetails = forwardRef(
                           </th>
                         );
                       })}
+
+                      <th
+                        rowSpan={2}
+                        className="th-thead text-black border-b border-r border-gray-300
+             min-w-[100px] p-0 text-center"
+                      >
+                        <div className="whitespace-nowrap th-thead-nb">
+                          Total Hrs
+                        </div>
+                      </th>
+
+                      <th
+                        rowSpan={2}
+                        className={`th-thead text-black border-b border-gray-300
+              min-w-[120px] p-0 text-center ${
+                canView("perHourRate") ? "border-r" : ""
+              }`}
+                      >
+                        <div className="whitespace-nowrap th-thead-nb">
+                          Total Cost
+                        </div>
+                      </th>
                     </tr>
                     <tr>
                       {/* {shouldShowCTD() && (
@@ -14089,21 +14129,35 @@ const ProjectHoursDetails = forwardRef(
 
                   <tbody className="tbody">
                     {newEntries.length > 0 &&
-                      newEntries.map((entry, entryIndex) => (
-                        <tr
-                          key={`new-entry-duration-${entryIndex}`}
-                          // style={{
-                          //   height: `${ROW_HEIGHT_DEFAULT }px`,
-                          //   lineHeight: "normal",
-                          // }}
-                          // className="bg-gray-50"
-                          style={{
-                            height: `${ROW_HEIGHT_DEFAULT}px`,
-                            lineHeight: "normal",
-                          }}
-                        >
-                          {/* CTD */}
-                          {/* {shouldShowCTD() && (
+                      newEntries.map((entry, entryIndex) => {
+                        const newEntryTotalHours = sortedDurations.reduce(
+                          (sum, duration) => {
+                            const key = `${duration.monthNo}_${duration.year}`;
+
+                            return (
+                              sum +
+                              (parseFloat(
+                                newEntryPeriodHoursArray[entryIndex]?.[key],
+                              ) || 0)
+                            );
+                          },
+                          0,
+                        );
+                        return (
+                          <tr
+                            key={`new-entry-duration-${entryIndex}`}
+                            // style={{
+                            //   height: `${ROW_HEIGHT_DEFAULT }px`,
+                            //   lineHeight: "normal",
+                            // }}
+                            // className="bg-gray-50"
+                            style={{
+                              height: `${ROW_HEIGHT_DEFAULT}px`,
+                              lineHeight: "normal",
+                            }}
+                          >
+                            {/* CTD */}
+                            {/* {shouldShowCTD() && (
                           <>
                             <td className="tbody-td border-gray-500">
                               <div className="text-center text-gray-400">
@@ -14119,8 +14173,8 @@ const ProjectHoursDetails = forwardRef(
                           </>
                         )} */}
 
-                          {/* Prior Year */}
-                          {/* {shouldShowPriorYear() && (
+                            {/* Prior Year */}
+                            {/* {shouldShowPriorYear() && (
                           <>
                             <td className="tbody-td border-gray-500">
                               <div className="text-center text-gray-400  ">
@@ -14136,250 +14190,270 @@ const ProjectHoursDetails = forwardRef(
                           </>
                          )} */}
 
-                          {/* Monthly */}
-                          {sortedDurations.map((duration) => {
-                            const uniqueKey = `${duration.monthNo}_${duration.year}`;
-                            const value =
-                              newEntryPeriodHoursArray[entryIndex]?.[
-                                uniqueKey
-                              ] || "";
+                            {/* Monthly */}
+                            {sortedDurations.map((duration) => {
+                              const uniqueKey = `${duration.monthNo}_${duration.year}`;
+                              const value =
+                                newEntryPeriodHoursArray[entryIndex]?.[
+                                  uniqueKey
+                                ] || "";
 
-                            const isInputEditable =
-                              isEditable &&
-                              isMonthEditable(duration, closedPeriod, planType);
+                              const isInputEditable =
+                                isEditable &&
+                                isMonthEditable(
+                                  duration,
+                                  closedPeriod,
+                                  planType,
+                                );
 
-                            return (
-                              <React.Fragment
-                                key={`new-entry-${entryIndex}-${uniqueKey}`}
-                              >
-                                {/* <td
+                              return (
+                                <React.Fragment
+                                  key={`new-entry-${entryIndex}-${uniqueKey}`}
+                                >
+                                  {/* <td
                                   className={`tbody-td  ${
                                     selectedColumnKey === uniqueKey
                                       ? "bg-yellow-100"
                                       : ""
                                   }`}
                                 > */}
-                                <td
-                                  key={`hrs-${uniqueKey}`}
-                                  className={`tbody-td min-w-[80px] border-gray-500 ${
-                                    /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
-                                    selectedColumnKey === uniqueKey ? " " : ""
-                                  } ${
-                                    planType === "EAC"
-                                      ? isInputEditable
-                                        ? "bg-white"
-                                        : "bg-white"
-                                      : // : "bg-gray-100"
-                                        ""
-                                  }`}
-                                >
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    className={`border border-gray-300 text-center px-1 py-0.5 w-12  text-xs outline-none ${
-                                      !isInputEditable
-                                        ? "cursor-not-allowed text-gray-400 bg-gray-100"
-                                        : "text-gray-700 bg-white"
+                                  <td
+                                    key={`hrs-${uniqueKey}`}
+                                    className={`tbody-td min-w-[80px] border-gray-500 ${
+                                      /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
+                                      selectedColumnKey === uniqueKey ? " " : ""
+                                    } ${
+                                      planType === "EAC"
+                                        ? isInputEditable
+                                          ? "bg-white"
+                                          : "bg-white"
+                                        : // : "bg-gray-100"
+                                          ""
                                     }`}
-                                    value={value}
-                                    onFocus={() =>
-                                      setFocusedCell({
-                                        type: "new",
-                                        entryIndex: entryIndex,
-                                        colKey: uniqueKey,
-                                      })
-                                    }
-                                    onPaste={(e) => {
-                                      if (!isInputEditable) return;
-                                      e.preventDefault();
-                                      const clipboardData =
-                                        e.clipboardData || window.clipboardData;
-                                      const pastedText =
-                                        clipboardData.getData("text");
-                                      performCursorPaste(pastedText, {
-                                        type: "new",
-                                        entryIndex: entryIndex,
-                                        colKey: uniqueKey,
-                                      });
-                                    }}
-                                    onChange={(e) => {
-                                      const inputValue = e.target.value;
+                                  >
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      className={`border border-gray-300 text-center px-1 py-0.5 w-12  text-xs outline-none ${
+                                        !isInputEditable
+                                          ? "cursor-not-allowed text-gray-400 bg-gray-100"
+                                          : "text-gray-700 bg-white"
+                                      }`}
+                                      value={value}
+                                      onFocus={() =>
+                                        setFocusedCell({
+                                          type: "new",
+                                          entryIndex: entryIndex,
+                                          colKey: uniqueKey,
+                                        })
+                                      }
+                                      onPaste={(e) => {
+                                        if (!isInputEditable) return;
+                                        e.preventDefault();
+                                        const clipboardData =
+                                          e.clipboardData ||
+                                          window.clipboardData;
+                                        const pastedText =
+                                          clipboardData.getData("text");
+                                        performCursorPaste(pastedText, {
+                                          type: "new",
+                                          entryIndex: entryIndex,
+                                          colKey: uniqueKey,
+                                        });
+                                      }}
+                                      onChange={(e) => {
+                                        const inputValue = e.target.value;
 
-                                      // Allow completely empty input for clearing
-                                      if (inputValue === "") {
-                                        setNewEntryPeriodHoursArray((prev) =>
-                                          prev.map((hours, idx) =>
-                                            idx === entryIndex
-                                              ? { ...hours, [uniqueKey]: "" }
-                                              : hours,
-                                          ),
+                                        // Allow completely empty input for clearing
+                                        if (inputValue === "") {
+                                          setNewEntryPeriodHoursArray((prev) =>
+                                            prev.map((hours, idx) =>
+                                              idx === entryIndex
+                                                ? { ...hours, [uniqueKey]: "" }
+                                                : hours,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        // Only allow numeric input with decimal
+                                        if (
+                                          !/^[0-9]*\.?[0-9]*$/.test(inputValue)
+                                        ) {
+                                          return; // Don't update if not numeric
+                                        }
+
+                                        // Check for negative values
+                                        const numericValue =
+                                          parseFloat(inputValue);
+                                        if (numericValue < 0) {
+                                          toast.error(
+                                            "Hours cannot be negative",
+                                            {
+                                              autoClose: 2000,
+                                            },
+                                          );
+                                          return;
+                                        }
+
+                                        // // Check against available hours * 2
+                                        const currentDuration = planMonths.find(
+                                          (duration) =>
+                                            `${duration.monthNo}_${duration.year}` ===
+                                            uniqueKey,
                                         );
-                                        return;
-                                      }
-
-                                      // Only allow numeric input with decimal
-                                      if (
-                                        !/^[0-9]*\.?[0-9]*$/.test(inputValue)
-                                      ) {
-                                        return; // Don't update if not numeric
-                                      }
-
-                                      // Check for negative values
-                                      const numericValue =
-                                        parseFloat(inputValue);
-                                      if (numericValue < 0) {
-                                        toast.error(
-                                          "Hours cannot be negative",
-                                          {
-                                            autoClose: 2000,
-                                          },
-                                        );
-                                        return;
-                                      }
-
-                                      // // Check against available hours * 2
-                                      const currentDuration = planMonths.find(
-                                        (duration) =>
-                                          `${duration.monthNo}_${duration.year}` ===
-                                          uniqueKey,
-                                      );
-
-                                      if (
-                                        currentDuration &&
-                                        currentDuration.workingHours
-                                      ) {
-                                        const maxAllowedHours =
-                                          currentDuration.workingHours * 1.3;
 
                                         if (
-                                          numericValue > maxAllowedHours &&
-                                          entry.idType !== "PLC"
+                                          currentDuration &&
+                                          currentDuration.workingHours
                                         ) {
-                                          // Math.round() or .toFixed(1) keeps the number clean if it has decimals
-                                          const formattedMax =
-                                            maxAllowedHours.toFixed(2);
+                                          const maxAllowedHours =
+                                            currentDuration.workingHours * 1.3;
 
-                                          toast.error(
-                                            `Hours cannot exceed the maximum allowed limit of ${formattedMax} hours.`,
-                                            { autoClose: 3000 },
-                                          );
-                                          return; // Don't update the state
+                                          if (
+                                            numericValue > maxAllowedHours &&
+                                            entry.idType !== "PLC"
+                                          ) {
+                                            // Math.round() or .toFixed(1) keeps the number clean if it has decimals
+                                            const formattedMax =
+                                              maxAllowedHours.toFixed(2);
+
+                                            toast.error(
+                                              `Hours cannot exceed the maximum allowed limit of ${formattedMax} hours.`,
+                                              { autoClose: 3000 },
+                                            );
+                                            return; // Don't update the state
+                                          }
                                         }
-                                      }
 
-                                      // Find the context config data for the current period
+                                        // Find the context config data for the current period
 
-                                      // Update state if validation passes
-                                      setNewEntryPeriodHoursArray((prev) =>
-                                        prev.map((hours, idx) =>
-                                          idx === entryIndex
-                                            ? {
-                                                ...hours,
-                                                [uniqueKey]: inputValue,
-                                              }
-                                            : hours,
-                                        ),
-                                      );
-                                    }}
-                                    onKeyDown={(e) => {
-                                      // Allow backspace to completely clear the field
-                                      if (
-                                        e.key === "Backspace" &&
-                                        (value === "0" || value === "")
-                                      ) {
-                                        e.preventDefault();
+                                        // Update state if validation passes
                                         setNewEntryPeriodHoursArray((prev) =>
                                           prev.map((hours, idx) =>
                                             idx === entryIndex
-                                              ? { ...hours, [uniqueKey]: "" }
+                                              ? {
+                                                  ...hours,
+                                                  [uniqueKey]: inputValue,
+                                                }
                                               : hours,
                                           ),
                                         );
-                                      }
-                                    }}
-                                    disabled={!isInputEditable}
-                                    placeholder=""
-                                  />
-                                  {/* </div> */}
-                                </td>
+                                      }}
+                                      onKeyDown={(e) => {
+                                        // Allow backspace to completely clear the field
+                                        if (
+                                          e.key === "Backspace" &&
+                                          (value === "0" || value === "")
+                                        ) {
+                                          e.preventDefault();
+                                          setNewEntryPeriodHoursArray((prev) =>
+                                            prev.map((hours, idx) =>
+                                              idx === entryIndex
+                                                ? { ...hours, [uniqueKey]: "" }
+                                                : hours,
+                                            ),
+                                          );
+                                        }
+                                      }}
+                                      disabled={!isInputEditable}
+                                      placeholder=""
+                                    />
+                                    {/* </div> */}
+                                  </td>
 
-                                {canView("perHourRate") && (
-                                  // <td
-                                  //   className={`tbody-td border-r  text-centerborder-gray-300 py-1 ${
-                                  //     selectedColumnKey === uniqueKey
-                                  //       ? "bg-yellow-100"
-                                  //       : ""
-                                  //   }`}
-                                  // >
-                                  <td
-                                    key={`cost-${uniqueKey}`}
-                                    className={`tbody-td min-w-[80px] border-gray-500 ${
-                                      /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
-                                      selectedColumnKey === uniqueKey ? " " : ""
-                                    } ${
-                                      planType === "EAC"
-                                        ? isInputEditable
-                                          ? // ? "bg-gray-100"
-                                            // : "bg-gray-100"
-                                            ""
+                                  {canView("perHourRate") && (
+                                    // <td
+                                    //   className={`tbody-td border-r  text-centerborder-gray-300 py-1 ${
+                                    //     selectedColumnKey === uniqueKey
+                                    //       ? "bg-yellow-100"
+                                    //       : ""
+                                    //   }`}
+                                    // >
+                                    <td
+                                      key={`cost-${uniqueKey}`}
+                                      className={`tbody-td min-w-[80px] border-gray-500 ${
+                                        /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
+                                        selectedColumnKey === uniqueKey
+                                          ? " "
                                           : ""
-                                        : ""
-                                    }`}
-                                  ></td>
-                                )}
-                                {canView("perHourRate") && (
-                                  // <td
-                                  //   className={`tbody-td border-r  text-centerborder-gray-300 py-1 ${
-                                  //     selectedColumnKey === uniqueKey
-                                  //       ? "bg-yellow-100"
-                                  //       : ""
-                                  //   }`}
-                                  // >
-                                  <td
-                                    key={`burden-${uniqueKey}`}
-                                    className={`tbody-td min-w-[80px] border-gray-500 ${
-                                      /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
-                                      selectedColumnKey === uniqueKey ? " " : ""
-                                    } ${
-                                      planType === "EAC"
-                                        ? isInputEditable
-                                          ? // ? "bg-gray-100"
-                                            // : "bg-gray-100"
-                                            ""
+                                      } ${
+                                        planType === "EAC"
+                                          ? isInputEditable
+                                            ? // ? "bg-gray-100"
+                                              // : "bg-gray-100"
+                                              ""
+                                            : ""
                                           : ""
-                                        : ""
-                                    }`}
-                                  ></td>
-                                )}
-                                {canView("perHourRate") && (
-                                  // <td
-                                  //   className={`tbody-td border-r  text-centerborder-gray-300 py-1 ${
-                                  //     selectedColumnKey === uniqueKey
-                                  //       ? "bg-yellow-100"
-                                  //       : ""
-                                  //   }`}
-                                  // >
-                                  <td
-                                    key={`total-${uniqueKey}`}
-                                    className={`tbody-td min-w-[80px] border-gray-500 ${
-                                      /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
-                                      selectedColumnKey === uniqueKey ? " " : ""
-                                    } ${
-                                      planType === "EAC"
-                                        ? isInputEditable
-                                          ? // ? "bg-gray-100"
-                                            // : "bg-gray-100"
-                                            ""
+                                      }`}
+                                    ></td>
+                                  )}
+                                  {canView("perHourRate") && (
+                                    // <td
+                                    //   className={`tbody-td border-r  text-centerborder-gray-300 py-1 ${
+                                    //     selectedColumnKey === uniqueKey
+                                    //       ? "bg-yellow-100"
+                                    //       : ""
+                                    //   }`}
+                                    // >
+                                    <td
+                                      key={`burden-${uniqueKey}`}
+                                      className={`tbody-td min-w-[80px] border-gray-500 ${
+                                        /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
+                                        selectedColumnKey === uniqueKey
+                                          ? " "
                                           : ""
-                                        : ""
-                                    }`}
-                                  ></td>
-                                )}
-                              </React.Fragment>
-                            );
-                          })}
-                        </tr>
-                      ))}
+                                      } ${
+                                        planType === "EAC"
+                                          ? isInputEditable
+                                            ? // ? "bg-gray-100"
+                                              // : "bg-gray-100"
+                                              ""
+                                            : ""
+                                          : ""
+                                      }`}
+                                    ></td>
+                                  )}
+                                  {canView("perHourRate") && (
+                                    // <td
+                                    //   className={`tbody-td border-r  text-centerborder-gray-300 py-1 ${
+                                    //     selectedColumnKey === uniqueKey
+                                    //       ? "bg-yellow-100"
+                                    //       : ""
+                                    //   }`}
+                                    // >
+                                    <td
+                                      key={`total-${uniqueKey}`}
+                                      className={`tbody-td min-w-[80px] border-gray-500 ${
+                                        /* Changed py-2 px-3 to px-2 py-1.5, min-w-[100px] to min-w-[80px] */
+                                        selectedColumnKey === uniqueKey
+                                          ? " "
+                                          : ""
+                                      } ${
+                                        planType === "EAC"
+                                          ? isInputEditable
+                                            ? // ? "bg-gray-100"
+                                              // : "bg-gray-100"
+                                              ""
+                                            : ""
+                                          : ""
+                                      }`}
+                                    ></td>
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="tbody-td min-w-[100px] border-gray-300 text-center">
+                              {newEntryTotalHours.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </td>
+
+                            <td className="tbody-td min-w-[120px] border-gray-300 text-center"></td>
+                          </tr>
+                        );
+                      })}
 
                     {/* ================= EMPLOYEE ROWS ================= */}
                     {sortedEmployees
@@ -14390,6 +14464,19 @@ const ProjectHoursDetails = forwardRef(
                         );
                         const monthHours = getMonthHours(emp);
                         const monthCost = getMonthCost(emp);
+
+                        const totalHours = Object.values(monthHours).reduce(
+                          (sum, item) => sum + (Number(item?.value) || 0),
+                          0,
+                        );
+
+                        const totalCosts = Object.values(monthCost).reduce(
+                          (sum, item) => sum + (Number(item?.cost) || 0),
+                          0,
+                        );
+
+                        console.log(totalCosts);
+                        console.log(totalHours);
 
                         return (
                           <tr
@@ -14461,7 +14548,7 @@ const ProjectHoursDetails = forwardRef(
                           )} */}
 
                             {/* Monthly */}
-                            {sortedDurations.map((duration) => {
+                            {sortedDurations.map((duration, idx) => {
                               const uniqueKey = `${duration.monthNo}_${duration.year}`;
                               const forecast = monthHours[uniqueKey];
 
@@ -14737,6 +14824,20 @@ const ProjectHoursDetails = forwardRef(
                                 </React.Fragment>
                               );
                             })}
+
+                            <td className="tbody-td min-w-[100px] border-gray-300 text-center">
+                              {totalHours.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </td>
+
+                            <td className="tbody-td min-w-[120px] border-gray-300 text-center">
+                              {totalCosts.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </td>
                           </tr>
                         );
                       })}
@@ -14811,13 +14912,10 @@ const ProjectHoursDetails = forwardRef(
                             item.month === duration.monthNo,
                         );
 
-                        const hours = monthData ? monthData.hours || 0 : 0;
-                        const laborCost = monthData
-                          ? monthData.laborCost || 0
-                          : 0;
-                        const burden = monthData
-                          ? monthData.laborBurden || 0
-                          : 0;
+                        const hours = Number(monthData?.hours) || 0;
+                        const laborCost = Number(monthData?.laborCost) || 0;
+                        const burden = Number(monthData?.laborBurden) || 0;
+
                         const totalburdencost = laborCost + burden;
 
                         return (
@@ -14863,6 +14961,43 @@ const ProjectHoursDetails = forwardRef(
                           </React.Fragment>
                         );
                       })}
+
+                      {/* Overall Total Hours */}
+                      <td
+                        className="tbody-td min-w-[100px] text-xs font-bold
+               border-l border-gray-300 px-2 text-center"
+                      >
+                        <span className="text-black">
+                          {laborCostByMonth
+                            .reduce(
+                              (sum, item) => sum + (Number(item.hours) || 0),
+                              0,
+                            )
+                            .toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                        </span>
+                      </td>
+
+                      {/* Overall Total Cost */}
+                      <td
+                        className="tbody-td min-w-[120px] text-xs font-bold
+               border-l border-gray-300 px-2 text-center"
+                      >
+                        <span className="text-black">
+                          {laborCostByMonth
+                            .reduce(
+                              (sum, item) =>
+                                sum + (Number(item.laborCost) || 0),
+                              0,
+                            )
+                            .toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                        </span>
+                      </td>
                     </tr>
                   </tfoot>
                 </table>

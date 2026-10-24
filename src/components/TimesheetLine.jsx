@@ -359,6 +359,7 @@ export default function TimesheetLine({
   const [isPeriodInvalid, setIsPeriodInvalid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modifiedHours, setModifiedHours] = useState(new Set());
+  const [initialLines, setInitialLines] = useState([]);
   // const [hiddenColumns, setHiddenColumns] = useState({
   //   "Work Order": false,
   //   Description: false,
@@ -525,11 +526,114 @@ export default function TimesheetLine({
     }
   }, [timePeriods, isEditMode]);
 
+  // const hasInitializedEdit = React.useRef(false);
+
+  // useEffect(() => {
+  //   if (isEditMode && (!purchaseOrderData || purchaseOrderData.length === 0))
+  //     return;
+  //   try {
+  //     if (isEditMode && timesheetToEdit) {
+  //       const editDateStr = formatDateForComparison(
+  //         timesheetToEdit?.timesheet_Date,
+  //       );
+  //       const timesheetYear = timesheetToEdit?.timesheet_Date
+  //         ? new Date(timesheetToEdit.timesheet_Date).getUTCFullYear()
+  //         : currentYear;
+  //       const matchingPeriod = timePeriods.find(
+  //         (period) =>
+  //           getWeekEndDateFromPeriod(period, timesheetYear) === editDateStr,
+  //       );
+  //       // const matchingPeriod = timePeriods.find(
+  //       //   (period) => getWeekEndDateFromPeriod(period) === editDateStr,
+  //       // );
+  //       if (matchingPeriod) setSelectedPeriod(matchingPeriod);
+
+  //       const hoursData = {};
+  //       const hourIdsData = {};
+  //       const datesInPeriod = matchingPeriod ? matchingPeriod.dates : [];
+
+  //       // FIX for Unexpected Token Error: Check for timesheetHours existence explicitly before calling forEach
+  //       const timesheetHours = timesheetToEdit?.timesheetHours;
+  //       if (timesheetHours) {
+  //         timesheetHours.forEach((hourEntry) => {
+  //           if (hourEntry && hourEntry.ts_Date) {
+  //             const d = new Date(`${hourEntry.ts_Date}T00:00:00Z`);
+  //             const numericFmt = new Intl.DateTimeFormat("en-US", {
+  //               month: "2-digit",
+  //               day: "2-digit",
+  //               timeZone: "UTC",
+  //             }).format(d);
+  //             const textFmt = new Intl.DateTimeFormat("en-US", {
+  //               month: "short",
+  //               day: "2-digit",
+  //               timeZone: "UTC",
+  //             }).format(d);
+
+  //             const dateIndex = datesInPeriod.findIndex(
+  //               (dp) => dp === numericFmt || dp === textFmt,
+  //             );
+
+  //             if (dateIndex !== -1) {
+  //               hoursData[dateIndex] = hourEntry.hours;
+  //               hourIdsData[dateIndex] = hourEntry.id;
+  //             }
+  //           }
+  //         });
+  //       }
+  //       // END FIX
+
+  //       if (matchingPeriod) {
+  //         for (var i = 0; i < matchingPeriod.dates.length; i++) {
+  //           if (hoursData[i] === undefined) hoursData[i] = "";
+  //         }
+  //       }
+
+  //       let fullWorkOrderString = "";
+  //       const poEntry = purchaseOrderData.find((po) =>
+  //         po.project?.includes(timesheetToEdit.projId),
+  //       );
+  //       if (poEntry) {
+  //         const projectIndex = poEntry.project.indexOf(timesheetToEdit.projId);
+  //         if (projectIndex > -1) {
+  //           // FIX: Ensure the format matches the selected value in handleSelectChange
+  //           fullWorkOrderString = `${poEntry.wa_Code}:::${poEntry.resourceDesc[projectIndex]}`;
+  //         }
+  //       }
+
+  //       const initialLine = {
+  //         id: timesheetToEdit?.id,
+  //         description: timesheetToEdit?.description || "",
+  //         project: timesheetToEdit?.projId || "",
+  //         plc: timesheetToEdit?.plc || "",
+  //         payType: timesheetToEdit?.payType || "SR",
+  //         workOrder: fullWorkOrderString, // THIS IS THE KEY TO PERSISTENCE
+  //         wa_Code: poEntry?.wa_Code || "",
+  //         pmUserID: poEntry?.pmUserId || "",
+  //         poNumber: timesheetToEdit?.poNumber || "",
+  //         rlseNumber: timesheetToEdit?.rlseNumber || "",
+  //         poLineNumber: timesheetToEdit?.poLineNumber || "",
+  //         hours: hoursData,
+  //         hourIds: hourIdsData,
+  //       };
+  //       setLines([initialLine]);
+  //       setInitialLines([initialLine]);
+  //     } else {
+  //       setLines([createEmptyLine(1, selectedPeriod.dates?.length || 7)]);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     onClose();
+  //   }
+  // }, [isEditMode, timesheetToEdit, purchaseOrderData, onClose, timePeriods]);
+
+  const hasInitializedEdit = React.useRef(false);
+
   useEffect(() => {
-    if (isEditMode && (!purchaseOrderData || purchaseOrderData.length === 0))
-      return;
+    if (hasInitializedEdit.current) return;
+
     try {
       if (isEditMode && timesheetToEdit) {
+        hasInitializedEdit.current = true;
         const editDateStr = formatDateForComparison(
           timesheetToEdit?.timesheet_Date,
         );
@@ -540,16 +644,12 @@ export default function TimesheetLine({
           (period) =>
             getWeekEndDateFromPeriod(period, timesheetYear) === editDateStr,
         );
-        // const matchingPeriod = timePeriods.find(
-        //   (period) => getWeekEndDateFromPeriod(period) === editDateStr,
-        // );
         if (matchingPeriod) setSelectedPeriod(matchingPeriod);
 
         const hoursData = {};
         const hourIdsData = {};
         const datesInPeriod = matchingPeriod ? matchingPeriod.dates : [];
 
-        // FIX for Unexpected Token Error: Check for timesheetHours existence explicitly before calling forEach
         const timesheetHours = timesheetToEdit?.timesheetHours;
         if (timesheetHours) {
           timesheetHours.forEach((hourEntry) => {
@@ -577,7 +677,6 @@ export default function TimesheetLine({
             }
           });
         }
-        // END FIX
 
         if (matchingPeriod) {
           for (var i = 0; i < matchingPeriod.dates.length; i++) {
@@ -586,14 +685,20 @@ export default function TimesheetLine({
         }
 
         let fullWorkOrderString = "";
-        const poEntry = purchaseOrderData.find((po) =>
-          po.project?.includes(timesheetToEdit.projId),
-        );
-        if (poEntry) {
-          const projectIndex = poEntry.project.indexOf(timesheetToEdit.projId);
-          if (projectIndex > -1) {
-            // FIX: Ensure the format matches the selected value in handleSelectChange
-            fullWorkOrderString = `${poEntry.wa_Code}:::${poEntry.resourceDesc[projectIndex]}`;
+        let poEntry = null;
+
+        // Only look up PO data if the role is NOT user
+        if (role !== "user" && purchaseOrderData.length > 0) {
+          poEntry = purchaseOrderData.find((po) =>
+            po.project?.includes(timesheetToEdit.projId),
+          );
+          if (poEntry) {
+            const projectIndex = poEntry.project.indexOf(
+              timesheetToEdit.projId,
+            );
+            if (projectIndex > -1) {
+              fullWorkOrderString = `${poEntry.wa_Code}:::${poEntry.resourceDesc[projectIndex]}`;
+            }
           }
         }
 
@@ -603,17 +708,19 @@ export default function TimesheetLine({
           project: timesheetToEdit?.projId || "",
           plc: timesheetToEdit?.plc || "",
           payType: timesheetToEdit?.payType || "SR",
-          workOrder: fullWorkOrderString, // THIS IS THE KEY TO PERSISTENCE
-          wa_Code: poEntry?.wa_Code || "",
-          pmUserID: poEntry?.pmUserId || "",
-          poNumber: timesheetToEdit?.poNumber || "",
-          rlseNumber: timesheetToEdit?.rlseNumber || "",
-          poLineNumber: timesheetToEdit?.poLineNumber || "",
+          workOrder: fullWorkOrderString,
+          wa_Code: poEntry?.wa_Code || timesheetToEdit?.workOrder || "",
+          pmUserID: poEntry?.pmUserId || timesheetToEdit?.pm_User_Id || "",
+          poNumber: timesheetToEdit?.poNumber || "0000",
+          rlseNumber: timesheetToEdit?.rlseNumber || "0",
+          poLineNumber: timesheetToEdit?.poLineNumber || 0,
           hours: hoursData,
           hourIds: hourIdsData,
         };
         setLines([initialLine]);
-      } else {
+        setInitialLines([initialLine]);
+      } else if (!isEditMode) {
+        hasInitializedEdit.current = true;
         setLines([createEmptyLine(1, selectedPeriod.dates?.length || 7)]);
       }
     } catch (error) {
@@ -1533,12 +1640,17 @@ export default function TimesheetLine({
                       <td className="p-1 border-r border-b border-gray-300 min-w-[150px]">
                         {role === "user" ? (
                           <select
-                            value={line.project}
+                            value={`${line.project}:::${line.plc}`}
                             onChange={(e) => {
-                              const selectedProjId = e.target.value;
-                              // Find matching entry from employeeProjects data to automatically map the billLabCatCd to plc
+                              const selectedValue = e.target.value;
+                              const [selectedProjId, selectedLabCat] =
+                                selectedValue.split(":::");
+
+                              // Find the exact matching entry using both projId and billLabCatCd
                               const matchedEntry = employeeProjects.find(
-                                (proj) => proj.projId === selectedProjId,
+                                (proj) =>
+                                  proj.projId === selectedProjId &&
+                                  proj.billLabCatCd === selectedLabCat,
                               );
 
                               setLines((currentLines) =>
@@ -1566,11 +1678,17 @@ export default function TimesheetLine({
                             }`}
                           >
                             <option value="">Select Project</option>
-                            {employeeProjects.map((proj) => (
-                              <option key={proj.projId} value={proj.projId}>
-                                {proj.projId} (LabCat: {proj.billLabCatCd})
-                              </option>
-                            ))}
+                            {employeeProjects.map((proj, idx) => {
+                              const optionValue = `${proj.projId}:::${proj.billLabCatCd}`;
+                              return (
+                                <option
+                                  key={`${proj.projId}-${proj.billLabCatCd}-${idx}`}
+                                  value={optionValue}
+                                >
+                                  {proj.projId} (LabCat: {proj.billLabCatCd})
+                                </option>
+                              );
+                            })}
                           </select>
                         ) : (
                           <input

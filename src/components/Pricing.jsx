@@ -119,9 +119,16 @@ const LEGACY_POOL_DEFINITIONS = [
 
 // Local fallback rules for rate IDs confirmed by the account-pool contract.
 // Other rate pools need an explicit allocation definition from your business/API.
+// const CONFIRMED_POOL_BASE_RULES = {
+//   FRINGE: ["directCost"],
+//   OVERHEAD: ["directCost", "fringeOnOverhead"],
+//   GNA: ["directCost", "fringeOnGna", "overheadOnGna"],
+// };
+
 const CONFIRMED_POOL_BASE_RULES = {
   FRINGE: ["directCost"],
   OVERHEAD: ["directCost", "fringeOnOverhead"],
+  OVERHEADONSITE: ["directCost", "fringeOnOverhead"],
   GNA: ["directCost", "fringeOnGna", "overheadOnGna"],
 };
 
@@ -272,7 +279,7 @@ const RATE_POOL_TO_ACCOUNT_FLAG = {
   OVERHEAD: "OVERHEAD",
   GNA: "GNA",
   MNH: "MNH",
-  OVERHEADONSITE: "OVERHEADONSITE",
+  OVERHEADONSITE: "OVERHEAD",
 };
 const normPoolPart = (value) =>
   String(value ?? "")
@@ -289,16 +296,45 @@ const classifyPool = (pool) => {
     (ACCOUNT_POOL_FLAGS.includes(category) ? category : null)
   );
 };
+// const isPoolEnabledForAccount = (pool, flags) => {
+//   if (pool.isFee) return true;
+//   const flag = classifyPool(pool);
+//   if (flag) return isAccountFlagTrue(flags, flag);
+//   return isAccountFlagTrue(flags, String(pool.flag || "").toUpperCase()) || isAccountFlagTrue(flags, String(pool.id || "").toUpperCase()) || isAccountFlagTrue(flags, String(pool.key || "").toUpperCase());
+// };
+
 const isPoolEnabledForAccount = (pool, flags) => {
   if (pool.isFee) return true;
+
+  const normalize = (value) =>
+    String(value || "")
+      .toUpperCase()
+      .replace(/[\s_-]+/g, "");
+
+  const onsiteFlag = [pool.id, pool.flag, pool.key]
+    .map(normalize)
+    .find((name) => name.endsWith("ONSITE"));
+
+  if (onsiteFlag) {
+    return Object.keys(flags || {}).some(
+      (name) =>
+        normalize(name) === onsiteFlag && isAccountFlagTrue(flags, name),
+    );
+  }
+
   const flag = classifyPool(pool);
-  if (flag) return isAccountFlagTrue(flags, flag);
+
+  if (flag) {
+    return isAccountFlagTrue(flags, flag);
+  }
+
   return (
     isAccountFlagTrue(flags, String(pool.flag || "").toUpperCase()) ||
     isAccountFlagTrue(flags, String(pool.id || "").toUpperCase()) ||
     isAccountFlagTrue(flags, String(pool.key || "").toUpperCase())
   );
 };
+
 const poolDependencies = (pool, pools, flags) => {
   const parts = (pool.baseIncludes || []).map(normPoolPart);
   const deps = new Set();
@@ -588,6 +624,11 @@ const Pricing = () => {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [hideZeroRows, setHideZeroRows] = useState(true);
   const [dashboardView, setDashboardView] = useState("Overview");
+  const [selectedDashboardFilter, setSelectedDashboardFilter] = useState({
+    laborCategory: "",
+    employee: "",
+    vendor: "",
+  });
 
   // Master Data State
   const [masterForecast, setMasterForecast] = useState([]);
@@ -709,7 +750,8 @@ const Pricing = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [visibleYears, setVisibleYears] = useState(DEFAULT_ALL_YEARS);
   const [laborMetrics, setLaborMetrics] = useState({ hrs: true, amt: true });
-  const [globalFee, setGlobalFee] = useState("7.00");
+  const [globalFee, setGlobalFee] = useState("0.00");
+  const [closingPeriodLabel, setClosingPeriodLabel] = useState("");
 
   const [templates, setTemplates] = useState([]);
   const [targetTemplateId, setTargetTemplateId] = useState("");
@@ -913,12 +955,20 @@ const Pricing = () => {
         const ensureArr = (d) =>
           Array.isArray(d) ? d : d?.data || d?.items || d?.results || [];
 
+        // const fore = ensureArr(foreRaw).filter(
+        //   (item) =>
+        //     String(item.plType || item.pl_type || "")
+        //       .trim()
+        //       .toUpperCase() === "NBBUD",
+        // );
         const fore = ensureArr(foreRaw).filter(
           (item) =>
             String(item.plType || item.pl_type || "")
               .trim()
               .toUpperCase() === "NBBUD",
         );
+
+        setMasterForecast(fore);
         const plc = ensureArr(plcRaw);
         const coa = ensureArr(coaRaw);
         const emp = ensureArr(empRaw);
@@ -1128,6 +1178,109 @@ const Pricing = () => {
     const fetchPools = async () => {
       if (!targetTemplateId || !ALL_YEARS.length) return;
       try {
+        const selectedTemplate = templates.find(
+          (template) => String(template.id) === String(targetTemplateId),
+        );
+
+        const isDefaultTemplate =
+          String(selectedTemplate?.templateCode || "")
+            .trim()
+            .toLowerCase() === "default";
+
+        let closingMonth = null;
+
+        setClosingPeriodLabel("");
+
+        // if (isDefaultTemplate) {
+
+        //   if (cancelled) return;
+
+        // setClosingPeriodLabel(
+        //   new Date(
+        //     Date.UTC(Number(String(closingPeriod).slice(0, 4)), closingMonth - 1, 1),
+        //   ).toLocaleDateString("en-US", {
+        //     month: "long",
+        //     year: "numeric",
+        //     timeZone: "UTC",
+        //   }),
+        // );
+        //   const configResponse = await fetch(
+        //     `${backendUrl}/api/Configuration/GetAllConfigValuesByProject/xxxxx`,
+        //   );
+
+        //   if (!configResponse.ok) {
+        //     throw new Error(
+        //       `Closing period request failed (${configResponse.status})`,
+        //     );
+        //   }
+
+        //   const configData = unwrapApiArray(await configResponse.json());
+
+        //   const closingPeriod = configData.find(
+        //     (item) =>
+        //       String(item.name || "").trim().toLowerCase() === "closing_period",
+        //   )?.value;
+
+        //   closingMonth = Number(
+        //     String(closingPeriod || "").match(/^\d{4}-(\d{2})-/)?.[1],
+        //   );
+
+        //   if (
+        //     !Number.isInteger(closingMonth) ||
+        //     closingMonth < 1 ||
+        //     closingMonth > 12
+        //   ) {
+        //     throw new Error(`Invalid closing_period: ${closingPeriod}`);
+        //   }
+        // }
+        if (isDefaultTemplate) {
+          const configResponse = await fetch(
+            `${backendUrl}/api/Configuration/GetAllConfigValuesByProject/xxxxx`,
+          );
+
+          if (!configResponse.ok) {
+            throw new Error(
+              `Closing period request failed (${configResponse.status})`,
+            );
+          }
+
+          const configData = unwrapApiArray(await configResponse.json());
+
+          const closingPeriod = configData.find(
+            (item) =>
+              String(item.name || "")
+                .trim()
+                .toLowerCase() === "closing_period",
+          )?.value;
+
+          closingMonth = Number(
+            String(closingPeriod || "").match(/^\d{4}-(\d{2})-/)?.[1],
+          );
+
+          if (
+            !Number.isInteger(closingMonth) ||
+            closingMonth < 1 ||
+            closingMonth > 12
+          ) {
+            throw new Error(`Invalid closing_period: ${closingPeriod}`);
+          }
+
+          if (cancelled) return;
+
+          setClosingPeriodLabel(
+            new Date(
+              Date.UTC(
+                Number(String(closingPeriod).slice(0, 4)),
+                closingMonth - 1,
+                1,
+              ),
+            ).toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+              timeZone: "UTC",
+            }),
+          );
+        }
         const rateResults = await Promise.all(
           ALL_YEARS.map((year) =>
             fetch(
@@ -1181,6 +1334,9 @@ const Pricing = () => {
             yearRates[pool.key] = 0;
           });
           data.forEach((record) => {
+            if (isDefaultTemplate && Number(record.month) !== closingMonth) {
+              return;
+            }
             const id = getPoolIdentity(record);
             const pool = nextPools.find(
               (item) =>
@@ -1188,19 +1344,40 @@ const Pricing = () => {
                 item.key.toUpperCase() === id.toUpperCase(),
             );
             if (!pool) return;
-            const raw =
-              record.targetRate ??
-              record.escalationPercent ??
-              record.rate ??
-              record.ratePercent ??
-              0;
-            const parsed = Number(raw);
+            // const raw = record.targetRate ?? record.escalationPercent ?? record.rate ?? record.ratePercent ?? 0;
+            // const actualRate = Number(record.actualRate);
+            // const raw =
+            //   Number.isFinite(actualRate) && actualRate !== 0
+            //     ? actualRate
+            //     : record.targetRate ??
+            //       record.escalationPercent ??
+            //       record.rate ??
+            //       record.ratePercent ??
+            //       0;
+            // const parsed = Number(raw);
+            // yearRates[pool.key] = Number.isFinite(parsed) ? parsed / 100 : 0;
+            // const parsed = Number(record.targetRate);
+            const parsed = Number(record.targetRate);
+            // yearRates[pool.key] = Number.isFinite(parsed) ? parsed / 100 : 0;
+
             yearRates[pool.key] = Number.isFinite(parsed) ? parsed / 100 : 0;
           });
           if (!("fee" in yearRates)) yearRates.fee = 0;
           nextRates[year] = yearRates;
         });
+        console.table(
+          rateResults.flatMap(({ year, data }) =>
+            data.map((record) => ({
+              year,
+              poolId: getPoolIdentity(record),
+              month: record.month,
+              actualRate: record.actualRate,
+              targetRate: record.targetRate,
+            })),
+          ),
+        );
 
+        // console.log("Final stored burden rates:", nextRates);
         setPools(nextPools);
         setBurdenRates(nextRates);
       } catch (error) {
@@ -1211,7 +1388,7 @@ const Pricing = () => {
     return () => {
       cancelled = true;
     };
-  }, [targetTemplateId, BASE_YEAR, OPTION_YEARS.join(",")]);
+  }, [targetTemplateId, templates, BASE_YEAR, OPTION_YEARS.join(",")]);
 
   // ABSOLUTE-MONTH ESCALATION MAP
   const escalatedRatesMap = useMemo(() => {
@@ -1308,6 +1485,22 @@ const Pricing = () => {
         totals.poolAmounts[pool.key] = 0;
       });
       const flags = getYearAccountFlags(accountPoolsMap, year, acctId, orgId);
+      //     console.table(
+      //   pools.map((pool) => ({
+      //     year : '2026',
+      //     acctId,
+      //     orgId,
+      //     poolId: pool.id,
+      //     flag: pool.flag,
+      //     enabled: isPoolEnabledForAccount(pool, flags),
+      //     baseIncludes: (pool.baseIncludes || []).join(", "),
+      //     rate:
+      //       yearRatesData?.monthly?.[pool.key]?.[0] ??
+      //       yearRatesData?.[pool.key] ??
+      //       0,
+      //   })),
+      // );
+
       const calculationOrder = orderedCalculationPools(pools, flags);
       const feeRate = Number.parseFloat(globalFee) / 100 || 0;
       for (let month = 0; month < 12; month++) {
@@ -2061,6 +2254,186 @@ const Pricing = () => {
   }, [categoryTableData, visibleYears, pools]);
 
   const PIE_COLORS = ["#3b82f6", "#f59e0b", "#8b5cf6"];
+  const dashboardGroupData = useMemo(() => {
+    const categories = new Map();
+    const employees = new Map();
+    const vendors = new Map();
+
+    const amountKeys = [
+      "cost",
+      "totalBurdenedCost",
+      "fee",
+      "price",
+      "hrs",
+      ...pools.filter((pool) => !pool.isFee).map((pool) => pool.key),
+    ];
+
+    const add = (map, name, yearData) => {
+      if (!yearData) return;
+
+      if (!map.has(name)) {
+        map.set(name, {
+          name,
+          Price: 0,
+          Hours: 0,
+          ...Object.fromEntries(amountKeys.map((key) => [key, 0])),
+        });
+      }
+
+      const item = map.get(name);
+
+      amountKeys.forEach((key) => {
+        item[key] += Number(yearData[key]) || 0;
+      });
+
+      item.Price = item.price;
+      item.Hours = item.hrs;
+    };
+
+    const forVisibleYears = (row, callback) => {
+      if (visibleYears.includes(BASE_YEAR)) {
+        callback(row.base);
+      }
+
+      (row.opts || []).forEach((yearData, index) => {
+        if (visibleYears.includes(OPTION_YEARS[index])) {
+          callback(yearData);
+        }
+      });
+    };
+
+    (categoryTableData || []).forEach((row) => {
+      if (row.isLabor) {
+        forVisibleYears(row, (yearData) => {
+          add(categories, row.cat || "Unassigned", yearData);
+        });
+
+        (row.subItems || []).forEach((employee) => {
+          forVisibleYears(employee, (yearData) => {
+            add(
+              employees,
+              employee.name || employee.emplId || "Unassigned",
+              yearData,
+            );
+          });
+        });
+      } else {
+        forVisibleYears(row, (yearData) => {
+          add(vendors, row.vendorName || "Unassigned / General", yearData);
+        });
+      }
+    });
+
+    const ranked = (map) =>
+      [...map.values()].sort((a, b) => b.Price - a.Price).slice(0, 10);
+
+    return {
+      categories: ranked(categories),
+      employees: ranked(employees),
+      vendors: ranked(vendors),
+    };
+  }, [
+    categoryTableData,
+    visibleYears,
+    pools,
+    BASE_YEAR,
+    OPTION_YEARS.join(","),
+  ]);
+
+  const dashboardGroupView = {
+    "Labor Categories": {
+      data: dashboardGroupData.categories,
+      filterKey: "laborCategory",
+      selectedLabel: "Selected Category",
+    },
+    Employees: {
+      data: dashboardGroupData.employees,
+      filterKey: "employee",
+      selectedLabel: "Selected Employee",
+    },
+    Vendors: {
+      data: dashboardGroupData.vendors,
+      filterKey: "vendor",
+      selectedLabel: "Selected Vendor",
+    },
+  }[dashboardView];
+
+  const dashboardDetailData = dashboardGroupView
+    ? dashboardGroupView.data.find(
+        (item) =>
+          item.name === selectedDashboardFilter[dashboardGroupView.filterKey],
+      ) || null
+    : null;
+
+  const dashboardGroupTotal = dashboardGroupView
+    ? dashboardGroupView.data.reduce((total, item) => total + item.Price, 0)
+    : 0;
+
+  const renderDetailBreakdown = (data) => {
+    if (!data) return null;
+
+    const wrap =
+      data.cost > 0 ? (data.totalBurdenedCost / data.cost).toFixed(2) : "-";
+
+    const lines = [
+      { key: "directCost", label: "Direct Cost", amount: data.cost },
+      ...pools
+        .filter((pool) => !pool.isFee)
+        .map((pool) => ({
+          key: pool.key,
+          label: pool.label,
+          amount: data[pool.key] || 0,
+        }))
+        .filter((item) => item.amount !== 0),
+      {
+        key: "totalBurdenedCost",
+        label: `Total Burdened Cost (Wrap Rate ${wrap})`,
+        amount: data.totalBurdenedCost,
+        className: "bg-indigo-50 font-semibold",
+      },
+      {
+        key: "fee",
+        label: `Fee (${Number(globalFee).toFixed(2)}%)`,
+        amount: data.fee,
+        className: "bg-purple-50",
+      },
+      {
+        key: "price",
+        label: "Price",
+        amount: data.price,
+        className: "bg-green-50 font-bold",
+      },
+    ];
+
+    return (
+      <div className="md:col-span-3 mt-2 overflow-x-auto">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr className="bg-gray-100 text-gray-700">
+              <th className="px-3 py-1.5 border border-gray-200 text-left">
+                Component
+              </th>
+              <th className="px-3 py-1.5 border border-gray-200 text-right">
+                Amount
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map((line) => (
+              <tr key={line.key} className={line.className || ""}>
+                <td className="px-3 py-1.5 border border-gray-200">
+                  {line.label}
+                </td>
+                <td className="px-3 py-1.5 border border-gray-200 text-right">
+                  {formatCurrency(line.amount)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   // ==========================================
   // EXPORT TO EXCEL
@@ -3336,7 +3709,7 @@ const Pricing = () => {
                     setTimeout(() => setShowProjectDropdown(false), 200)
                   }
                   className="w-48 border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none focus:border-green-600 font-bold text-gray-800"
-                  placeholder="e.g. C1800..."
+                  placeholder="e.g. 22003..."
                   autoComplete="off"
                 />
                 {showProjectDropdown && (
@@ -3414,6 +3787,17 @@ const Pricing = () => {
               />
             </div>
 
+            {closingPeriodLabel && (
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-gray-300 rounded shadow-sm text-xs whitespace-nowrap">
+                <span className="font-semibold text-gray-700 tracking-wider">
+                  Closing Period:
+                </span>
+                <span className="font-bold text-gray-800">
+                  {closingPeriodLabel}
+                </span>
+              </div>
+            )}
+
             {/* Escalation Config Area (Expandable Panel) */}
             <div className="relative">
               <button
@@ -3428,7 +3812,7 @@ const Pricing = () => {
               </button>
 
               {showEscalationPanel && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 w-[600px] p-4">
+                <div className="absolute top-full left-0 xl:left-auto xl:right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 w-[600px] max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-auto p-4">
                   <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-gray-800 text-sm">
@@ -4034,7 +4418,7 @@ const Pricing = () => {
                   </div>
                 )}
 
-                {dashboardView === "Labor Categories" && (
+                {/* {dashboardView === "Labor Categories" && (
                   <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200 flex flex-col">
                     <h3 className="text-gray-700 font-bold mb-4">
                       Top 10 Labor Categories by Price
@@ -4080,9 +4464,9 @@ const Pricing = () => {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                )}
+                )} */}
 
-                {dashboardView === "Employees" && (
+                {/* {dashboardView === "Employees" && (
                   <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200 flex flex-col">
                     <h3 className="text-gray-700 font-bold mb-4">
                       Top 10 Employees by Price
@@ -4128,9 +4512,9 @@ const Pricing = () => {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                )}
+                )} */}
 
-                {dashboardView === "Vendors" && (
+                {/* {dashboardView === "Vendors" && (
                   <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200 flex flex-col">
                     <h3 className="text-gray-700 font-bold mb-4">
                       Top 10 Vendors by Price
@@ -4175,6 +4559,138 @@ const Pricing = () => {
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
+                  </div>
+                )} */}
+                {dashboardGroupView && (
+                  <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200 flex flex-col">
+                    <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                      <h3 className="text-gray-700 font-bold">
+                        {dashboardView}
+                      </h3>
+
+                      <select
+                        value={
+                          selectedDashboardFilter[dashboardGroupView.filterKey]
+                        }
+                        onChange={(event) => {
+                          const value = event.target.value;
+
+                          setSelectedDashboardFilter((previous) => ({
+                            ...previous,
+                            [dashboardGroupView.filterKey]: value,
+                          }));
+                        }}
+                        className="border border-gray-300 rounded px-3 py-2 text-sm bg-white min-w-[220px]"
+                      >
+                        <option value="">All {dashboardView}</option>
+
+                        {dashboardGroupView.data.map((item) => (
+                          <option key={item.name} value={item.name}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex-1 w-full relative">
+                      <ResponsiveContainer width="100%" height={400}>
+                        <PieChart>
+                          <Pie
+                            data={dashboardGroupView.data}
+                            dataKey="Price"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={145}
+                            label={({ name, percent }) =>
+                              `${name} ${(percent * 100).toFixed(1)}%`
+                            }
+                            onClick={(data) => {
+                              const name =
+                                data?.name || data?.payload?.name || "";
+
+                              setSelectedDashboardFilter((previous) => ({
+                                ...previous,
+                                [dashboardGroupView.filterKey]: name,
+                              }));
+                            }}
+                          >
+                            {dashboardGroupView.data.map((entry, index) => {
+                              const selected =
+                                selectedDashboardFilter[
+                                  dashboardGroupView.filterKey
+                                ] === entry.name;
+
+                              return (
+                                <Cell
+                                  key={entry.name}
+                                  fill={PIE_COLORS[index % PIE_COLORS.length]}
+                                  stroke={selected ? "#111827" : "#fff"}
+                                  strokeWidth={selected ? 3 : 1}
+                                />
+                              );
+                            })}
+                          </Pie>
+
+                          <RechartsTooltip
+                            formatter={(value) => [
+                              formatCurrency(value),
+                              "Price",
+                            ]}
+                          />
+
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {dashboardDetailData && (
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 border-t border-gray-200 pt-4">
+                        <div className="rounded-md bg-indigo-50 p-3">
+                          <div className="text-[11px] font-bold text-indigo-600 uppercase">
+                            {dashboardGroupView.selectedLabel}
+                          </div>
+                          <div className="text-sm font-semibold text-gray-800 mt-1 break-words">
+                            {dashboardDetailData.name}
+                          </div>
+                        </div>
+
+                        <div className="rounded-md bg-blue-50 p-3">
+                          <div className="text-[11px] font-bold text-blue-600 uppercase">
+                            {dashboardView === "Vendors"
+                              ? "Evaluated Cost"
+                              : "Price"}
+                          </div>
+                          <div className="text-lg font-bold text-gray-800 mt-1">
+                            {formatCurrency(dashboardDetailData.Price)}
+                          </div>
+                        </div>
+
+                        <div className="rounded-md bg-green-50 p-3">
+                          <div className="text-[11px] font-bold text-green-600 uppercase">
+                            {dashboardView === "Vendors"
+                              ? "Share of Vendors"
+                              : "Hours / Share"}
+                          </div>
+
+                          <div className="text-sm font-bold text-gray-800 mt-1">
+                            {dashboardView !== "Vendors" && (
+                              <>{formatNum(dashboardDetailData.Hours)} hrs · </>
+                            )}
+                            {dashboardGroupTotal > 0
+                              ? (
+                                  (dashboardDetailData.Price /
+                                    dashboardGroupTotal) *
+                                  100
+                                ).toFixed(1)
+                              : "0.0"}
+                            %
+                          </div>
+                        </div>
+
+                        {renderDetailBreakdown(dashboardDetailData)}
+                      </div>
+                    )}
                   </div>
                 )}
               </>

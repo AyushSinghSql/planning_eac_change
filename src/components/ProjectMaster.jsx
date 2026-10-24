@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { backendUrl } from "./config";
 
+// Base API URL: uses backendUrl from config if available, otherwise falls back to localhost:5033
+// const API_BASE_URL = backendUrl || "http://localhost:5033"
+
+const API_BASE_URL = "http://localhost:5033";
+
 const columns = [
   { key: "project_id", label: "Project ID" },
   { key: "project_name", label: "Project Name" },
@@ -97,7 +102,7 @@ function ProjectMaster() {
   // Fetch employees for manager dropdown suggestions with deduplication
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`${backendUrl}/Employee/GetAllEmployees`);
+      const response = await fetch(`${backendUrl}/api/EmployeeMaster`);
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -105,7 +110,7 @@ function ProjectMaster() {
           const uniqueEmployees = [];
           for (const emp of data) {
             const id = String(
-              emp.emplId || emp.employeeid || emp.id || "",
+              emp.emplId || emp.employeeId || emp.id || "",
             ).trim();
             if (id && !seen.has(id.toLowerCase())) {
               seen.add(id.toLowerCase());
@@ -203,18 +208,43 @@ function ProjectMaster() {
     return [...pasted, ...newRows, ...recentRows, ...existing];
   }, [projects, recentSavedIds]);
 
+  // const filteredProjects = useMemo(() => {
+  //   const trimmed = search.toLowerCase().trim();
+  //   if (!trimmed) return sortedProjects;
+
+  //   return sortedProjects.filter(
+  //     (project) =>
+  //       project.isNew ||
+  //       project.isPasted ||
+  //       columns.some((column) =>
+  //         String(project[column.key] || "")
+  //           .toLowerCase()
+  //           .includes(trimmed),
+  //       ),
+  //   );
+  // }, [sortedProjects, search]);
+
   const filteredProjects = useMemo(() => {
     const trimmed = search.toLowerCase().trim();
-    if (!trimmed) return sortedProjects;
-    return sortedProjects.filter(
-      (project) =>
-        project.isNew ||
-        project.isPasted ||
-        columns.some((column) =>
-          String(project[column.key] || "")
-            .toLowerCase()
-            .includes(trimmed),
-        ),
+
+    // Filter only by Project ID
+    const filtered = !trimmed
+      ? sortedProjects
+      : sortedProjects.filter(
+          (project) =>
+            project.isNew ||
+            project.isPasted ||
+            String(project.project_id ?? "")
+              .toLowerCase()
+              .includes(trimmed),
+        );
+
+    return [...filtered].sort((a, b) =>
+      String(a.project_id ?? "").localeCompare(
+        String(b.project_id ?? ""),
+        undefined,
+        { numeric: true, sensitivity: "base" },
+      ),
     );
   }, [sortedProjects, search]);
 

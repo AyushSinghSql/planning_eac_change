@@ -2374,8 +2374,10 @@ const getUserIPAddress = async () => {
 // Updated columns with Work Order after Name
 const columnsAdmin = [
   "All",
-  "Project Id",
+  "Project ID",
+  "Project Name",
   "PLC",
+  "PLC Description",
   "Status",
   "Timesheet Date",
   "Employee ID",
@@ -2488,6 +2490,7 @@ export default function ApprovalEnquiry() {
   const [searchDate, setSearchDate] = useState("");
   const [searchEmployeeId, setSearchEmployeeId] = useState("");
   const [searchEmployeeName, setSearchEmployeeName] = useState("");
+  const [searchProjectId, setsearchProjectId] = useState("");
   const [selectedResourceId, setSelectedResourceId] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -3002,7 +3005,7 @@ export default function ApprovalEnquiry() {
       const employeeId = String(timesheet["Employee ID"] || "").trim();
       const timesheetDate =
         timesheet.originalDate || timesheet["Timesheet Date"];
-      const projId = timesheet.projId || timesheet["Project Id"];
+      const projId = timesheet.projId || timesheet["Project ID"];
       console.log(timesheet);
       const plc = timesheet.plc || timesheet["PLC"];
       const key = `${employeeId}|${timesheetDate}|${projId}|${plc}`;
@@ -3227,8 +3230,10 @@ export default function ApprovalEnquiry() {
             // Display fields
             status: timesheetEntry.approvalStatus?.toLowerCase(),
             Status: timesheetEntry.approvalStatus,
-            "Project Id": timesheetEntry.projId,
+            "Project ID": timesheetEntry.projId,
+            "Project Name": timesheetEntry.projectName,
             PLC: timesheetEntry.plc,
+            "PLC Description": timesheetEntry.plcDesc,
             "Timesheet Date": convertDate(timesheetEntry.timesheet_Date),
             "Employee ID": timesheetEntry.resource_Id,
             Name: timesheetEntry.resource_Name || timesheetEntry.displayedName,
@@ -3319,6 +3324,14 @@ export default function ApprovalEnquiry() {
         (row["Name"] || "")
           .toLowerCase()
           .includes(searchEmployeeName.trim().toLowerCase()),
+      );
+    }
+
+    if (searchProjectId.trim()) {
+      filtered = filtered.filter((row) =>
+        (row["Project ID"] || "")
+          .toLowerCase()
+          .includes(searchProjectId.trim().toLowerCase()),
       );
     }
 
@@ -3931,6 +3944,7 @@ export default function ApprovalEnquiry() {
     setSearchDate("");
     setSearchEmployeeId("");
     setSearchEmployeeName("");
+    setsearchProjectId("");
     setSearchStatus("");
     setFilterMonth("");
     setFilterYear("");
@@ -4167,6 +4181,23 @@ export default function ApprovalEnquiry() {
 
               <div className="flex items-center gap-2">
                 <label
+                  htmlFor="filterProjId"
+                  className="font-semibold text-xs sm:text-sm whitespace-nowrap text-gray-700"
+                >
+                  Project ID:
+                </label>
+                <input
+                  id="filterProjId"
+                  type="text"
+                  value={searchProjectId}
+                  onChange={(e) => setsearchProjectId(e.target.value)}
+                  placeholder="Project ID"
+                  className="border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-inner min-w-[140px]"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label
                   htmlFor="filterStatus"
                   className="font-semibold text-xs sm:text-sm whitespace-nowrap text-gray-700"
                 >
@@ -4203,18 +4234,18 @@ export default function ApprovalEnquiry() {
                     />
                     Submitted
                   </label>
-                  {isAdmin && (
-                    <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={searchStatus.includes("processed")}
-                        value="processed"
-                        onChange={handleStatusCheckboxChange}
-                        className="cursor-pointer accent-blue-600"
-                      />
-                      Processed
-                    </label>
-                  )}
+                  {/* {isAdmin && ( */}
+                  <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={searchStatus.includes("processed")}
+                      value="processed"
+                      onChange={handleStatusCheckboxChange}
+                      className="cursor-pointer accent-blue-600"
+                    />
+                    Processed
+                  </label>
+                  {/* )} */}
                 </div>
               </div>
               <button
@@ -4353,20 +4384,14 @@ export default function ApprovalEnquiry() {
                   </div>
                 </div>
               ) : (
-                <table className="w-full text-xs border-collapse table-fixed">
+                <table className="w-full text-xs border-collapse table-auto">
                   <thead className="sticky top-0 z-20">
                     <tr>
                       {columns.map((col) => (
                         <th
                           key={col}
-                          className="px-2 py-1.5 whitespace-nowrap border-r border-b border-gray-300 text-xs font-semibold bg-[#e5f3fb] text-black text-center cursor-pointer select-none last:border-r-0"
+                          className="px-3 py-2 whitespace-nowrap border-r border-b border-gray-300 text-xs font-semibold bg-[#e5f3fb] text-black text-center cursor-pointer select-none last:border-r-0"
                           style={{
-                            minWidth:
-                              col === "All"
-                                ? "80px"
-                                : col === "Status"
-                                  ? "150px"
-                                  : `${colWidth}px`,
                             cursor: col !== "All" ? "pointer" : "default",
                           }}
                           onClick={() => col !== "All" && handleSort(col)}
@@ -4418,20 +4443,11 @@ export default function ApprovalEnquiry() {
                               className={`${rowBg} cursor-pointer transition-colors hover:bg-sky-50 ${
                                 isApprovedOrRejected ? "opacity-75" : ""
                               }`}
-                              // onClick={(e) => handleRowClick(row, e)}
                             >
                               {columns.map((col) => (
                                 <td
                                   key={col}
-                                  className="px-2 py-1.5 text-center whitespace-nowrap border-r border-b border-gray-300 text-xs text-black last:border-r-0 relative"
-                                  style={{
-                                    minWidth:
-                                      col === "All"
-                                        ? "80px"
-                                        : col === "Status"
-                                          ? "150px"
-                                          : `${colWidth}px`,
-                                  }}
+                                  className="px-3 py-2 text-center whitespace-nowrap border-r border-b border-gray-300 text-xs text-black last:border-r-0 relative"
                                 >
                                   {col === "Status" ? (
                                     <div className="flex items-center justify-center gap-1.5">

@@ -1351,26 +1351,34 @@ export default function MainTable() {
 
     try {
       const response = await fetch(
-        `${backendUrl}/api/EmployeeLeaveBeginningBalance/GetByEmployeeLeaves/E001?leaveYear=2026`,
+        `${backendUrl}/api/EmployeeLeaveTransactions/balance/EMP001?fiscalYear=${currentYear}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         },
       );
-      // const response = await fetch(
-      //   `${backendUrl}/api/EmployeeLeaveBeginningBalance/GetByEmployeeLeaves/${currentUser.name}?leaveYear=${currentYear}`,
-      //   {
-      //     method: "GET",
-      //     headers: { "Content-Type": "application/json" },
-      //   },
-      // );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      setLeaveData(Array.isArray(data) ? data : []);
+
+      // Map API response to match JSX property names
+      const formattedData = Array.isArray(data)
+        ? data.map((item) => ({
+            leaveTypeCode: item.leave_code || "",
+            // leaveTypeName: item.leave_type_name || item.leave_code, // fallback if name isn't provided
+            // beginningBalance: item.beginning_balance || 0,
+            // carriedForward: item.carried_forward || 0,
+            // beginningAdjustments: item.beginning_adjustments || 0,
+            accruedHours: item.accrued_hours || 0,
+            leaveTakenHours: item.leave_taken_hours || 0,
+            availableBalance: item.balance_hours || 0,
+          }))
+        : [];
+
+      setLeaveData(formattedData);
     } catch (error) {
       showToast(`Error fetching leave balance: ${error.message}`, "error");
       setLeaveData([]);
@@ -1378,7 +1386,6 @@ export default function MainTable() {
       setLeaveLoading(false);
     }
   };
-
   const handleCreateClick = () => {
     // Close any open detail modal first
     setSelectedTimesheetData(null);
@@ -1544,7 +1551,7 @@ export default function MainTable() {
                       onClick={handleLeaveBalance}
                       className="btn1 btn-blue cursor-pointer"
                     >
-                      Leave
+                      Leave Balance
                     </button>
                     <button
                       onClick={handleCreateClick}
@@ -1676,7 +1683,7 @@ export default function MainTable() {
                           <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
                             Leave Code
                           </th>
-                          <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-left">
+                          {/* <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-left">
                             Leave Type Name
                           </th>
                           <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
@@ -1687,7 +1694,7 @@ export default function MainTable() {
                           </th>
                           <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
                             Adjustments
-                          </th>
+                          </th> */}
                           <th className="px-3 py-2 border-r border-b border-gray-300 font-semibold text-black text-center">
                             Accrued Hours
                           </th>
@@ -1711,7 +1718,7 @@ export default function MainTable() {
                               <td className="px-3 py-2 text-center border-r border-b border-gray-300 font-bold text-blue-700">
                                 {item.leaveTypeCode}
                               </td>
-                              <td className="px-3 py-2 text-left border-r border-b border-gray-300 font-medium text-gray-800">
+                              {/* <td className="px-3 py-2 text-left border-r border-b border-gray-300 font-medium text-gray-800">
                                 {item.leaveTypeName}
                               </td>
                               <td className="px-3 py-2 text-center border-r border-b border-gray-300">
@@ -1722,7 +1729,7 @@ export default function MainTable() {
                               </td>
                               <td className="px-3 py-2 text-center border-r border-b border-gray-300">
                                 {item.beginningAdjustments}
-                              </td>
+                              </td> */}
                               <td className="px-3 py-2 text-center border-r border-b border-gray-300">
                                 {item.accruedHours}
                               </td>

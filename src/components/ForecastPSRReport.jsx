@@ -1194,6 +1194,8 @@ const computeTotals = (
     indirect: blank(),
   };
 
+  const clientId = import.meta.env.VITE_CLIENT_ID;
+
   if (!trendData || trendData.length === 0) return out;
 
   const allMode = selectedProjectIds === null; // show everything
@@ -1231,8 +1233,7 @@ const computeTotals = (
 
     //   return;
     // }
-
-    if (gidName === "Contracts Revenue") {
+    if (gidName === "Revenue") {
       const closingMonth = closingPeriodDate
         ? closingPeriodDate.getMonth() + 1
         : 0;
@@ -1241,7 +1242,7 @@ const computeTotals = (
         MONTHS.forEach((m) => {
           const amount = getAmt(group.monthlyTotals, year, m.key);
 
-          if (m.id <= closingMonth) {
+          if (m.id <= closingMonth && clientId !== "SSAI") {
             out.rev[m.name] += amount * -1;
           } else {
             out.rev[m.name] += amount;
@@ -1255,7 +1256,7 @@ const computeTotals = (
               MONTHS.forEach((m) => {
                 const amount = getAmt(proj.monthlyTotals, year, m.key);
 
-                if (m.id <= closingMonth) {
+                if (m.id <= closingMonth && clientId !== "SSAI") {
                   out.rev[m.name] += amount * -1;
                 } else {
                   out.rev[m.name] += amount;
@@ -1271,7 +1272,11 @@ const computeTotals = (
 
     // ── DIRECT LABOR ─────────────────────────────────────────────────
     // if (gid === "50-00-02") {
-    if (gid === "50" || gid.includes("50")) {
+    if (
+      clientId === "SSAI"
+        ? gidName === "Direct Labor"
+        : gid === "500" || gid.includes("50")
+    ) {
       if (allMode) {
         MONTHS.forEach((m) => {
           out.cost[m.name] += getAmt(group.monthlyTotals, year, m.key);
@@ -1310,7 +1315,11 @@ const computeTotals = (
       }
       return;
     }
-    if (gidName === "Subcontracts") {
+    if (
+      clientId === "SSAI"
+        ? gidName === "Subcontractors"
+        : gidName === "Subcontracts"
+    ) {
       if (allMode) {
         MONTHS.forEach((m) => {
           out.sub[m.name] += getAmt(group.monthlyTotals, year, m.key);
@@ -1334,7 +1343,9 @@ const computeTotals = (
     if (
       gidName === "Other Direct Costs" ||
       gidName === "Direct Travel" ||
-      gidName === "Direct Materials"
+      gidName === "Travel" ||
+      gidName === "Direct Materials" ||
+      gidName === "Materials"
     ) {
       getChildren(group).forEach((acct) => {
         // if (!isODC(acct.id)) return;
@@ -1356,7 +1367,7 @@ const computeTotals = (
       return;
     }
 
-    if (gid === "90") {
+    if (clientId === "SSAI" ? gidName === "Unallowables" : gid === "90") {
       if (allMode) {
         MONTHS.forEach((m) => {
           out.unallowable[m.name] += getAmt(group.monthlyTotals, year, m.key);
@@ -1379,7 +1390,11 @@ const computeTotals = (
       return;
     }
 
-    if (gid === "95") {
+    if (
+      clientId === "SSAI"
+        ? gidName === "Interest Income" || gidName === "Other Income"
+        : gid === "95"
+    ) {
       if (allMode) {
         MONTHS.forEach((m) => {
           out.nonOpps[m.name] += getAmt(group.monthlyTotals, year, m.key);

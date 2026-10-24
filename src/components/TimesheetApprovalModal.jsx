@@ -764,15 +764,26 @@ export default function TimesheetApprovalView({
   const [lines, setLines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [headerDates, setHeaderDates] = useState([]);
+  const [timesheetPeriod, setTimesheetPeriod] = useState("Bi-weekly");
 
   const hideableColumns =
     resourceType === "USER"
-      ? ["Project", "PLC", "Pay Type"]
+      ? [
+          "Line No",
+          "Project",
+          "Project Name",
+          "PLC",
+          "PLC Description",
+          "Pay Type",
+        ]
       : [
+          "Line No",
           "Work Order",
           "Description",
           "Project",
+          "Project Name",
           "PLC",
+          "PLC Description",
           "Pay Type",
           "Po Id",
           "Release",
@@ -790,13 +801,148 @@ export default function TimesheetApprovalView({
   const [timesheetDetails, setTimesheetDetails] = useState(null);
 
   const dayKeyMapping = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  // const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+  const periodDates = React.useMemo(() => {
+    if (!timesheetDate) return [];
+
+    const selectedDate = new Date(
+      `${String(timesheetDate).split("T")[0]}T00:00:00Z`,
+    );
+
+    if (Number.isNaN(selectedDate.getTime())) return [];
+
+    const period = timesheetPeriod.toLowerCase().trim();
+    let startDate = new Date(selectedDate);
+    let count = 7;
+
+    switch (period) {
+      case "weekly":
+      case "weekly - 7 days":
+        count = 7;
+        break;
+
+      case "bi-weekly":
+      case "bi-weekly - 14 days":
+        count = 14;
+        break;
+
+      case "semi-monthly":
+      case "semi-monthly - 15 days":
+        count = 15;
+        break;
+
+      case "monthly":
+        startDate.setUTCDate(1);
+        count = new Date(
+          startDate.getUTCFullYear(),
+          startDate.getUTCMonth() + 1,
+          0,
+        ).getDate();
+        break;
+
+      default:
+        count = 7;
+    }
+
+    if (period !== "monthly") {
+      switch (period) {
+        case "weekly":
+        case "weekly - 7 days":
+          startDate.setUTCDate(startDate.getUTCDate() - 6);
+          break;
+
+        case "bi-weekly":
+        case "bi-weekly - 14 days":
+          startDate.setUTCDate(startDate.getUTCDate() - 13);
+          break;
+
+        case "semi-monthly":
+        case "semi-monthly - 15 days":
+          startDate.setUTCDate(startDate.getUTCDate() - 14);
+          break;
+      }
+    }
+
+    return Array.from({ length: count }, (_, index) => {
+      const date = new Date(startDate);
+      date.setUTCDate(startDate.getUTCDate() + index);
+
+      return {
+        key: `day${index + 1}`,
+        dateKey: date.toISOString().slice(0, 10),
+        label: `${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(
+          date.getUTCDate(),
+        ).padStart(2, "0")}`,
+        weekday: ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][
+          date.getUTCDay()
+        ],
+      };
+    });
+  }, [timesheetDate, timesheetPeriod]);
+
+  const days = React.useMemo(
+    () => periodDates.map((item) => item.key),
+    [periodDates],
+  );
+
+  useEffect(() => {
+    const fetchTimesheetPeriod = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/ConfigValues`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch configuration");
+        }
+
+        const configData = await response.json();
+
+        const periodConfig = configData.find(
+          (item) => item.name?.toLowerCase() === "timesheet_period",
+        );
+
+        if (periodConfig?.value) {
+          setTimesheetPeriod(periodConfig.value.trim());
+        }
+      } catch (error) {
+        console.error("Failed to fetch timesheet period:", error);
+      }
+    };
+
+    fetchTimesheetPeriod();
+  }, []);
 
   useEffect(() => {
     if (resourceId) {
       fetchTimesheetData();
     }
-  }, [resourceId, timesheetDate, resourceType]);
+  }, [resourceId, timesheetDate, resourceType, periodDates]);
+
+  useEffect(() => {
+    const fetchTimesheetPeriod = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/ConfigValues`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch configuration");
+        }
+
+        const configData = await response.json();
+
+        const periodConfig = configData.find(
+          (item) => item.name?.toLowerCase() === "timesheet_period",
+        );
+
+        if (periodConfig?.value) {
+          setTimesheetPeriod(periodConfig.value.trim());
+        }
+      } catch (error) {
+        console.error("Failed to fetch timesheet period:", error);
+      }
+    };
+
+    fetchTimesheetPeriod();
+  }, []);
 
   console.log(resourceType);
   const fetchTimesheetData = async () => {
@@ -870,32 +1016,32 @@ export default function TimesheetApprovalView({
       }
 
       const mappedLines = filteredData.map((item, index) => {
-        const hoursData = {
-          mon: 0,
-          tue: 0,
-          wed: 0,
-          thu: 0,
-          fri: 0,
-          sat: 0,
-          sun: 0,
-        };
+        const hoursData = Object.fromEntries(
+          periodDates.map((day) => [day.key, 0]),
+        );
+
         const hourIdsData = {};
 
-        if (item.timesheetHours && Array.isArray(item.timesheetHours)) {
+        if (Array.isArray(item.timesheetHours)) {
           item.timesheetHours.forEach((hourEntry) => {
-            const date = new Date(`${hourEntry.ts_Date}T00:00:00Z`);
-            if (!isNaN(date.getTime())) {
-              const dayKey = dayKeyMapping[date.getUTCDay()];
-              if (dayKey) {
-                hoursData[dayKey] = hourEntry.hours;
-                hourIdsData[dayKey] = hourEntry.id;
-              }
+            const dateKey = String(hourEntry.ts_Date).split("T")[0];
+
+            const matchingDay = periodDates.find(
+              (day) => day.dateKey === dateKey,
+            );
+
+            if (matchingDay) {
+              hoursData[matchingDay.key] =
+                (Number(hoursData[matchingDay.key]) || 0) +
+                (Number(hourEntry.hours) || 0);
+
+              hourIdsData[matchingDay.key] = hourEntry.id;
             }
           });
         }
 
         const calculatedTotal = Object.values(hoursData).reduce(
-          (sum, hours) => sum + (parseFloat(hours) || 0),
+          (sum, hours) => sum + (Number(hours) || 0),
           0,
         );
 
@@ -906,7 +1052,9 @@ export default function TimesheetApprovalView({
             item.workOrder || item.work_order || item.workOrderNumber || "",
           description: item.description || "",
           project: item.projId || "",
+          projectName: item.projectName || "",
           plc: item.plc || "",
+          plcDesc: item.plcDesc || "",
           payType: item.payType || "SR",
           poNumber: item.poNumber || "",
           rlseNumber: item.rlseNumber || "",
@@ -919,6 +1067,8 @@ export default function TimesheetApprovalView({
       });
 
       setLines(mappedLines);
+
+      setLines(mappedLines);
     } catch (error) {
       showToast(error.message, "error");
       setLines([]);
@@ -928,12 +1078,14 @@ export default function TimesheetApprovalView({
   };
 
   const dailyTotals = React.useMemo(() => {
-    const totals = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
+    const totals = Object.fromEntries(days.map((day) => [day, 0]));
+
     lines.forEach((line) => {
       days.forEach((day) => {
-        totals[day] += parseFloat(line.hours[day] || 0);
+        totals[day] += Number(line.hours?.[day]) || 0;
       });
     });
+
     return totals;
   }, [lines, days]);
 
@@ -964,20 +1116,33 @@ export default function TimesheetApprovalView({
 
   const baseHeaders =
     resourceType === "USER"
-      ? ["Line No", "Project", "PLC", "Pay Type"]
+      ? [
+          "Line No",
+          "Project",
+          "Project Name",
+          "PLC",
+          "PLC Description",
+          "Pay Type",
+        ]
       : [
           "Line No",
           "Work Order",
           "Description",
           "Project",
+          "Project Name",
           "PLC",
+          "PLC Description",
           "Pay Type",
           "Po Id",
           "Release",
           "PO LN No",
         ];
 
-  const tableHeaders = [...baseHeaders, ...headerDates, "Total Hours"];
+  const tableHeaders = [
+    ...baseHeaders,
+    ...periodDates.map((day) => day.label),
+    "Total Hours",
+  ];
 
   const hiddenCount = Object.values(hiddenColumns).filter((val) => val).length;
   const hiddenColumnsList = Object.entries(hiddenColumns)
@@ -1173,11 +1338,21 @@ export default function TimesheetApprovalView({
                           {line.project || "-"}
                         </td>
                       )}
+                      {!isColumnHidden("Project Name") && (
+                        <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
+                          {line.projectName || "-"}
+                        </td>
+                      )}
 
                       {/* PLC column */}
                       {!isColumnHidden("PLC") && (
                         <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
                           {line.plc || "-"}
+                        </td>
+                      )}
+                      {!isColumnHidden("PLC Description") && (
+                        <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
+                          {line.plcDesc || "-"}
                         </td>
                       )}
 
@@ -1214,25 +1389,24 @@ export default function TimesheetApprovalView({
                         )}
 
                       {/* Daily hours columns */}
-                      {days.map((day) => (
+
+                      {periodDates.map((day) => (
                         <td
-                          key={`${line.id}-${day}`}
+                          key={`${line.id}-${day.key}`}
                           className="px-2 py-1 border-r border-b border-gray-300 text-center"
                         >
                           <div
                             className={`w-14 mx-auto text-center py-1 rounded text-xs font-semibold ${
-                              line.hours[day] > 0
+                              Number(line.hours?.[day.key]) > 0
                                 ? "bg-green-50 text-green-800 border border-green-200"
                                 : "text-gray-400"
                             } ${
-                              day === "sat" || day === "sun"
+                              day.weekday === "sat" || day.weekday === "sun"
                                 ? "bg-gray-100"
                                 : ""
                             }`}
                           >
-                            {line.hours[day]
-                              ? parseFloat(line.hours[day]).toFixed(1)
-                              : "0.0"}
+                            {(Number(line.hours?.[day.key]) || 0).toFixed(1)}
                           </div>
                         </td>
                       ))}
@@ -1261,14 +1435,12 @@ export default function TimesheetApprovalView({
                   >
                     Total Hours
                   </td>
-                  {days.map((day) => (
+                  {periodDates.map((day) => (
                     <td
-                      key={day}
+                      key={day.key}
                       className="px-2 py-2 text-center border-r border-gray-300"
                     >
-                      <div className="w-14 mx-auto font-semibold text-black">
-                        {dailyTotals[day].toFixed(2)}
-                      </div>
+                      {dailyTotals[day.key].toFixed(2)}
                     </td>
                   ))}
                   <td className="px-3 py-2 text-center font-bold text-black">
