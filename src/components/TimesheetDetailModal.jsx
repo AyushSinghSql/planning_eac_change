@@ -337,7 +337,8 @@ const hideableColumns = [
 export default function TimesheetDetailModal({
   timesheetData,
   currentUser,
-
+  userId,
+  role,
   onClose,
 
   onSave,
@@ -378,7 +379,7 @@ export default function TimesheetDetailModal({
   //   "PO Remaining Hours": false,
   // }); // Config States
 
-  const role = currentUser?.role?.toLowerCase(); // Default role, can be dynamically set based on user context
+  // const role = currentUser?.role?.toLowerCase(); // Default role, can be dynamically set based on user context
 
   console.log(timesheetData?.status);
 
@@ -454,7 +455,8 @@ export default function TimesheetDetailModal({
         try {
           const response = await fetch(
             // `${backendUrl}/api/user-projects/projects/${userId}`,
-            `${backendUrl}/api/ProjEmployeeLabcat/employee/${currentUser?.name}`,
+            // `${backendUrl}/api/ProjEmployeeLabcat/employee/${currentUser?.name}`,
+            `${backendUrl}/api/ProjEmployeeLabcat/employee/${userId}`,
           );
           if (!response.ok)
             throw new Error("Failed to fetch employee projects");

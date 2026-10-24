@@ -704,6 +704,7 @@ import { backendUrl } from "./config";
 import TimesheetLine from "./TimesheetLine";
 import { BriefcaseBusiness } from "lucide-react";
 import TimesheetDetailModal from "./TimesheetDetailModal";
+import axios from "axios";
 
 const showToast = (message, type = "info") => {
   const bgColor =
@@ -778,8 +779,14 @@ export default function MainTable() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveData, setLeaveData] = useState([]);
   const [leaveLoading, setLeaveLoading] = useState(false);
+  const [userOptions, setUserOptions] = useState([]);
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
 
   const userRole = currentUser?.role?.toLowerCase();
+  console.log(userRole);
+  const showEmplSuggestion = userRole != "user" || userRole != "subk_user";
   const canNotify = !!currentUser;
 
   const dateToYyyyMmDd = (date) => {
@@ -815,6 +822,32 @@ export default function MainTable() {
     return isNaN(num) ? "0.00" : num.toFixed(2);
   };
 
+  useEffect(() => {
+    const fetchBaseData = async () => {
+      try {
+        setEmployeeLoading(true);
+        const [userRes] = await Promise.all([
+          axios.get(`${backendUrl}/api/User`),
+        ]);
+
+        const userData = Array.isArray(userRes.data) ? userRes.data : [];
+        setUserOptions(
+          userData.map((u) => ({
+            value: u.username, // maps to the employee resource identifier (e.g. "002668")
+            label: `${u.fullName} (${u.username})`,
+            role: u.role, // captures user role from the API response
+            userId: u.userId,
+          })),
+        );
+      } catch (e) {
+        console.error("Base data fetch failed", e);
+        // Fallback or handle error cleanly
+      } finally {
+        setEmployeeLoading(false);
+      }
+    };
+    fetchBaseData();
+  }, []);
   // const getStatusStyle = (status) => {
   //   const baseStyle =
   //     "px-2.5 py-1 text-xs font-semibold rounded-full text-center inline-block";
@@ -935,10 +968,12 @@ export default function MainTable() {
   }, [currentSelectedRowId, rows]);
 
   const fetchData = async () => {
-    if (!currentUser) return [];
+    const targetResource = selectedEmployeeId || currentUser?.name;
+    if (!targetResource) return [];
+    // if (!currentUser) return [];
     setLoading(true);
     try {
-      const apiUrl = `${backendUrl}/api/SubkTimesheet/ByResourceV1/${currentUser.name}?month=${filterMonth}&year=${filterYear}`;
+      const apiUrl = `${backendUrl}/api/SubkTimesheet/ByResourceV1/${targetResource}?month=${filterMonth}&year=${filterYear}`;
       const response = await fetch(apiUrl);
       if (!response.ok)
         throw new Error("Network response failed while fetching timesheets.");
@@ -1544,6 +1579,43 @@ export default function MainTable() {
 
             {/* Table Container Card */}
             <div className="border border-gray-200 rounded-sm bg-white p-3 w-full mx-auto">
+              {userRole !== "user" && userRole !== "subk_user" && (
+                <div className="flex items-center gap-2 w-full sm:w-[450px]">
+                  <label
+                    htmlFor="employeeSelect"
+                    className="input-label mb-1 block whitespace-nowrap font-medium text-xs"
+                  >
+                    Employee <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <select
+                    id="employeeSelect"
+                    className="outline-none w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white"
+                    value={selectedEmployeeId}
+                    onChange={(e) => {
+                      const selectedVal = e.target.value;
+                      setSelectedEmployeeId(selectedVal);
+
+                      // Find the corresponding option to extract its role
+                      const matchedOpt = userOptions.find(
+                        (o) => o.value === selectedVal,
+                      );
+                      if (matchedOpt) {
+                        setSelectedRole(matchedOpt.role);
+                      } else {
+                        setSelectedRole("");
+                      }
+                    }}
+                    disabled={employeeLoading}
+                  >
+                    <option value="">Select employee...</option>
+                    {userOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex justify-end items-center mb-2.5">
                 {canNotify && (
                   <div className="flex gap-2">
@@ -1782,8 +1854,14 @@ export default function MainTable() {
                     }
                   }
                 }}
-                resourceId={currentUser?.name}
-                userId={currentUser?.userId}
+                // resourceId={currentUser?.name}
+                // userId={currentUser?.userId}
+                resourceId={selectedEmployeeId || currentUser?.name} // <-- Updated here
+                userId={selectedEmployeeId || currentUser?.userId}
+                role={
+                  selectedRole?.toLocaleLowerCase() ||
+                  currentUser?.role?.toLowerCase()
+                }
                 existingTimesheetDates={[...existingDatesForUser]}
                 timesheetToEdit={timesheetToEdit}
                 isAdmin={userRole === "admin"}
@@ -1799,6 +1877,11 @@ export default function MainTable() {
                 onClose={handleCloseDetail}
                 onSave={handleSaveDetails}
                 currentUser={currentUser}
+                userId={selectedEmployeeId || currentUser?.name}
+                role={
+                  selectedRole?.toLocaleLowerCase() ||
+                  currentUser?.role?.toLowerCase()
+                }
                 isSaving={isSaving}
               />
             </div>

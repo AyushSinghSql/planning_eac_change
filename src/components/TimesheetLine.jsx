@@ -328,6 +328,7 @@ export default function TimesheetLine({
   existingTimesheetDates = [],
   timesheetToEdit = null,
   isAdmin = false,
+  role,
 }) {
   const currentYear = new Date().getFullYear();
   const [purchaseOrderData, setPurchaseOrderData] = useState([]);
@@ -376,7 +377,7 @@ export default function TimesheetLine({
 
   const isEditMode = Boolean(timesheetToEdit);
 
-  const role = currentUser?.role?.toLowerCase(); // Default role, can be dynamically set based on user context
+  // const role = currentUser?.role?.toLowerCase(); // Default role, can be dynamically set based on user context
 
   // Define hideable columns conditionally based on the role
   const hideableColumns =

@@ -2543,6 +2543,10 @@ export default function ApprovalEnquiry() {
   }
 
   const isAdmin = currentUser?.role.toUpperCase() === "ADMIN";
+  const showRevStatus =
+    currentUser?.role.toUpperCase() === "ADMIN" ||
+    currentUser?.role.toUpperCase() === "SUPERVISOR" ||
+    currentUser?.role.toUpperCase() === "PROJECT MANAGER";
   const isUser = currentUser?.role === "user" || currentUser?.role === "User";
   const isPM = currentUser?.role === "pm";
   const columns = columnsAdmin;
@@ -2911,22 +2915,40 @@ export default function ApprovalEnquiry() {
   const handleRowClick = (rowData, event) => {
     if (event?.target?.type === "checkbox") return;
 
-    // clicking the open row collapses it
-    if (currentSelectedRowId === rowData.id) {
-      handleCloseDetails();
-      return;
-    }
+    const clickedDate = rowData.timesheetDateRaw || rowData.timesheet_Date; // e.g. "2025-11-02"
 
-    const clickedDate = rowData.timesheetDateRaw || rowData.timesheet_Date;
     const employeeId = String(rowData["Employee ID"]).trim();
     const approverId = String(rowData["Approver ID"]).trim();
+
+    // Composite key must match the one used when building dateToLineNos
     const key = `${employeeId}|${approverId}|${clickedDate}`;
 
-    // still needed for the Status / Revision buttons below the table
+    const linesForKey = dateToLineNos[key] || [];
+
+    console.log(
+      "Row click -> key:",
+      key,
+      "date:",
+      clickedDate,
+      "lines:",
+      linesForKey,
+    );
+
+    setSelectedResourceId(employeeId);
     setSelectedTimesheetDate(clickedDate);
-    setSelectedTimesheetLines(dateToLineNos[key] || []);
-    setSelectedResourceType(rowData.resource_Type || "");
-    setCurrentSelectedRowId(rowData.id);
+    setSelectedTimesheetLines(linesForKey);
+    // setSelectedResourceType(rowData.resource_Type || "");
+    // setCurrentSelectedRowId(rowData.id);
+
+    setTimeout(() => {
+      if (timesheetDetailsRef.current) {
+        timesheetDetailsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+          inline: "nearest",
+        });
+      }
+    }, 100);
   };
 
   const handleCloseDetails = () => {
@@ -2934,6 +2956,7 @@ export default function ApprovalEnquiry() {
     setSelectedTimesheetDate(null);
     setSelectedTimesheetLines([]);
     setSelectedResourceType(null);
+    setSelectedResourceId(null);
   };
 
   useEffect(() => {
@@ -4443,6 +4466,7 @@ export default function ApprovalEnquiry() {
                               className={`${rowBg} cursor-pointer transition-colors hover:bg-sky-50 ${
                                 isApprovedOrRejected ? "opacity-75" : ""
                               }`}
+                              onClick={() => handleRowClick(row)}
                             >
                               {columns.map((col) => (
                                 <td
@@ -4578,7 +4602,7 @@ export default function ApprovalEnquiry() {
             <div className="flex justify-between items-center mt-2.5 w-full flex-shrink-0">
               <div className="flex-1" />
               <div className="flex gap-2 ml-auto">
-                {isAdmin && (
+                {showRevStatus && (
                   <>
                     {/* Approval History Panel */}
                     <button
