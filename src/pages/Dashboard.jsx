@@ -120,12 +120,12 @@ const Dashboard = () => {
       const userRole = (currentUserObj.role || "").toUpperCase();
 
       // If user is ADMIN, skip network rules or handle empty responses by defaulting to show all
-      if (userRole === "ADMIN") {
-        // Option A: Skip API fetch entirely and keep visibility clear so fallback takes over
-        setVisibility({});
-        setLoading(false);
-        return;
-      }
+      // if (userRole === "ADMIN") {
+      //   // Option A: Skip API fetch entirely and keep visibility clear so fallback takes over
+      //   setVisibility({});
+      //   setLoading(false);
+      //   return;
+      // }
 
       const res = await axios.get(`${backendUrl}/Orgnization/${user.userId}`, {
         headers: {
@@ -139,6 +139,8 @@ const Dashboard = () => {
         ...(data.fields || {}),
       };
       setVisibility(mergedVisibility);
+      localStorage.setItem("userVisibility", JSON.stringify(mergedVisibility));
+      console.log(mergedVisibility);
     } catch (e) {
       setVisibility({});
     } finally {
@@ -178,9 +180,9 @@ const Dashboard = () => {
     if (userString) {
       try {
         const userObj = JSON.parse(userString);
-        if (userObj.role?.toUpperCase() === "ADMIN") {
-          return true; // Bypass restriction and show all screens/fields
-        }
+        // if (userObj.role?.toUpperCase() === "ADMIN") {
+        //   return true; // Bypass restriction and show all screens/fields
+        // }
       } catch (e) {
         console.error("Error parsing user role for permission check:", e);
       }
@@ -197,9 +199,9 @@ const Dashboard = () => {
     if (userString) {
       try {
         const userObj = JSON.parse(userString);
-        if (userObj.role?.toUpperCase() === "ADMIN") {
-          return true; // Bypass restriction and allow edits everywhere
-        }
+        // if (userObj.role?.toUpperCase() === "ADMIN") {
+        //   return true; // Bypass restriction and allow edits everywhere
+        // }
       } catch (e) {
         console.error("Error parsing user role for permission check:", e);
       }
@@ -218,22 +220,22 @@ const Dashboard = () => {
   //   navigate("/login", { replace: true });
   // };
 
-    const handleLogout = async () => {
-      try {
-        await axios.post(
-          `${backendUrl}/api/User/logout`,
-          {},
-          { withCredentials: true }
-        );
-      } catch (error) {
-        console.error("Logout API failed:", error);
-      } finally {
-        localStorage.removeItem("currentUser");
-        localStorage.removeItem("authToken");
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        `${backendUrl}/api/User/logout`,
+        {},
+        { withCredentials: true },
+      );
+    } catch (error) {
+      console.error("Logout API failed:", error);
+    } finally {
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("authToken");
 
-        navigate("/login", { replace: true });
-      }
-    };
+      navigate("/login", { replace: true });
+    }
+  };
 
   // Auth Guard
   if (!localStorage.getItem("currentUser")) {
