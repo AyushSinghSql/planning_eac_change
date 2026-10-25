@@ -338,6 +338,7 @@ export default function TimesheetLine({
   const [isLoading, setIsLoading] = useState(true);
 
   const [holidays, setHolidays] = useState([]);
+  const [payTypes, setPayTypes] = useState([]);
 
   // --- Config States ---
   const [periodType, setPeriodType] = useState("Weekly");
@@ -402,6 +403,28 @@ export default function TimesheetLine({
     });
     return initial;
   });
+
+  useEffect(() => {
+    const fetchPayTypes = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/PayType`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch Pay Types");
+        }
+
+        const data = await response.json();
+        setPayTypes(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching Pay Types:", error);
+        setPayTypes([]);
+      }
+    };
+
+    fetchPayTypes();
+  }, []);
 
   useEffect(() => {
     if (role === "user") {
@@ -1257,6 +1280,7 @@ export default function TimesheetLine({
   };
 
   const handleSubmit = async () => {
+    console.log(lines)
     if (isPeriodInvalid) {
       showToast("The selected period already has a timesheet.", "warning");
       return;
@@ -1723,11 +1747,20 @@ export default function TimesheetLine({
                               e.target.value,
                             )
                           }
-                          className={`w-full bg-white px-2 py-1 text-xs border border-gray-300 rounded shadow-inner text-black ${isPeriodInvalid ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                          className={`w-full bg-white px-2 py-1 text-xs border border-gray-300 rounded shadow-inner text-black ${
+                            isPeriodInvalid
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                          }`}
                           disabled={isPeriodInvalid}
                         >
-                          <option value="SR">Regular</option>
-                          <option value="SO">Overtime</option>
+                          <option value="">Select Pay Type</option>
+
+                          {payTypes.map((payType) => (
+                            <option key={payType.id} value={payType.name}>
+                              {payType.description}
+                            </option>
+                          ))}
                         </select>
                       </td>
                     )}
