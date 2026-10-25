@@ -1387,9 +1387,9 @@ export default function TimesheetDetailModal({
           Timesheet_Date: new Date(timesheetData.Date)
             .toISOString()
             .split("T")[0],
-          CreatedBy: String(resourceId),
+          CreatedBy: String(currentUser?.name),
           UpdatedAt: now,
-          UpdatedBy: String(resourceId),
+          UpdatedBy: String(currentUser?.name),
           UpdateReason: reason,
           TimesheetHours: periodDates.map((dateInfo, idx) => {
             let hourValue = parseFloat(currentLine.hours[idx]);
@@ -1398,8 +1398,8 @@ export default function TimesheetDetailModal({
             return {
               Ts_Date: dateInfo.apiDate,
               Hours: hourValue,
-              CreatedBy: currentUserName,
-              UpdatedBy: currentUserName,
+              CreatedBy: String(currentUser?.name),
+              UpdatedBy: String(currentUser?.name),
             };
           }),
         };
@@ -1437,8 +1437,8 @@ export default function TimesheetDetailModal({
               .split("T")[0],
             workOrder: currentLine.wa_Code,
             updatedAt: now,
-            updatedBy: String(resourceId),
-            createdBy: String(resourceId),
+            updatedBy: String(currentUser?.name),
+            createdBy: String(currentUser?.name),
             createdAt: timesheetDetails?.createdAt || now,
             hours: 0,
             status: timesheetData.Status || "OPEN",
@@ -1471,8 +1471,8 @@ export default function TimesheetDetailModal({
               ts_Date: periodDates[idx].apiDate,
               hours: hourValue,
               lineNo: currentLine.id,
-              CreatedBy: currentUserName,
-              UpdatedBy: currentUserName,
+              CreatedBy: String(currentUser?.name),
+              UpdatedBy: String(currentUser?.name),
               comment: reason || updateReason,
             };
 

@@ -1344,7 +1344,7 @@ export default function TimesheetLine({
           PoLineNumber: parseInt(line.poLineNumber, 10) || 0,
           Timesheet_Date: weekEndDateAsISO,
           UpdatedAt: now,
-          UpdatedBy: String(resourceId),
+          UpdatedBy: String(currentUser?.name),
           TimesheetHours: timesheetHours,
           Hours: lineHoursTotal,
           Status: "OPEN",
@@ -1353,7 +1353,7 @@ export default function TimesheetLine({
 
         if (!isEditMode) {
           payload.CreatedAt = now;
-          payload.CreatedBy = String(resourceId);
+          payload.CreatedBy = String(currentUser?.name);
         }
 
         const response = await fetch(url, {

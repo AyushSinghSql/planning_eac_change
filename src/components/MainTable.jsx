@@ -833,7 +833,7 @@ export default function MainTable() {
         setEmployeeLoading(true);
         // Fetch members for approver ID 18 (or generalize as needed)
         const userRes = await axios.get(
-          `${backendUrl}/api/UserGroups/approver/${Id}/members`,
+          `${backendUrl}/api/UserGroups/SupervisorMembers/${Id}`,
         );
 
         // Access the 'members' array from the response body structure

@@ -632,7 +632,43 @@ export default function GroupManagement({ onClose }) {
     fetchData();
   }, []);
 
-  // Filtered users for mapping table based on search and roles
+  // // Filtered users for mapping table based on search and roles
+  // const filteredUsersForMapping = useMemo(() => {
+  //   const allowedRoles = ["user", "sub_user"];
+  //   const roleFiltered = usersList.filter(
+  //     (u) => u.role && allowedRoles.includes(u.role.toLowerCase()),
+  //   );
+  //   const sourceList = roleFiltered.length > 0 ? roleFiltered : usersList;
+
+  //   if (!userSearchTerm.trim()) return usersList;
+  //   const term = userSearchTerm.toLowerCase();
+  //   return usersList.filter(
+  //     (u) =>
+  //       (u.fullName && u.fullName.toLowerCase().includes(term)) ||
+  //       (u.username && u.username.toLowerCase().includes(term)) ||
+  //       (u.email && u.email.toLowerCase().includes(term)),
+  //   );
+  // }, [userSearchTerm, usersList]);
+
+  // // Filtered approvers for mapping table based on search and roles
+  // const filteredApproverCandidates = useMemo(() => {
+  //   const allowedRoles = ["approver", "supervisor", "admin", "project manager"];
+  //   const roleFiltered = usersList.filter(
+  //     (u) => u.role && allowedRoles.includes(u.role.toLowerCase()),
+  //   );
+  //   const sourceList = roleFiltered.length > 0 ? roleFiltered : usersList;
+
+  //   if (!approverSearchTerm.trim()) return usersList;
+  //   const term = approverSearchTerm.toLowerCase();
+  //   return usersList.filter(
+  //     (u) =>
+  //       (u.fullName && u.fullName.toLowerCase().includes(term)) ||
+  //       (u.username && u.username.toLowerCase().includes(term)) ||
+  //       (u.email && u.email.toLowerCase().includes(term)),
+  //   );
+  // }, [approverSearchTerm, usersList]);
+
+  // Filtered and sorted users for mapping table (selected items shown on top)
   const filteredUsersForMapping = useMemo(() => {
     const allowedRoles = ["user", "sub_user"];
     const roleFiltered = usersList.filter(
@@ -640,17 +676,33 @@ export default function GroupManagement({ onClose }) {
     );
     const sourceList = roleFiltered.length > 0 ? roleFiltered : usersList;
 
-    if (!userSearchTerm.trim()) return usersList;
-    const term = userSearchTerm.toLowerCase();
-    return usersList.filter(
-      (u) =>
-        (u.fullName && u.fullName.toLowerCase().includes(term)) ||
-        (u.username && u.username.toLowerCase().includes(term)) ||
-        (u.email && u.email.toLowerCase().includes(term)),
-    );
-  }, [userSearchTerm, usersList]);
+    const filtered = !userSearchTerm.trim()
+      ? usersList
+      : usersList.filter(
+          (u) =>
+            (u.fullName &&
+              u.fullName
+                .toLowerCase()
+                .includes(userSearchTerm.toLowerCase())) ||
+            (u.username &&
+              u.username
+                .toLowerCase()
+                .includes(userSearchTerm.toLowerCase())) ||
+            (u.email &&
+              u.email.toLowerCase().includes(userSearchTerm.toLowerCase())),
+        );
 
-  // Filtered approvers for mapping table based on search and roles
+    // Sort so selected items appear at the top
+    return [...filtered].sort((a, b) => {
+      const aSelected = selectedUsers.has(a.userId);
+      const bSelected = selectedUsers.has(b.userId);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [userSearchTerm, usersList, selectedUsers]);
+
+  // Filtered and sorted approvers for mapping table (selected items shown on top)
   const filteredApproverCandidates = useMemo(() => {
     const allowedRoles = ["approver", "supervisor", "admin", "project manager"];
     const roleFiltered = usersList.filter(
@@ -658,15 +710,31 @@ export default function GroupManagement({ onClose }) {
     );
     const sourceList = roleFiltered.length > 0 ? roleFiltered : usersList;
 
-    if (!approverSearchTerm.trim()) return usersList;
-    const term = approverSearchTerm.toLowerCase();
-    return usersList.filter(
-      (u) =>
-        (u.fullName && u.fullName.toLowerCase().includes(term)) ||
-        (u.username && u.username.toLowerCase().includes(term)) ||
-        (u.email && u.email.toLowerCase().includes(term)),
-    );
-  }, [approverSearchTerm, usersList]);
+    const filtered = !approverSearchTerm.trim()
+      ? usersList
+      : usersList.filter(
+          (u) =>
+            (u.fullName &&
+              u.fullName
+                .toLowerCase()
+                .includes(approverSearchTerm.toLowerCase())) ||
+            (u.username &&
+              u.username
+                .toLowerCase()
+                .includes(approverSearchTerm.toLowerCase())) ||
+            (u.email &&
+              u.email.toLowerCase().includes(approverSearchTerm.toLowerCase())),
+        );
+
+    // Sort so selected approvers appear at the top
+    return [...filtered].sort((a, b) => {
+      const aSelected = approversList.some((app) => app.userId === a.userId);
+      const bSelected = approversList.some((app) => app.userId === b.userId);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [approverSearchTerm, usersList, approversList]);
 
   const handleUserToggle = (userId) => {
     if (approversList.some((app) => app.userId === userId)) {
