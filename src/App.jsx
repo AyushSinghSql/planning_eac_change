@@ -1479,6 +1479,7 @@ import ProjectMaster from "./components/ProjectMaster";
 import EmployeeMaster from "./components/EmployeeMaster";
 import ProjectUserMapping from "./components/ProjectUserMapping";
 import ApprovalEnquiry from "./components/ApprovalEnquiry";
+import TimesheetScheduleManager from "./components/TimesheetScheduleManager";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -2017,6 +2018,16 @@ function App() {
                     <CreditCardExpenses />
                   </div>
                 </RequirePermission>
+              }
+            />
+            <Route
+              path="sub-schedule-manager"
+              element={
+                // <RequirePermission screenKey="invoiceexport">
+                <div className="mt-12 ml-2">
+                  <TimesheetScheduleManager />
+                </div>
+                // </RequirePermission>
               }
             />
             <Route
