@@ -1222,8 +1222,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { backendUrl } from "./config";
-import logo from "../assets/revolve_color_logo.png";
-import revolve from "../assets/logo-22.png";
+import logo from "../assets/CapComm_Logo_v2_nobk.png";
+import fedaxis from "../assets/fed_axis_login_image.png";
 import axios from "axios";
 
 const Login = () => {
@@ -1846,7 +1846,9 @@ const Login = () => {
       userId: data.user_Id ?? data.userId,
       token: data.token,
       fullName: data.fullName,
+      ts_Sch_Id: data.ts_Sch_Id,
     };
+    
 
     localStorage.setItem("currentUser", JSON.stringify(userObj));
     window.location.href = dashboardUrl;
@@ -1896,10 +1898,10 @@ const Login = () => {
           <img
             src={logo}
             alt="Lumina Corps"
-            className="w-[80%] max-w-[600px] object-contain"
+            className="w-[70%] max-w-[500px] object-contain"
           />
-          <p className="mt-8 text-black text-sm tracking-[0.35em]">
-            Planning Management System
+          <p className="mt-4 text-black text-sm tracking-[0.35em]">
+            Timesheet Management System
           </p>
         </div>
       </div>
@@ -1911,8 +1913,8 @@ const Login = () => {
             {/* Company Logo */}
             <div className="flex justify-center mb-8">
               <img
-                src={revolve}
-                alt="Revolve"
+                src={fedaxis}
+                alt="FedAxis"
                 className="h-20 object-contain opacity-90"
               />
             </div>
@@ -2268,7 +2270,7 @@ const Login = () => {
             )}
 
             {/* Footer */}
-            <div className="mt-6 text-center text-xs text-white">
+            {/* <div className="mt-6 text-center text-xs text-white">
               © 2026{" "}
               <a
                 href="https://www.revolvefintech.com/"
@@ -2279,7 +2281,7 @@ const Login = () => {
                 Revolve
               </a>
               . All rights reserved.
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

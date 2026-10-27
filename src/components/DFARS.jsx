@@ -230,7 +230,7 @@ const DFARS = () => {
 
                     <div className="mt-1 bg-emerald-50/50 border-l-4 border-emerald-400 p-3 rounded-r-md text-xs text-slate-600">
                       <span className="font-semibold text-emerald-800 block mb-1">
-                        FinAxis Validation Logic:
+                        FedAxis Validation Logic:
                       </span>
                       {item.logic}
                     </div>

@@ -1570,7 +1570,7 @@ const NavigationSidebar = ({
               </div>
 
               {/* LEVEL 1: Dashboard Section */}
-              <div>
+              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -1680,9 +1680,9 @@ const NavigationSidebar = ({
                     </NavSubGroup>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              <div>
+              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -1720,10 +1720,10 @@ const NavigationSidebar = ({
                     />
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* LEVEL 1: Projects Section */}
-              {!searchTerm && (
+              {currentUserRole?.toUpperCase() === "ADMIN" && !searchTerm && (
                 <div
                   className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
                   onClick={() => setPlanningOpen(!planningOpen)}
@@ -1749,7 +1749,7 @@ const NavigationSidebar = ({
                 </div>
               )}
 
-              {(planningOpen || searchTerm) && isExpanded && (
+              {currentUserRole?.toUpperCase() === "ADMIN" && (planningOpen || searchTerm) && isExpanded && (
                 <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
                   <NavSubGroup
                     label="Project Financial Dashboards"
@@ -1849,7 +1849,7 @@ const NavigationSidebar = ({
               )}
 
               {/* LEVEL 1: Opportunities & Pricing Section */}
-              <div>
+              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -1969,9 +1969,9 @@ const NavigationSidebar = ({
                     </NavSubGroup>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              <div>
+              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -2016,10 +2016,10 @@ const NavigationSidebar = ({
                     />
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* LEVEL 1: Compliance (DCAA) */}
-              <div>
+              {currentUserRole?.toUpperCase() === "ADMIN" && <div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -2087,7 +2087,7 @@ const NavigationSidebar = ({
                     </NavSubGroup>
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* Time and Subcontractor Management */}
               <div>
@@ -2121,13 +2121,13 @@ const NavigationSidebar = ({
 
                 {(subContractorSectionOpen || searchTerm) && isExpanded && (
                   <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
+                    {currentUserRole?.toUpperCase() === "ADMIN" && <NavItem
                       label="Dashboard"
                       path="/dashboard/sub-dashboards"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
+                    />}
                     <NavItem
                       label="Create Timesheet"
                       path="/dashboard/sub-create-timesheet"
@@ -2135,14 +2135,14 @@ const NavigationSidebar = ({
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
                     />
-                    <NavItem
+                    {(currentUserRole?.toUpperCase() === "ADMIN" || currentUserRole?.toUpperCase() === "SUPERVISOR" || currentUserRole?.toUpperCase() === "PROJECT MANAGER") && <NavItem
                       label="Enquiry & Approval"
                       path="/dashboard/sub-enquiry-approval"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
-                    <NavItem
+                    />}
+                    {/* <NavItem
                       label="Generate Invoice"
                       path="/dashboard/sub-export-table"
                       selected={selectedPage}
@@ -2183,8 +2183,8 @@ const NavigationSidebar = ({
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
-                    <NavItem
+                    /> */}
+                    {(currentUserRole?.toUpperCase() === "ADMIN") && <><NavItem
                       label="Manage Project"
                       path="/dashboard/sub-project-master"
                       selected={selectedPage}
@@ -2194,6 +2194,13 @@ const NavigationSidebar = ({
                     <NavItem
                       label="Manage Employee"
                       path="/dashboard/sub-employee-master"
+                      selected={selectedPage}
+                      onClick={handleLinkClick}
+                      searchTerm={searchTerm}
+                    />
+                    <NavItem
+                      label="Project Leave Mapping"
+                      path="/dashboard/leave-project-mapping"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
@@ -2226,19 +2233,20 @@ const NavigationSidebar = ({
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
                     />
+                    
                     <NavItem
                       label="Settings"
                       path="/dashboard/sub-settings"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
+                    /></>}
                   </div>
                 )}
               </div>
 
               {/* LEVEL 1: Settings */}
-              <div>
+              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -2267,6 +2275,13 @@ const NavigationSidebar = ({
 
                 {(configurationOpen || searchTerm) && isExpanded && (
                   <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                    <NavItem
+                      label="Project Plc Mapping"
+                      path="/dashboard/sub-plc-mapping"
+                      selected={selectedPage}
+                      onClick={handleLinkClick}
+                      searchTerm={searchTerm}
+                    />
                     <NavItem
                       label="Configuration Settings"
                       path="/dashboard/global-configuration"
@@ -2318,10 +2333,10 @@ const NavigationSidebar = ({
                     />
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* LEVEL 1: Admin */}
-              <div>
+             {currentUserRole?.toUpperCase() === "ADMIN" && <div>
                 {!searchTerm && (
                   <div
                     className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
@@ -2350,13 +2365,14 @@ const NavigationSidebar = ({
 
                 {(adminSetingOpen || searchTerm) && isExpanded && (
                   <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
+                    {/* <NavItem
                       label="Manage Groups"
                       path="/dashboard/manage-groups"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
+                    /> */}
+
                     <NavItem
                       label="Manage Users"
                       path="/dashboard/manage-users"
@@ -2380,7 +2396,7 @@ const NavigationSidebar = ({
                     />
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
           )}
         </div>

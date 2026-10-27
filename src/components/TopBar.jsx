@@ -48,7 +48,7 @@
 // export default TopBar;
 
 import React, { useState, useEffect } from "react";
-import logo from "../assets/logo-22.png";
+import logo from "../assets/fed_axis_login_image.png";
 import { User, LogOut, Key, X, Lock, ChevronLeft } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -159,7 +159,7 @@ function TopBar({ onLogout }) {
           {/* Left Side Brand */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold tracking-wide text-white">
-              FinAxis
+              FedAxis
             </span>
           </div>
 

@@ -1479,7 +1479,9 @@ import ProjectMaster from "./components/ProjectMaster";
 import EmployeeMaster from "./components/EmployeeMaster";
 import ProjectUserMapping from "./components/ProjectUserMapping";
 import ApprovalEnquiry from "./components/ApprovalEnquiry";
+import LeaveProjectMapping from "./components/LeaveProjectMapping";
 import TimesheetScheduleManager from "./components/TimesheetScheduleManager";
+import ProjectPlcMapping from "./components/ProjectPlcMapping";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -1547,8 +1549,8 @@ function App() {
               Access Denied
             </h2>
             <p className="text-sm text-gray-600">
-              You do not have permission to view this screen (
-              <span className="font-mono font-semibold">{screenKey}</span>).
+              You do not have permission to view this screen 
+              {/* (<span className="font-mono font-semibold">{screenKey}</span>). */}
               Please contact your administrator if you believe this is an error.
             </p>
           </div>
@@ -2021,16 +2023,6 @@ function App() {
               }
             />
             <Route
-              path="sub-schedule-manager"
-              element={
-                // <RequirePermission screenKey="invoiceexport">
-                <div className="mt-12 ml-2">
-                  <TimesheetScheduleManager />
-                </div>
-                // </RequirePermission>
-              }
-            />
-            <Route
               path="vendor-expenses"
               element={
                 <RequirePermission screenKey="otherCost">
@@ -2349,6 +2341,34 @@ function App() {
                     <GroupManagement />
                   </div>
                 </RequirePermission>
+              }
+            />
+            <Route
+              path="leave-project-mapping"
+              element={
+                  <div className="mt-12 ml-2">
+                    <LeaveProjectMapping />
+                  </div>
+              }
+            />
+            <Route
+              path="sub-schedule-manager"
+              element={
+                // <RequirePermission screenKey="invoiceexport">
+                <div className="mt-12 ml-2">
+                  <TimesheetScheduleManager />
+                </div>
+                // </RequirePermission>
+              }
+            />
+            <Route
+              path="sub-plc-mapping"
+              element={
+                // <RequirePermission screenKey="invoiceexport">
+                <div className="mt-12 ml-2">
+                  <ProjectPlcMapping />
+                </div>
+                // </RequirePermission>
               }
             />
             <Route

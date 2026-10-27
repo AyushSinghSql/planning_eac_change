@@ -2386,6 +2386,7 @@ const columnsAdmin = [
   "Hours",
   "Approver ID",
   "Approver Name",
+  "Submitted By",
 ];
 
 const ReasonModal = ({
@@ -2937,8 +2938,8 @@ export default function ApprovalEnquiry() {
     setSelectedResourceId(employeeId);
     setSelectedTimesheetDate(clickedDate);
     setSelectedTimesheetLines(linesForKey);
-    // setSelectedResourceType(rowData.resource_Type || "");
-    // setCurrentSelectedRowId(rowData.id);
+    setSelectedResourceType(rowData.resource_Type || "");
+    setCurrentSelectedRowId(rowData.id);
 
     setTimeout(() => {
       if (timesheetDetailsRef.current) {
@@ -3266,6 +3267,7 @@ export default function ApprovalEnquiry() {
             "Approver ID": timesheetEntry.pm_User_Id || "",
             "Approver Name":
               timesheetEntry.pm_Name || timesheetEntry.pmName || "",
+            "Submitted By": timesheetEntry.submittedBy || "",
             timesheetDateRaw: timesheetEntry.timesheet_Date,
             // Additional fields for operations
             originalDate: timesheetEntry.timesheet_Date,
@@ -3294,6 +3296,14 @@ export default function ApprovalEnquiry() {
       console.log("Final grouped data:", groupedData);
 
       setRows(groupedData);
+
+      // --- CLEAR ALL SELECTIONS AND DETAILS UPON SUCCESSFUL FETCH ---
+      setSelectedRows([]);
+      setSelectedNotifyRows([]);
+      setSelectAll(false);
+      setNotifySelectAll(false);
+      setUnifiedSelectAll(false);
+      handleCloseDetails();
     } catch (error) {
       console.error("Error fetching data:", error);
       showToast(`Error fetching data: ${error.message}`, "error");
@@ -3637,9 +3647,9 @@ export default function ApprovalEnquiry() {
   const handleBulkProcessedClick = async () => {
     setProcessedLoading(true);
 
-    const approvedRows = selectedRows.filter(
-      (row) => row.status?.toLowerCase() === "approved",
-    );
+    // const approvedRows = selectedRows.filter(
+    //   (row) => row.status?.toLowerCase() === "approved",
+    // );
     const requestBody = buildBulkRequestBody(
       selectedRows,
       "processed",
@@ -3658,10 +3668,20 @@ export default function ApprovalEnquiry() {
       );
 
       if (response.ok) {
-        showToast("Correction requested for selected timesheets.", "success");
+        showToast("Processed requested for selected timesheets.", "success");
+
+        const processedIds = selectedRows.flatMap((row) =>
+          row.combinedIds && row.combinedIds.length > 0
+            ? row.combinedIds
+            : [row.id || row.requestId],
+        );
+
         setRows((prevRows) =>
           prevRows.map((row) =>
-            approvedRows.some((ar) => ar.requestId === row.requestId)
+            processedIds.includes(row.id) ||
+            processedIds.includes(row.requestId) ||
+            (row.combinedIds &&
+              row.combinedIds.some((id) => processedIds.includes(id)))
               ? {
                   ...row,
                   status: "processed",
@@ -3674,10 +3694,29 @@ export default function ApprovalEnquiry() {
         setSelectedRows([]);
         setSelectAll(false);
       } else {
-        showToast("Correction request failed.", "error");
+        // Parse the error message from the response (handles both plain text and JSON error formats)
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "Processed request failed.";
+
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message ||
+            errorData.title ||
+            errorData.error ||
+            JSON.stringify(errorData);
+        } else {
+          const textError = await response.text();
+          if (textError) errorMessage = textError;
+        }
+
+        showToast(errorMessage, "error");
       }
     } catch (error) {
-      showToast("An error occurred during correction.", "error");
+      showToast(
+        error.message || "An error occurred during correction.",
+        "error",
+      );
     } finally {
       setProcessedLoading(false);
     }
@@ -3700,7 +3739,7 @@ export default function ApprovalEnquiry() {
     //   return;
     // }
 
-    performBulkApprove("Bulk approved");
+    performBulkApprove("Approved");
   };
 
   const correctionEligibleCount = selectedRows.filter(
@@ -3798,6 +3837,78 @@ export default function ApprovalEnquiry() {
     }
   };
 
+  //   const performBulkApprove = async (reason) => {
+  //     setApproveLoading(true); // Use specific loading state
+  //     try {
+  //       const requestBody = buildBulkRequestBody(
+  //         selectedRows,
+  //         "approved",
+  //         reason,
+  //         userIpAddress,
+  //       );
+
+  //       console.log("Bulk Approve Payload:", requestBody);
+
+  //       const response = await fetch(
+  //         `${backendUrl}/api/Approval/BulkApproveRequestsAsync`,
+  //         {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify(requestBody),
+  //         },
+  //       );
+
+  //       if (response.ok) {
+  //         const totalProcessed = requestBody.length;
+  //         showToast(
+  //           `Successfully approved ${totalProcessed} timesheet entries with reason: "${reason}"`,
+  //           "success",
+  //         );
+
+  //         // Update all grouped entries in the state
+  //         const approvedIds = selectedRows.flatMap((row) =>
+  //           row.combinedIds && row.combinedIds.length > 0
+  //             ? row.combinedIds
+  //             : [row.id],
+  //         );
+
+  //         setRows((prevRows) =>
+  //           prevRows.map((row) =>
+  //             approvedIds.includes(row.id) ||
+  //             (row.combinedIds &&
+  //               row.combinedIds.some((id) => approvedIds.includes(id)))
+  //               ? {
+  //                   ...row,
+  //                   isApproved: true,
+  //                   status: "approved",
+  //                   selected: false,
+  //                   Status: "APPROVED",
+  //                 }
+  //               : row,
+  //           ),
+  //         );
+
+  //         setSelectedRows([]);
+  //         setSelectAll(false);
+  //       } else {
+  //         const errorData = await response.text();
+  //         console.error("Approval failed:", errorData);
+  //         showToast(
+  //           "Failed to approve some timesheets. Please try again.",
+  //           "error",
+  //         );
+  //       }
+  //     } catch (error) {
+  //       console.error("Approval error:", error);
+  //       showToast(
+  //         "Failed to approve timesheets. Please check your connection.",
+  //         "error",
+  //       );
+  //     } finally {
+  //       setApproveLoading(false);
+  //     }
+  //   };
+
   const performBulkApprove = async (reason) => {
     setApproveLoading(true); // Use specific loading state
     try {
@@ -3852,17 +3963,31 @@ export default function ApprovalEnquiry() {
         setSelectedRows([]);
         setSelectAll(false);
       } else {
-        const errorData = await response.text();
-        console.error("Approval failed:", errorData);
-        showToast(
-          "Failed to approve some timesheets. Please try again.",
-          "error",
-        );
+        // Parse the error message from the response (handles both JSON and plain text error messages)
+        const contentType = response.headers.get("content-type");
+        let errorMessage =
+          "Failed to approve some timesheets. Please try again.";
+
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message ||
+            errorData.title ||
+            errorData.error ||
+            JSON.stringify(errorData);
+        } else {
+          const textError = await response.text();
+          if (textError) errorMessage = textError;
+        }
+
+        console.error("Approval failed:", errorMessage);
+        showToast(errorMessage, "error");
       }
     } catch (error) {
       console.error("Approval error:", error);
       showToast(
-        "Failed to approve timesheets. Please check your connection.",
+        error.message ||
+          "Failed to approve timesheets. Please check your connection.",
         "error",
       );
     } finally {
@@ -3924,23 +4049,109 @@ export default function ApprovalEnquiry() {
         setSelectedRows([]);
         setSelectAll(false);
       } else {
-        const errorData = await response.text();
-        console.error("Rejection failed:", errorData);
-        showToast(
-          "Failed to reject some timesheets. Please try again.",
-          "error",
-        );
+        // Parse the error message from the response (handles both JSON and plain text error messages)
+        const contentType = response.headers.get("content-type");
+        let errorMessage =
+          "Failed to reject some timesheets. Please try again.";
+
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message ||
+            errorData.title ||
+            errorData.error ||
+            JSON.stringify(errorData);
+        } else {
+          const textError = await response.text();
+          if (textError) errorMessage = textError;
+        }
+
+        console.error("Rejection failed:", errorMessage);
+        showToast(errorMessage, "error");
       }
     } catch (error) {
       console.error("Rejection error:", error);
       showToast(
-        "Failed to reject timesheets. Please check your connection.",
+        error.message ||
+          "Failed to reject timesheets. Please check your connection.",
         "error",
       );
     } finally {
       setRejectLoading(false);
     }
   };
+
+  //   const performBulkReject = async (reason) => {
+  //     setRejectLoading(true); // Use specific loading state
+  //     try {
+  //       const requestBody = buildBulkRequestBody(
+  //         selectedRows,
+  //         "rejected",
+  //         reason,
+  //         userIpAddress,
+  //       );
+
+  //       console.log("Bulk Reject Payload:", requestBody);
+
+  //       const response = await fetch(
+  //         `${backendUrl}/api/Approval/BulkApproveRequestsAsync`,
+  //         {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify(requestBody),
+  //         },
+  //       );
+
+  //       if (response.ok) {
+  //         const totalProcessed = requestBody.length;
+  //         showToast(
+  //           `Successfully rejected ${totalProcessed} timesheet entries with reason: "${reason}"`,
+  //           "success",
+  //         );
+
+  //         // Update all grouped entries in the state
+  //         const rejectedIds = selectedRows.flatMap((row) =>
+  //           row.combinedIds && row.combinedIds.length > 0
+  //             ? row.combinedIds
+  //             : [row.id],
+  //         );
+
+  //         setRows((prevRows) =>
+  //           prevRows.map((row) =>
+  //             rejectedIds.includes(row.id) ||
+  //             (row.combinedIds &&
+  //               row.combinedIds.some((id) => rejectedIds.includes(id)))
+  //               ? {
+  //                   ...row,
+  //                   isRejected: true,
+  //                   status: "rejected",
+  //                   selected: false,
+  //                   Status: "REJECTED",
+  //                 }
+  //               : row,
+  //           ),
+  //         );
+
+  //         setSelectedRows([]);
+  //         setSelectAll(false);
+  //       } else {
+  //         const errorData = await response.text();
+  //         console.error("Rejection failed:", errorData);
+  //         showToast(
+  //           "Failed to reject some timesheets. Please try again.",
+  //           "error",
+  //         );
+  //       }
+  //     } catch (error) {
+  //       console.error("Rejection error:", error);
+  //       showToast(
+  //         "Failed to reject timesheets. Please check your connection.",
+  //         "error",
+  //       );
+  //     } finally {
+  //       setRejectLoading(false);
+  //     }
+  //   };
 
   const hasPendingRows = Array.isArray(filteredRows)
     ? filteredRows.some((row) => isRowActionable(row))
@@ -4350,8 +4561,7 @@ export default function ApprovalEnquiry() {
                               approveEligibleCount === 0 ||
                               hasApprovedSelected ||
                               hasProcessedSelected ||
-                              allProcessedSelected ||
-                              hasOwnTimesheetSelected
+                              allProcessedSelected
                             }
                             className="btn1 btn-blue cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                           >
@@ -4591,7 +4801,7 @@ export default function ApprovalEnquiry() {
                               ))}
                             </tr>
 
-                            {isCurrent && (
+                            {/* {isCurrent && (
                               <tr>
                                 <td
                                   colSpan={columns.length}
@@ -4600,7 +4810,7 @@ export default function ApprovalEnquiry() {
                                   <MiniTimesheetDetails row={row} />
                                 </td>
                               </tr>
-                            )}
+                            )} */}
                           </Fragment>
                         );
                       })

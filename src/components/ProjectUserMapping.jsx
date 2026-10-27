@@ -751,6 +751,83 @@ export default function ProjectUserMapping({ onClose }) {
       selectedEmployeeIds.has(emp.employeeId),
     );
 
+  // const saveProjectMappings = async () => {
+  //   if (!selectedProjectId) {
+  //     toast.warn("Select a project first.");
+  //     return;
+  //   }
+
+  //   // for (const employeeId of selectedEmployeeIds) {
+  //   //   const plc = employeePlcMap[employeeId];
+  //   //   if (!plc || !String(plc).trim()) {
+  //   //     const emp = employeesList.find(
+  //   //       (e) => String(e.employeeId) === String(employeeId),
+  //   //     );
+  //   //     const empName = emp
+  //   //       ? emp.displayedName || `${emp.lastName}, ${emp.firstName}`
+  //   //       : employeeId;
+  //   //     toast.warn(`PLC is required for employee: ${empName}`);
+  //   //     return;
+  //   //   }
+  //   // }
+
+  //   try {
+  //     setLoading(true);
+  //     const nowIso = new Date().toISOString();
+  //     const items = Array.from(selectedEmployeeIds).map((employeeId) => ({
+  //       projId: String(selectedProjectId),
+  //       emplId: String(employeeId),
+  //       billLabCatCd: String(employeePlcMap[employeeId] || ""),
+  //       dfltFl: "Y",
+  //       companyId: "",
+  //       startDt: nowIso,
+  //       endDt: "2078-12-31T00:00:00.000Z",
+  //     }));
+
+  //     const payload = { items };
+
+  //     await axios.post(
+  //       `${backendUrl}/api/ProjEmployeeLabcat/bulk-upsert`,
+  //       payload,
+  //     );
+  //     toast.success("Project, Employee & PLC mapping updated successfully.");
+
+  //     const res = await axios
+  //       .get(
+  //         `${backendUrl}/api/ProjEmployeeLabcat/project/${selectedProjectId}`,
+  //       )
+  //       .catch(() => ({ data: [] }));
+  //     const data = Array.isArray(res.data) ? res.data : [];
+  //     const normalized = data.map((item) => {
+  //       const matchedEmp = employeesList.find(
+  //         (emp) =>
+  //           String(emp.employeeId) === String(item.emplId || item.employeeId),
+  //       );
+  //       return {
+  //         employeeId: item.emplId || item.employeeId,
+  //         displayedName: matchedEmp?.displayedName || item.displayedName || "",
+  //         lastName: matchedEmp?.lastName || item.lastName || "",
+  //         firstName: matchedEmp?.firstName || item.firstName || "",
+  //         status: matchedEmp?.status || item.status || "",
+  //         billLabCatCd: item.billLabCatCd || "",
+  //       };
+  //     });
+  //     setOriginalEmployeesForProj(normalized);
+  //     setSelectedEmployeeIds(new Set(normalized.map((e) => e.employeeId)));
+
+  //     const plcMap = {};
+  //     normalized.forEach((e) => {
+  //       plcMap[e.employeeId] = e.billLabCatCd;
+  //     });
+  //     setProjectPlcMap(plcMap);
+  //   } catch (e) {
+  //     console.error("Save project mapping failed", e);
+  //     toast.error("Failed to update project mappings.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const saveProjectMappings = async () => {
     if (!selectedProjectId) {
       toast.warn("Select a project first.");
@@ -760,6 +837,7 @@ export default function ProjectUserMapping({ onClose }) {
     try {
       setLoading(true);
       const nowIso = new Date().toISOString();
+
       const items = Array.from(selectedEmployeeIds).map((employeeId) => ({
         projId: String(selectedProjectId),
         emplId: String(employeeId),
@@ -770,10 +848,14 @@ export default function ProjectUserMapping({ onClose }) {
         endDt: "2078-12-31T00:00:00.000Z",
       }));
 
-      const payload = { items };
+      // Include projId at the root level so the backend knows the project context even if items is []
+      const payload = {
+        projId: String(selectedProjectId),
+        items,
+      };
 
-      await axios.post(
-        `${backendUrl}/api/ProjEmployeeLabcat/bulk-upsert`,
+      await axios.put(
+        `${backendUrl}/api/ProjEmployeeLabcat/ReplaceProjectMappings`,
         payload,
       );
       toast.success("Project, Employee & PLC mapping updated successfully.");
@@ -783,6 +865,7 @@ export default function ProjectUserMapping({ onClose }) {
           `${backendUrl}/api/ProjEmployeeLabcat/project/${selectedProjectId}`,
         )
         .catch(() => ({ data: [] }));
+
       const data = Array.isArray(res.data) ? res.data : [];
       const normalized = data.map((item) => {
         const matchedEmp = employeesList.find(
@@ -798,6 +881,7 @@ export default function ProjectUserMapping({ onClose }) {
           billLabCatCd: item.billLabCatCd || "",
         };
       });
+
       setOriginalEmployeesForProj(normalized);
       setSelectedEmployeeIds(new Set(normalized.map((e) => e.employeeId)));
 

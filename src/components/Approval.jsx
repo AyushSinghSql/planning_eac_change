@@ -75,6 +75,7 @@ const columnsAdmin = [
   "Hours",
   "Approver ID",
   "Approver Name",
+  "Submitted By",
 ];
 
 const ReasonModal = ({
@@ -941,6 +942,7 @@ export default function Approval() {
             "Approver ID": timesheetEntry.pm_User_Id || "",
             "Approver Name":
               timesheetEntry.pm_Name || timesheetEntry.pmName || "",
+            "Submitted By": timesheetEntry.submittedBy || "",
             timesheetDateRaw: timesheetEntry.timesheet_Date,
             // Additional fields for operations
             originalDate: timesheetEntry.timesheet_Date,
@@ -968,6 +970,14 @@ export default function Approval() {
       console.log("Final grouped data:", groupedData);
 
       setRows(groupedData);
+
+      // --- CLEAR ALL SELECTIONS AND DETAILS UPON SUCCESSFUL FETCH ---
+      setSelectedRows([]);
+      setSelectedNotifyRows([]);
+      setSelectAll(false);
+      setNotifySelectAll(false);
+      setUnifiedSelectAll(false);
+      handleCloseDetails();
     } catch (error) {
       console.error("Error fetching data:", error);
       showToast(`Error fetching data: ${error.message}`, "error");
@@ -1303,9 +1313,6 @@ export default function Approval() {
   const handleBulkProcessedClick = async () => {
     setProcessedLoading(true);
 
-    const approvedRows = selectedRows.filter(
-      (row) => row.status?.toLowerCase() === "approved",
-    );
     const requestBody = buildBulkRequestBody(
       selectedRows,
       "processed",
@@ -1324,10 +1331,31 @@ export default function Approval() {
       );
 
       if (response.ok) {
-        showToast("Correction requested for selected timesheets.", "success");
+        showToast(
+          "Successfully marked selected timesheets as processed.",
+          "success",
+        );
+
+        // Collect all target identifiers (supporting grouped rows, combinedIds, ids, and requestIds)
+        const processedIds = selectedRows.flatMap((row) =>
+          row.combinedIds && row.combinedIds.length > 0
+            ? row.combinedIds
+            : [row.id, row.requestId],
+        );
+
+        const processedRequestIds = selectedRows.flatMap((row) =>
+          row.combinedRequestIds && row.combinedRequestIds.length > 0
+            ? row.combinedRequestIds
+            : [row.requestId],
+        );
+
         setRows((prevRows) =>
           prevRows.map((row) =>
-            approvedRows.some((ar) => ar.requestId === row.requestId)
+            processedIds.includes(row.id) ||
+            processedIds.includes(row.requestId) ||
+            processedRequestIds.includes(row.requestId) ||
+            (row.combinedIds &&
+              row.combinedIds.some((id) => processedIds.includes(id)))
               ? {
                   ...row,
                   status: "processed",
@@ -1337,13 +1365,32 @@ export default function Approval() {
               : row,
           ),
         );
+
         setSelectedRows([]);
         setSelectAll(false);
       } else {
-        showToast("Correction request failed.", "error");
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "Processed request failed.";
+
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message ||
+            errorData.title ||
+            errorData.error ||
+            JSON.stringify(errorData);
+        } else {
+          const textError = await response.text();
+          if (textError) errorMessage = textError;
+        }
+
+        showToast(errorMessage, "error");
       }
     } catch (error) {
-      showToast("An error occurred during correction.", "error");
+      showToast(
+        error.message || "An error occurred during processing.",
+        "error",
+      );
     } finally {
       setProcessedLoading(false);
     }

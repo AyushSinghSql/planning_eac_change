@@ -42,7 +42,10 @@ const WorkflowUserMapping = () => {
 
         // 1. Fetch Users
         const userRes = await axios.get(`${backendUrl}/api/User`);
-        const userData = userRes.data || [];
+        // const userData = userRes.data || [];
+        const userData = (userRes.data || []).filter(
+  (user) => user.username !== "Revolve"
+);
         setUsers(userData);
 
         // 2. Fetch Approval Workflows

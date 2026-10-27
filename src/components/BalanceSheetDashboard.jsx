@@ -1339,7 +1339,7 @@ const ChartCard = ({ title, subtitle, children, action }) => (
     {children}
   </div>
 );
-// BalanceSheetDashboard
+
 export default function BalanceSheetDashboard({
   currentYear = new Date().getFullYear(),
   currency = "USD",

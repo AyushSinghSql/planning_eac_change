@@ -156,9 +156,9 @@
   }
 
   /* Primary solid buttons (New Budget / Blank / EAC / Calc / Detail, etc.) */
-  .btn-blue {
+.btn-blue {
     /* match "New Budget" style: bg-slate-900 */
-    @apply text-white;
+    @apply text-white cursor-pointer disabled:opacity-50;
     background-color: #17414d;
   }
 

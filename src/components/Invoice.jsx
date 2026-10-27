@@ -600,7 +600,7 @@ const InvoiceViewer = ({ data, setInvoiceModalVisible, onInvoiceSuccess }) => {
               <div style={{ ...addressBlockStyle, marginTop: "16px" }}>
                 <span style={boldTextStyle}>Bill To: {"\n"}</span>
                 {invoice.billT ||
-                  `Revolve Fintech
+                  `FedAxis
                 
                 Ashburn, VA 20147 `}
               </div>

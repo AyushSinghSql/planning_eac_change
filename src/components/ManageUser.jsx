@@ -9,6 +9,7 @@ import ConfigureField from "./ConfigureField";
 const ManageUser = () => {
   const { canEdit } = useOutletContext();
   const isEditable = canEdit("manageUser");
+  // const isEditable = true;
 
   // ------------------------------------------------------------
   // USERS / ROLES
@@ -630,7 +631,7 @@ const ManageUser = () => {
         username: user.username.trim(),
         fullName: user.fullName.trim(),
         email: user.email?.trim() || "",
-        role: String(roleId || ""),
+        role: String(user.role || ""),
         roleId: Number(roleId || 0),
         isActive: Boolean(user.isActive),
         firstLogin: Boolean(user.firstLogin),
@@ -1284,9 +1285,9 @@ const ManageUser = () => {
                       Status
                     </th>
 
-                    <th className="th-thead !px-1 !py-1 text-left bg-[#e5f3fb] text-black text-xs">
+                    {/* <th className="th-thead !px-1 !py-1 text-left bg-[#e5f3fb] text-black text-xs">
                       Groups
-                    </th>
+                    </th> */}
 
                     {newUserRowId && (
                       <>
@@ -1394,9 +1395,9 @@ const ManageUser = () => {
                           </td>
 
                           {/* GROUPS */}
-                          <td className="tbody-td !px-1 !py-0.5">
+                          {/* <td className="tbody-td !px-1 !py-0.5">
                             {renderGroupsCell(user)}
-                          </td>
+                          </td> */}
 
                           {/* PASSWORD / CONFIRM PASSWORD - NEW USERS ONLY */}
                           {newUserRowId && (

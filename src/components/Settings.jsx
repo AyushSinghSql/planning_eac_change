@@ -1520,9 +1520,9 @@ const Settings = () => {
   const [maxHoursPerDay, setMaxHoursPerDay] = useState("8");
   const [hardEdit, setHardEdit] = useState(false);
   const [weekendHighlightColor, setWeekendHighlightColor] = useState("#ef4444");
-const [payTypes, setPayTypes] = useState([]);
-const [payTypeEditIdx, setPayTypeEditIdx] = useState(null);
-const [prevPayTypeRow, setPrevPayTypeRow] = useState(null);
+  const [payTypes, setPayTypes] = useState([]);
+  const [payTypeEditIdx, setPayTypeEditIdx] = useState(null);
+  const [prevPayTypeRow, setPrevPayTypeRow] = useState(null);
 
   const WEEK_DAYS = [
     { value: "monday", label: "Mon" },
@@ -1549,24 +1549,24 @@ const [prevPayTypeRow, setPrevPayTypeRow] = useState(null);
     weekendHighlightColor: "#ef4444",
   });
 
- useEffect(() => {
-  const fetchPayTypes = async () => {
-    try {
-      const response = await fetch(`${backendUrl}/api/PayType`, {
-        credentials: "include",
-      });
+  useEffect(() => {
+    const fetchPayTypes = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/PayType`, {
+          credentials: "include",
+        });
 
-      if (!response.ok) throw new Error("Failed to fetch Pay Types");
+        if (!response.ok) throw new Error("Failed to fetch Pay Types");
 
-      const data = await response.json();
-      setPayTypes(data);
-    } catch (error) {
-      console.error("Error fetching Pay Types:", error);
-    }
-  };
+        const data = await response.json();
+        setPayTypes(data);
+      } catch (error) {
+        console.error("Error fetching Pay Types:", error);
+      }
+    };
 
-  fetchPayTypes();
-}, []);
+    fetchPayTypes();
+  }, []);
 
   useEffect(() => {
     const userInfo = localStorage.getItem("currentUser");
@@ -2186,113 +2186,145 @@ const [prevPayTypeRow, setPrevPayTypeRow] = useState(null);
   };
 
   const addPayTypeRow = () => {
-  const newRow = {
-    id: null,
-    name: "",
-    description: "",
-    isNew: true,
+    const newRow = {
+      id: null,
+      name: "",
+      description: "",
+      rate: "",
+      isOvertime: false,
+      isHourly: false,
+      isSalary: false,
+      isFuture: false,
+      isNew: true,
+    };
+
+    setPayTypes((prev) => [...prev, newRow]);
+    setPayTypeEditIdx(payTypes.length);
   };
 
-  setPayTypes((prev) => [...prev, newRow]);
-  setPayTypeEditIdx(payTypes.length);
-};
-
-const handlePayTypeInputChange = (index, field, value) => {
-  setPayTypes((prev) =>
-    prev.map((row, i) =>
-      i === index ? { ...row, [field]: value } : row
-    )
-  );
-};
-
-const handlePayTypeEdit = (index) => {
-  setPrevPayTypeRow({ ...payTypes[index] });
-  setPayTypeEditIdx(index);
-};
-
-const handlePayTypeCancel = (index) => {
-  if (payTypes[index]?.isNew) {
-    setPayTypes((prev) => prev.filter((_, i) => i !== index));
-  } else {
+  const handlePayTypeInputChange = (index, field, value) => {
     setPayTypes((prev) =>
-      prev.map((row, i) =>
-        i === index ? prevPayTypeRow : row
-      )
+      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
     );
-  }
-
-  setPayTypeEditIdx(null);
-  setPrevPayTypeRow(null);
-};
-
-const handlePayTypeSave = async (index) => {
-  const row = payTypes[index];
-
-  if (!row.name?.trim()) {
-    toast.error("Pay Type name is required");
-    return;
-  }
-
-  const payload = {
-    name: row.name.trim(),
-    description: row.description?.trim() || "",
   };
 
-  try {
-    const response = await fetch(`${backendUrl}/api/PayType`, {
-      method: row.isNew ? "POST" : "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        row.isNew ? [payload] : [{ id: row.id, ...payload }]
-      ),
-    });
+  const handlePayTypeEdit = (index) => {
+    setPrevPayTypeRow({ ...payTypes[index] });
+    setPayTypeEditIdx(index);
+  };
 
-    if (!response.ok) {
-      throw new Error("Failed to save Pay Type");
+  const handlePayTypeCancel = (index) => {
+    if (payTypes[index]?.isNew) {
+      setPayTypes((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setPayTypes((prev) =>
+        prev.map((row, i) => (i === index ? prevPayTypeRow : row)),
+      );
     }
 
-    const result = await fetch(`${backendUrl}/api/PayType`, {
-      credentials: "include",
-    });
-
-    if (!result.ok) throw new Error("Failed to reload Pay Types");
-
-    setPayTypes(await result.json());
     setPayTypeEditIdx(null);
     setPrevPayTypeRow(null);
-    toast.success("Pay Type saved successfully");
-  } catch (error) {
-    console.error("Error saving Pay Type:", error);
-    toast.error("Failed to save Pay Type");
-  }
-};
+  };
 
-const handlePayTypeDelete = async (id) => {
-  if (!id) {
-    toast.error("Invalid Pay Type ID");
-    return;
-  }
+  const handlePayTypeSave = async (index) => {
+    const row = payTypes[index];
 
-  if (!window.confirm("Are you sure you want to delete this Pay Type?")) {
-    return;
-  }
+    if (!row.name?.trim()) {
+      toast.error("Pay Type name is required");
+      return;
+    }
 
-  try {
-    const response = await fetch(`${backendUrl}/api/PayType/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    if (
+      row.rate === "" ||
+      row.rate === null ||
+      row.rate === undefined ||
+      !Number.isFinite(Number(row.rate)) ||
+      Number(row.rate) <= 0
+    ) {
+      toast.error("Rate is required and must be greater than 0");
+      return;
+    }
 
-    if (!response.ok) throw new Error("Failed to delete Pay Type");
+    const rate = Number(row.rate);
 
-    setPayTypes((prev) => prev.filter((row) => row.id !== id));
-    toast.success("Pay Type deleted successfully");
-  } catch (error) {
-    console.error("Error deleting Pay Type:", error);
-    toast.error("Failed to delete Pay Type");
-  }
-};
+    if (rate > 99999999.99 || !/^\d+(\.\d{1,2})?$/.test(String(row.rate))) {
+      toast.error("Enter a valid rate with up to 2 decimal places");
+      return;
+    }
+
+    const payload = {
+      name: row.name.trim(),
+      description: row.description?.trim() || "",
+      rate,
+
+      isOvertime: Boolean(row.isOvertime),
+      isHourly: Boolean(row.isHourly),
+      isSalary: Boolean(row.isSalary),
+      isFuture: Boolean(row.isFuture),
+    };
+
+    try {
+      const response = await fetch(`${backendUrl}/api/PayType`, {
+        method: row.isNew ? "POST" : "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          row.isNew ? [payload] : [{ id: row.id, ...payload }],
+        ),
+      });
+
+      const resultData = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          resultData?.message || resultData?.title || "Failed to save Pay Type",
+        );
+      }
+
+      const result = await fetch(`${backendUrl}/api/PayType`, {
+        credentials: "include",
+      });
+
+      if (!result.ok) {
+        throw new Error("Pay Type saved, but failed to reload the list");
+      }
+
+      setPayTypes(await result.json());
+      setPayTypeEditIdx(null);
+      setPrevPayTypeRow(null);
+
+      toast.success("Pay Type saved successfully");
+    } catch (error) {
+      console.error("Error saving Pay Type:", error);
+      toast.error(error.message || "Failed to save Pay Type");
+    }
+  };
+
+  const handlePayTypeDelete = async (id) => {
+    if (!id) {
+      toast.error("Invalid Pay Type ID");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this Pay Type?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/api/PayType/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete Pay Type");
+
+      setPayTypes((prev) => prev.filter((row) => row.id !== id));
+      toast.success("Pay Type deleted successfully");
+    } catch (error) {
+      console.error("Error deleting Pay Type:", error);
+      toast.error("Failed to delete Pay Type");
+    }
+  };
 
   return (
     <div className="space-y-2 text-sm sm:text-base text-gray-800 font-inter">
@@ -2689,145 +2721,279 @@ const handlePayTypeDelete = async (id) => {
                   </div>
                 </div>
 
-<div className="flex-1">
-  <div className="flex items-center mb-2">
-    {/* Optional icon to match Workflow Setup */}
-    <SettingsIcon className="h-4 w-4 text-blue-600 mr-3" />
-    <h2 className="text-base font-semibold text-gray-900">
-      Pay Type Setup
-    </h2>
-  </div>
-
-  <div className="bg-gray-50 rounded-lg p-2">
-    <div className="space-y-2">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={addPayTypeRow}
-          disabled={payTypeEditIdx !== null}
-          className="btn1 btn-blue shrink-0 flex items-center gap-1"
-                          >
-                            Add
-        </button>
-      </div>
-
-      <table className="w-full border-collapse border border-gray-300 text-sm">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 p-2 text-left">Code</th>
-            <th className="border border-gray-300 p-2 text-left">Description</th>
-            <th className="border border-gray-300 p-2 text-center">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {payTypes.map((row, index) => {
-            const isEditing = payTypeEditIdx === index;
-
-            return (
-              <tr key={row.id ?? `new-${index}`}>
-                <td className="border border-gray-300 p-2">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={row.name || ""}
-                      onChange={(e) =>
-                        handlePayTypeInputChange(
-                          index,
-                          "name",
-                          e.target.value
-                        )
-                      }
-                      className="w-full border px-1.5 py-1 rounded bg-white text-sm"
-                      placeholder="Enter pay type name"
-                    />
-                  ) : (
-                    <span className="px-1 py-0.5 font-medium">
-                      {row.name || "-"}
-                    </span>
-                  )}
-                </td>
-
-                <td className="border border-gray-300 p-2">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={row.description || ""}
-                      onChange={(e) =>
-                        handlePayTypeInputChange(
-                          index,
-                          "description",
-                          e.target.value
-                        )
-                      }
-                      className="w-full border px-1.5 py-1 rounded bg-white text-sm"
-                      placeholder="Enter description"
-                    />
-                  ) : (
-                    <span className="px-1 py-0.5 text-gray-700">
-                      {row.description || "-"}
-                    </span>
-                  )}
-                </td>
-
-                <td className="border border-gray-300 p-2">
-                  <div className="flex justify-center gap-2">
-                    {isEditing ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handlePayTypeSave(index)}
-                          className="px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm transition"
-                        >
-                          <Save size={16} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handlePayTypeCancel(index)}
-                          className="px-2 py-0.5 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm transition"
-                        >
-                          <X size={16} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handlePayTypeEdit(index)}
-                          disabled={payTypeEditIdx !== null}
-                          className="px-2 py-0.5 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm disabled:opacity-50 transition"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handlePayTypeDelete(row.id)}
-                          className="px-2 py-0.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm transition"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </>
-                    )}
+                <div className="flex-1">
+                  <div className="flex items-center mb-2">
+                    {/* Optional icon to match Workflow Setup */}
+                    <SettingsIcon className="h-4 w-4 text-blue-600 mr-3" />
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Pay Type Setup
+                    </h2>
                   </div>
-                </td>
-              </tr>
-            );
-          })}
 
-          {payTypes.length === 0 && (
-            <tr>
-              <td colSpan={3} className="border border-gray-300 p-4 text-center text-gray-500">
-                No Pay Types found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+                  <div className="bg-gray-50 rounded-lg p-2">
+                    <div className="space-y-2">
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={addPayTypeRow}
+                          disabled={payTypeEditIdx !== null}
+                          className="btn1 btn-blue shrink-0 flex items-center gap-1"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      <table className="w-full border-collapse border border-gray-300 text-sm">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="border border-gray-300 p-2 text-left">
+                              Code
+                            </th>
+
+                            <th className="border border-gray-300 p-2 text-left">
+                              Description
+                            </th>
+
+                            <th className="border border-gray-300 p-2 text-right">
+                              Rate
+                            </th>
+
+                            <th className="border border-gray-300 p-2 text-center">
+                              OVERTIME
+                            </th>
+
+                            {/* <th className="border border-gray-300 p-2 text-center">
+      HOURLY
+    </th>
+
+    <th className="border border-gray-300 p-2 text-center">
+      SALARY
+    </th> */}
+
+                            <th className="border border-gray-300 p-2 text-center">
+                              FUTURE
+                            </th>
+
+                            <th className="border border-gray-300 p-2 text-center">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {payTypes.map((row, index) => {
+                            const isEditing = payTypeEditIdx === index;
+
+                            return (
+                              <tr key={row.id ?? `new-${index}`}>
+                                <td className="border border-gray-300 p-2">
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      value={row.name || ""}
+                                      onChange={(e) =>
+                                        handlePayTypeInputChange(
+                                          index,
+                                          "name",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full border px-1.5 py-1 rounded bg-white text-sm"
+                                      placeholder="Enter pay type name"
+                                    />
+                                  ) : (
+                                    <span className="px-1 py-0.5 font-medium">
+                                      {row.name || "-"}
+                                    </span>
+                                  )}
+                                </td>
+
+                                <td className="border border-gray-300 p-2">
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      value={row.description || ""}
+                                      onChange={(e) =>
+                                        handlePayTypeInputChange(
+                                          index,
+                                          "description",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full border px-1.5 py-1 rounded bg-white text-sm"
+                                      placeholder="Enter description"
+                                    />
+                                  ) : (
+                                    <span className="px-1 py-0.5 text-gray-700">
+                                      {row.description || "-"}
+                                    </span>
+                                  )}
+                                </td>
+
+                                <td className="border border-gray-300 p-2">
+                                  {isEditing ? (
+                                    <input
+                                      type="number"
+                                      min="0.01"
+                                      max="99999999.99"
+                                      step="0.01"
+                                      required
+                                      value={row.rate ?? ""}
+                                      onChange={(e) =>
+                                        handlePayTypeInputChange(
+                                          index,
+                                          "rate",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full border px-1.5 py-1 rounded bg-white text-sm text-right"
+                                      placeholder="Enter rate"
+                                    />
+                                  ) : (
+                                    <span className="block text-right">
+                                      {row.rate != null
+                                        ? Number(row.rate).toFixed(2)
+                                        : "-"}
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* OVERTIME */}
+                                <td className="border border-gray-300 p-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(row.isOvertime)}
+                                    disabled={!isEditing}
+                                    onChange={(e) =>
+                                      handlePayTypeInputChange(
+                                        index,
+                                        "isOvertime",
+                                        e.target.checked,
+                                      )
+                                    }
+                                    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+                                  />
+                                </td>
+
+                                {/* HOURLY */}
+                                {/* <td className="border border-gray-300 p-2 text-center">
+  <input
+    type="checkbox"
+    checked={Boolean(row.isHourly)}
+    disabled={!isEditing}
+    onChange={(e) =>
+      handlePayTypeInputChange(
+        index,
+        "isHourly",
+        e.target.checked
+      )
+    }
+    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+  />
+</td> */}
+
+                                {/* SALARY */}
+                                {/* <td className="border border-gray-300 p-2 text-center">
+  <input
+    type="checkbox"
+    checked={Boolean(row.isSalary)}
+    disabled={!isEditing}
+    onChange={(e) =>
+      handlePayTypeInputChange(
+        index,
+        "isSalary",
+        e.target.checked
+      )
+    }
+    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+  />
+</td> */}
+
+                                {/* FUTURE */}
+                                <td className="border border-gray-300 p-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(row.isFuture)}
+                                    disabled={!isEditing}
+                                    onChange={(e) =>
+                                      handlePayTypeInputChange(
+                                        index,
+                                        "isFuture",
+                                        e.target.checked,
+                                      )
+                                    }
+                                    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+                                  />
+                                </td>
+                                <td className="border border-gray-300 p-2">
+                                  <div className="flex justify-center gap-2">
+                                    {isEditing ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePayTypeSave(index)
+                                          }
+                                          className="px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm transition"
+                                        >
+                                          <Save size={16} />
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePayTypeCancel(index)
+                                          }
+                                          className="px-2 py-0.5 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm transition"
+                                        >
+                                          <X size={16} />
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePayTypeEdit(index)
+                                          }
+                                          disabled={payTypeEditIdx !== null}
+                                          className="px-2 py-0.5 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm disabled:opacity-50 transition"
+                                        >
+                                          <Edit2 size={16} />
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePayTypeDelete(row.id)
+                                          }
+                                          className="px-2 py-0.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm transition"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+                          {payTypes.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={8}
+                                className="border border-gray-300 p-4 text-center text-gray-500"
+                              >
+                                No Pay Types found.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex gap-6 w-full">
                   {/* Configure Timesheet Period Section */}
