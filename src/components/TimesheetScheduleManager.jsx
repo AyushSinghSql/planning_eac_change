@@ -212,7 +212,7 @@ export default function TimesheetScheduleManager({ onScheduleChange }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 w-full max-w-6xl mx-auto font-sans">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 w-full mx-auto font-sans">
       <div className="mb-5 pb-4 border-b border-gray-200">
         <h2 className="text-lg font-bold text-gray-800">
           Timesheet Schedule & Periods Management
