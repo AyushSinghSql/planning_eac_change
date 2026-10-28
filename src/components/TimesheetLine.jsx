@@ -618,27 +618,27 @@
 //     return initial;
 //   });
 
-//   useEffect(() => {
-//     const fetchPayTypes = async () => {
-//       try {
-//         const response = await fetch(`${backendUrl}/api/PayType`, {
-//           credentials: "include",
-//         });
+// useEffect(() => {
+//   const fetchPayTypes = async () => {
+//     try {
+//       const response = await fetch(`${backendUrl}/api/PayType`, {
+//         credentials: "include",
+//       });
 
-//         if (!response.ok) {
-//           throw new Error("Failed to fetch Pay Types");
-//         }
-
-//         const data = await response.json();
-//         setPayTypes(Array.isArray(data) ? data : []);
-//       } catch (error) {
-//         console.error("Error fetching Pay Types:", error);
-//         setPayTypes([]);
+//       if (!response.ok) {
+//         throw new Error("Failed to fetch Pay Types");
 //       }
-//     };
 
-//     fetchPayTypes();
-//   }, []);
+//       const data = await response.json();
+//       setPayTypes(Array.isArray(data) ? data : []);
+//     } catch (error) {
+//       console.error("Error fetching Pay Types:", error);
+//       setPayTypes([]);
+//     }
+//   };
+
+//   fetchPayTypes();
+// }, []);
 
 //   useEffect(() => {
 //     if (role !== "fbsdusbcsdnjsbhasbx") {
@@ -3480,12 +3480,28 @@ export default function TimesheetLine({
 
         if (newColumnTotal > maxDailyHours) {
           exceedsMaxDailyHours = true;
-          isValid = false;
-          // const maxDailyError = `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours.`;
-          const maxDailyError = `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours. Please add a new line with the OT pay type for the excess hours.`;
-          toastMessage = exceedsPoRemaining
-            ? `${toastMessage} | ${maxDailyError}`
-            : maxDailyError;
+
+          // Check if the current line's payType is Overtime (SO, Overtime, or OT)
+          const isOvertimePayType =
+            currentLine?.payType?.toLowerCase() === "so" ||
+            currentLine?.payType?.toLowerCase() === "overtime" ||
+            currentLine?.payType?.toLowerCase() === "ot";
+
+          const maxDailyError = isOvertimePayType
+            ? `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours.`
+            : `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours. Please add a new line with the OT pay type for the excess hours.`;
+
+          // Only block entry (isValid = false) if it is NOT an overtime line
+          if (!isOvertimePayType) {
+            isValid = false;
+            toastMessage = exceedsPoRemaining
+              ? `${toastMessage} | ${maxDailyError}`
+              : maxDailyError;
+          } else {
+            toastMessage = exceedsPoRemaining
+              ? `${toastMessage} | ${maxDailyError}`
+              : maxDailyError;
+          }
 
           setMaxHoursExceededCells((prev) => new Set(prev).add(cellKey));
         } else if (exceedsPoRemaining) {
@@ -3523,6 +3539,164 @@ export default function TimesheetLine({
       showToast(toastMessage, "error", 3000);
     }
   };
+
+  // const handleHourChange = (id, dayIndex, value) => {
+  //   const cellKey = `${id}-${dayIndex}`;
+  //   const currentLine = lines.find((line) => line.id === id);
+
+  //   const updateHoursAndClearHighlight = (newValue) => {
+  //     setMaxHoursExceededCells((prev) => {
+  //       const next = new Set(prev);
+  //       const newDailyTotal =
+  //         lines
+  //           .filter((line) => line.id !== id)
+  //           .reduce(
+  //             (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
+  //             0,
+  //           ) + (parseFloat(newValue) || 0);
+
+  //       if (newDailyTotal <= maxDailyHours) {
+  //         next.delete(cellKey);
+  //       }
+  //       return next;
+  //     });
+  //     setLines((currentLines) =>
+  //       currentLines.map((line) =>
+  //         line.id === id
+  //           ? { ...line, hours: { ...line.hours, [dayIndex]: newValue } }
+  //           : line,
+  //       ),
+  //     );
+  //     setModifiedHours((prev) => new Set(prev).add(cellKey));
+  //   };
+
+  //   if (value === "") {
+  //     updateHoursAndClearHighlight("");
+  //     return;
+  //   }
+
+  //   const numValue = parseFloat(value);
+  //   let isValid = true;
+  //   let toastMessage = "";
+  //   let exceedsPoRemaining = false;
+  //   let exceedsMaxDailyHours = false;
+
+  //   if (isNaN(numValue) || numValue < 0) {
+  //     isValid = false;
+  //     toastMessage = "Hours must be a positive number.";
+  //   } else if (numValue % 0.5 !== 0) {
+  //     isValid = false;
+  //     toastMessage = "Hours must be in 0.5 increments.";
+  //   } else {
+  //     if (currentLine && currentLine.poLineNumber) {
+  //       const poLineNumber = currentLine.poLineNumber;
+  //       const remainingHours = remainingPoHours[poLineNumber];
+
+  //       if (remainingHours !== undefined) {
+  //         const newTotalForPO = lines
+  //           .filter((line) => line.poLineNumber === poLineNumber)
+  //           .reduce((total, line) => {
+  //             return (
+  //               total +
+  //               Object.keys(line.hours).reduce((lineSum, index) => {
+  //                 const hourValue = parseFloat(line.hours[index]) || 0;
+  //                 if (line.id === id && String(index) === String(dayIndex)) {
+  //                   return lineSum + numValue;
+  //                 }
+  //                 return lineSum + hourValue;
+  //               }, 0)
+  //             );
+  //           }, 0);
+
+  //         if (newTotalForPO > remainingHours) {
+  //           exceedsPoRemaining = true;
+  //           if (!hardEdit) {
+  //             isValid = false;
+  //             toastMessage = `Cannot exceed remaining PO hours (${remainingHours.toFixed(2)} available for PO Line ${poLineNumber}).`;
+  //           } else {
+  //             toastMessage = `PO Limit Exceeded: ${remainingHours.toFixed(2)} hours available for PO Line ${poLineNumber}.`;
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     if (isValid) {
+  //       const otherLinesTotal = lines
+  //         .filter((line) => line.id !== id)
+  //         .reduce(
+  //           (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
+  //           0,
+  //         );
+
+  //       // const newColumnTotal = otherLinesTotal + numValue;
+
+  //       // if (newColumnTotal > maxDailyHours) {
+  //       //   exceedsMaxDailyHours = true;
+  //       //   isValid = false;
+  //       //   // const maxDailyError = `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours.`;
+  //       //   const maxDailyError = `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours. Please add a new line with the OT pay type for the excess hours.`;
+  //       //   toastMessage = exceedsPoRemaining
+  //       //     ? `${toastMessage} | ${maxDailyError}`
+  //       //     : maxDailyError;
+
+  //       //   setMaxHoursExceededCells((prev) => new Set(prev).add(cellKey));
+  //       // }
+  //       if (newColumnTotal > maxDailyHours) {
+  //         exceedsMaxDailyHours = true;
+
+  //         // Check if the current line's payType is already Overtime
+  //         const isOvertimePayType =
+  //           currentLine?.payType?.toLowerCase() === "so" ||
+  //           currentLine?.payType?.toLowerCase() === "overtime";
+
+  //         // Hard Block if Max Daily Hours is exceeded AND it's not already an OT line
+  //         // (Adjust the condition if your standard pay type string is different)
+  //         isValid = false;
+
+  //         const maxDailyError = isOvertimePayType
+  //           ? `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours.`
+  //           : `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours. Please add a new line with the OT pay type for the excess hours.`;
+
+  //         toastMessage = exceedsPoRemaining
+  //           ? `${toastMessage} | ${maxDailyError}`
+  //           : maxDailyError;
+
+  //         setMaxHoursExceededCells((prev) => new Set(prev).add(cellKey));
+  //       } else if (exceedsPoRemaining) {
+  //         setMaxHoursExceededCells((prev) => {
+  //           const next = new Set(prev);
+  //           next.delete(cellKey);
+  //           return next;
+  //         });
+  //       } else {
+  //         setMaxHoursExceededCells((prev) => {
+  //           const next = new Set(prev);
+  //           next.delete(cellKey);
+  //           return next;
+  //         });
+  //       }
+  //     }
+  //   }
+
+  //   if (isValid) {
+  //     updateHoursAndClearHighlight(numValue);
+  //     if (toastMessage) {
+  //       showToast(toastMessage, "warning", 3000);
+  //     }
+  //   } else {
+  //     setLines((currentLines) =>
+  //       currentLines.map((line) => (line.id === id ? currentLine : line)),
+  //     );
+  //     if (!exceedsMaxDailyHours) {
+  //       setMaxHoursExceededCells((prev) => {
+  //         const next = new Set(prev);
+  //         next.delete(cellKey);
+  //         return next;
+  //       });
+  //     }
+  //     showToast(toastMessage, "error", 3000);
+  //   }
+  // };
 
   const getRemainingHoursForLine = (line) => {
     if (!line.poLineNumber) return null;
@@ -3575,20 +3749,67 @@ export default function TimesheetLine({
     setSelectedLines(new Set());
   };
 
+  // const dailyTotals = useMemo(() => {
+  //   if (!selectedPeriod.dates) return {};
+  //   const totals = {};
+  //   selectedPeriod.dates.forEach((_, index) => {
+  //     totals[index] = 0;
+  //   });
+  //   lines.forEach((line) => {
+  //     Object.keys(line.hours).forEach((index) => {
+  //       totals[index] =
+  //         (totals[index] || 0) + (parseFloat(line.hours[index]) || 0);
+  //     });
+  //   });
+  //   return totals;
+  // }, [lines, selectedPeriod]);
   const dailyTotals = useMemo(() => {
     if (!selectedPeriod.dates) return {};
     const totals = {};
     selectedPeriod.dates.forEach((_, index) => {
-      totals[index] = 0;
+      totals[index] = {
+        total: 0,
+        standard: 0,
+        overtime: 0,
+      };
     });
+
     lines.forEach((line) => {
-      Object.keys(line.hours).forEach((index) => {
-        totals[index] =
-          (totals[index] || 0) + (parseFloat(line.hours[index]) || 0);
+      // Find matching pay type config for this line
+      const currentPayTypeConfig = payTypes?.find(
+        (pt) => pt.name === line.payType || pt.id === line.payType,
+      );
+
+      const isLineOvertime = currentPayTypeConfig
+        ? currentPayTypeConfig.isOvertime
+        : line.payType?.toLowerCase() === "ot" ||
+          line.payType?.toLowerCase() === "overtime" ||
+          line.payType === "SO";
+
+      Object.keys(line.hours || {}).forEach((index) => {
+        const val = parseFloat(line.hours[index]) || 0;
+
+        // Initialize totals if this index doesn't exist
+        if (!totals[index]) {
+          totals[index] = {
+            total: 0,
+            overtime: 0,
+            standard: 0,
+          };
+        }
+
+        totals[index].total += val;
+
+        if (isLineOvertime) {
+          totals[index].overtime += val;
+        } else {
+          totals[index].standard += val;
+        }
       });
     });
+
     return totals;
-  }, [lines, selectedPeriod]);
+  }, [lines, selectedPeriod, payTypes]);
 
   const copyLines = () => {
     if (selectedLines.size === 0) {
@@ -3603,25 +3824,54 @@ export default function TimesheetLine({
       return;
     }
     const linesToCopy = lines.filter((line) => selectedLines.has(line.id));
-    const potentialTotals = { ...dailyTotals };
+
+    // Deep clone or copy dailyTotals structure safely
+    const potentialTotals = {};
+    Object.keys(dailyTotals).forEach((idx) => {
+      const val = dailyTotals[idx];
+      potentialTotals[idx] =
+        typeof val === "object"
+          ? { ...val }
+          : { total: val, standard: val, overtime: 0 };
+    });
+
     let validationFailed = false;
 
     linesToCopy.forEach((lineToCopy) => {
+      const isLineOvertime =
+        lineToCopy.payType?.toLowerCase() === "so" ||
+        lineToCopy.payType?.toLowerCase() === "overtime" ||
+        lineToCopy.payType?.toLowerCase() === "ot";
+
       Object.keys(lineToCopy.hours).forEach((index) => {
-        potentialTotals[index] =
-          (potentialTotals[index] || 0) +
-          (parseFloat(lineToCopy.hours[index]) || 0);
-        if (potentialTotals[index] > maxDailyHours) validationFailed = true;
+        const hourVal = parseFloat(lineToCopy.hours[index]) || 0;
+
+        if (!potentialTotals[index]) {
+          potentialTotals[index] = { total: 0, standard: 0, overtime: 0 };
+        }
+
+        potentialTotals[index].total += hourVal;
+        if (isLineOvertime) {
+          potentialTotals[index].overtime += hourVal;
+        } else {
+          potentialTotals[index].standard += hourVal;
+        }
+
+        // Only fail validation if standard (non-overtime) hours exceed maxDailyHours
+        if (potentialTotals[index].standard > maxDailyHours) {
+          validationFailed = true;
+        }
       });
     });
 
     if (validationFailed) {
       showToast(
-        `Cannot copy, as it would cause a daily total to exceed the max limit of ${maxDailyHours} hours.`,
+        `Cannot copy, as it would cause standard daily totals to exceed the max limit of ${maxDailyHours} hours. Please use the OT pay type for excess hours.`,
         "error",
       );
       return;
     }
+
     showToast("Line(s) copied.", "info");
     const newLines = linesToCopy.map((line, index) => ({
       ...line,
@@ -3634,10 +3884,12 @@ export default function TimesheetLine({
     setSelectedLines(new Set());
   };
 
-  const grandTotal = Object.values(dailyTotals).reduce(
-    (sum, total) => sum + total,
-    0,
-  );
+  const grandTotal = Object.values(dailyTotals).reduce((sum, daySummary) => {
+    if (!daySummary) return sum; // <-- Safely skip if undefined
+    const totalVal =
+      typeof daySummary === "number" ? daySummary : daySummary?.total || 0;
+    return sum + totalVal;
+  }, 0);
 
   const toggleColumnVisibility = (columnName) => {
     setHiddenColumns((prev) => ({ ...prev, [columnName]: !prev[columnName] }));
@@ -3650,6 +3902,150 @@ export default function TimesheetLine({
     });
     setHiddenColumns(allVisible);
   };
+
+  // const handleSubmit = async () => {
+  //   if (isPeriodInvalid) {
+  //     showToast(
+  //       "The selected period is closed or already has a timesheet.",
+  //       "warning",
+  //     );
+  //     return;
+  //   }
+  //   if (grandTotal === 0) {
+  //     showToast("Cannot submit a timesheet with zero hours.", "warning");
+  //     return;
+  //   }
+
+  //   // Check if any day's STANDARD (non-overtime) hours exceed maxDailyHours
+  //   const hasInvalidStandardDay = Object.keys(dailyTotals).some((dayIndex) => {
+  //     const daySummary = dailyTotals[dayIndex];
+  //     const standardHours =
+  //       typeof daySummary === "number"
+  //         ? daySummary
+  //         : daySummary.standard !== undefined
+  //           ? daySummary.standard
+  //           : daySummary.total || 0;
+
+  //     return standardHours > maxDailyHours;
+  //   });
+
+  //   if (hasInvalidStandardDay) {
+  //     showToast(
+  //       `Cannot submit. Standard daily hours exceed the maximum limit of ${maxDailyHours}. Please use the OT pay type for excess hours.`,
+  //       "error",
+  //     );
+  //     return;
+  //   }
+
+  //   if (isSubmitting) return;
+  //   setIsSubmitting(true);
+
+  //   if (role === "fbsdusbcsdnjsbhasbx") {
+  //     for (const line of lines) {
+  //       if (!line.project || !line.poLineNumber) {
+  //         showToast(`Please complete the Work Order for all lines.`, "warning");
+  //         setIsSubmitting(false);
+  //         return;
+  //       }
+  //     }
+  //   }
+
+  //   try {
+  //     const API_URL = `${backendUrl}/api/SubkTimesheet`;
+  //     const now = new Date().toISOString();
+  //     const endDateObj = parseDateString(
+  //       selectedPeriod.dates[selectedPeriod.dates.length - 1],
+  //       currentYear,
+  //     );
+  //     const weekEndDateAsISO = endDateObj.toISOString().split("T")[0];
+
+  //     for (const line of lines) {
+  //       const lineHoursTotal = parseFloat(
+  //         Object.values(line.hours)
+  //           .reduce((s, h) => s + (parseFloat(h) || 0), 0)
+  //           .toFixed(2),
+  //       );
+  //       if (!isEditMode && lineHoursTotal === 0) continue;
+
+  //       const method = isEditMode ? "PUT" : "POST";
+  //       const url = isEditMode ? `${API_URL}/${line.id}` : API_URL;
+
+  //       const timesheetHours = selectedPeriod.dates
+  //         .map((dateStr, index) => {
+  //           const dateObj = parseDateString(dateStr, currentYear);
+  //           const month = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
+  //           const day = String(dateObj.getUTCDate()).padStart(2, "0");
+  //           const dateForApi = `${currentYear}-${month}-${day}`;
+  //           const hourComment = line.comments?.[index] || "";
+
+  //           return {
+  //             Id: isEditMode ? line.hourIds[index] || 0 : 0,
+  //             Ts_Date: dateForApi,
+  //             Hours: line.hours[index] || 0,
+  //             Comment: hourComment,
+  //             comment: hourComment,
+  //             dayIndex: index,
+  //           };
+  //         })
+  //         .filter((hourEntry) => {
+  //           if (isEditMode)
+  //             return modifiedHours.has(`${line.id}-${hourEntry.dayIndex}`);
+  //           return (
+  //             hourEntry.Hours > 0 ||
+  //             (hourEntry.Comment && hourEntry.Comment.trim() !== "")
+  //           );
+  //         })
+  //         .map(({ dayIndex, ...rest }) => rest);
+
+  //       const payload = {
+  //         Id: isEditMode ? line.id : 0,
+  //         Description: line.description,
+  //         ProjId: line.project,
+  //         Plc: line.plc,
+  //         WorkOrder: line.wa_Code,
+  //         pm_User_Id: line.pmUserID,
+  //         PayType: line.payType,
+  //         PoNumber: role === "fbsdusbcsdnjsbhasbx" ? line.poNumber : "0000",
+  //         RlseNumber: line.rlseNumber || "0",
+  //         Resource_Id: String(resourceId),
+  //         PoLineNumber: parseInt(line.poLineNumber, 10) || 0,
+  //         Timesheet_Date: weekEndDateAsISO,
+  //         UpdatedAt: now,
+  //         UpdatedBy: String(currentUser?.name),
+  //         TimesheetHours: timesheetHours,
+  //         Hours: lineHoursTotal,
+  //         Status: "OPEN",
+  //         ApprovalStatus: "PENDING",
+  //       };
+
+  //       if (!isEditMode) {
+  //         payload.CreatedAt = now;
+  //         payload.CreatedBy = String(currentUser?.name);
+  //       }
+
+  //       const response = await fetch(url, {
+  //         method: method,
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(payload),
+  //       });
+
+  //       if (!response.ok) {
+  //         const errorText = await response.text();
+  //         throw new Error(`Submission failed: ${errorText}`);
+  //       }
+  //     }
+
+  //     showToast(
+  //       `Timesheet ${isEditMode ? "updated" : "created"} successfully!`,
+  //       "success",
+  //     );
+  //     setModifiedHours(new Set());
+  //     onClose(weekEndDateAsISO);
+  //   } catch (error) {
+  //     showToast(error.message, "error");
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const handleSubmit = async () => {
     if (isPeriodInvalid) {
@@ -3664,9 +4060,58 @@ export default function TimesheetLine({
       return;
     }
 
-    if (maxHoursExceededCells.size > 0) {
+    // 1. Check if any individual non-overtime (Regular/Standard) line has hours exceeding maxDailyHours on any day
+    let hasExcessiveRegularLineHours = false;
+    let excessLineMessage = "";
+
+    for (const line of lines) {
+      const currentPayTypeConfig = payTypes?.find(
+        (pt) => pt.name === line.payType || pt.id === line.payType,
+      );
+      const isLineOvertime = currentPayTypeConfig
+        ? currentPayTypeConfig.isOvertime
+        : line.payType?.toLowerCase() === "so" ||
+          line.payType?.toLowerCase() === "overtime" ||
+          line.payType?.toLowerCase() === "ot" ||
+          line.payType === "SO";
+
+      if (!isLineOvertime && line.hours) {
+        Object.keys(line.hours).forEach((dayIndex) => {
+          const hVal = parseFloat(line.hours[dayIndex]) || 0;
+          if (hVal > maxDailyHours) {
+            hasExcessiveRegularLineHours = true;
+            excessLineMessage = `A Regular/Standard pay type line has ${hVal} hours on day ${parseInt(dayIndex) + 1}, which exceeds the max limit of ${maxDailyHours}.`;
+          }
+        });
+      }
+    }
+
+    if (hasExcessiveRegularLineHours) {
       showToast(
-        `Cannot submit. Please review and correct the ${maxHoursExceededCells.size} highlighted cell(s) exceeding the maximum daily hours (${maxDailyHours}).`,
+        `Cannot submit. ${excessLineMessage} Please use the OT pay type for excess hours.`,
+        "error",
+      );
+      return;
+    }
+
+    // 2. Check if any day's combined STANDARD (non-overtime) total hours exceed maxDailyHours
+    const hasInvalidStandardDay = Object.keys(dailyTotals).some((dayIndex) => {
+      const daySummary = dailyTotals[dayIndex];
+      if (!daySummary) return false;
+
+      const standardHours =
+        typeof daySummary === "number"
+          ? daySummary
+          : daySummary.standard !== undefined
+            ? daySummary.standard
+            : daySummary.total || 0;
+
+      return standardHours > maxDailyHours;
+    });
+
+    if (hasInvalidStandardDay) {
+      showToast(
+        `Cannot submit. Standard daily hours exceed the maximum limit of ${maxDailyHours}. Please use the OT pay type for excess hours.`,
         "error",
       );
       return;
@@ -3875,10 +4320,9 @@ export default function TimesheetLine({
               onClick={handleSubmit}
               variant="primary"
               disabled={
-                isPeriodInvalid ||
-                isSubmitting ||
-                lines.length === 0 ||
-                maxHoursExceededCells.size > 0
+                isPeriodInvalid || isSubmitting || lines.length === 0
+                //  ||
+                // maxHoursExceededCells.size > 0
               }
             >
               {isSubmitting ? "Saving..." : isEditMode ? "Save" : "Save"}
@@ -4223,12 +4667,34 @@ export default function TimesheetLine({
                       const isWeekend = configWeekends.includes(dayName);
                       const holiday = getHolidayDetails(dateString);
                       const columnDate = d;
-                      const isFutureDate =
+
+                      // Find the corresponding pay type object for this line
+                      const currentPayTypeConfig = payTypes?.find(
+                        (pt) =>
+                          pt.name === line.payType || pt.id === line.payType,
+                      );
+
+                      // Check future date restriction using pay type's configuration
+                      const isSystemFutureDate =
                         columnDate.getTime() > today.getTime();
+                      const allowsFuture = currentPayTypeConfig
+                        ? currentPayTypeConfig.isFuture
+                        : true;
+                      const isFutureDate = isSystemFutureDate && !allowsFuture;
 
                       const isDisabled = isPeriodInvalid || isFutureDate;
                       const cellKey = `${line.id}-${dayIndex}`;
-                      const isExceeded = maxHoursExceededCells.has(cellKey);
+
+                      // Check if line is overtime via configuration or fallback naming convention
+                      const isLineOvertime = currentPayTypeConfig
+                        ? currentPayTypeConfig.isOvertime
+                        : line.payType?.toLowerCase() === "ot" ||
+                          line.payType?.toLowerCase() === "overtime" ||
+                          line.payType === "SO";
+
+                      // Suppress red max hours warning/exceeded state if it's an overtime pay type line
+                      const baseExceeded = maxHoursExceededCells.has(cellKey);
+                      const isExceeded = baseExceeded && !isLineOvertime;
 
                       let backgroundStyle = {};
                       let backgroundClass = "bg-white";
@@ -4336,9 +4802,13 @@ export default function TimesheetLine({
               </td>
               {selectedPeriod.dates &&
                 selectedPeriod.dates.map((dateString, index) => {
-                  const dayTotal = dailyTotals[index] || 0;
-                  const isDayExceeded = dayTotal > maxDailyHours;
-                  const isColumnHighlighted = isDayExceeded;
+                  const daySummary = dailyTotals[index] || {};
+                  const totalHours =
+                    typeof daySummary === "number"
+                      ? daySummary
+                      : daySummary.total || 0;
+                  const isDayExceeded = totalHours > maxDailyHours;
+                  const isColumnHighlighted = false;
 
                   return (
                     <td
@@ -4348,7 +4818,7 @@ export default function TimesheetLine({
                       <div
                         className={`w-16 mx-auto ${isColumnHighlighted ? "text-red-700 font-bold" : "text-black font-semibold"}`}
                       >
-                        {dayTotal.toFixed(2)}
+                        {totalHours.toFixed(2)}
                       </div>
                     </td>
                   );

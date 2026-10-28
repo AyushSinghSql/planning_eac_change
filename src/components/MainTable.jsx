@@ -1684,7 +1684,7 @@ export default function MainTable() {
                       htmlFor="employeeId"
                       className="font-semibold text-xs sm:text-sm whitespace-nowrap text-gray-700"
                     >
-                      Employee Name:
+                      PLC Name:
                     </label>
                     <input
                       id="employeeId"
