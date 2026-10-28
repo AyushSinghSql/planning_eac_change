@@ -1847,6 +1847,7 @@ const Login = () => {
       token: data.token,
       fullName: data.fullName,
       ts_Sch_Id: data.ts_Sch_Id,
+      employeeId: data.empl_Id
     };
     
 

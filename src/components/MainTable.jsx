@@ -871,6 +871,7 @@ export default function MainTable() {
             userId: u.userId,
             scheduleId: u.ts_Schl_id?.ts_Schedule_Id,
             statusCd: u.ts_Schl_id?.sEmplStatusCd,
+            employeeId: u.ts_Schl_id?.emplId
           })),
         );
       } catch (e) {
@@ -1029,7 +1030,7 @@ export default function MainTable() {
   }, [currentSelectedRowId, rows]);
 
   const fetchData = async () => {
-    const targetResource = selectedEmployeeId || currentUser?.name;
+    const targetResource = selectedEmployeeId || currentUser?.employeeId;
     if (!targetResource) return [];
     // if (!currentUser) return [];
     setLoading(true);
@@ -1273,7 +1274,7 @@ export default function MainTable() {
     setIsSubmittingLeave(true);
     try {
       const payload = {
-        emplId: selectedEmployeeId || currentUser?.name || "EMP001",
+        emplId: selectedEmployeeId || currentUser?.employeeId || "EMP001",
         leaveCode: selectedLeaveCode,
         transactionType: "LEAVE",
         transactionDate: new Date().toISOString(),
@@ -1714,7 +1715,7 @@ export default function MainTable() {
                     value={selectedEmployeeId}
                     onChange={(e) => {
                       const selectedVal = e.target.value;
-
+                      console.log(selectedVal)
                       if (selectedEmployeeId !== selectedVal) {
                         setSelectedTimesheetData(false);
                       }
@@ -1736,7 +1737,7 @@ export default function MainTable() {
                   >
                     <option value="">Select Employee</option>
                     {userOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
+                      <option key={opt.value} value={opt.employeeId}>
                         {opt.label}
                       </option>
                     ))}
@@ -2108,7 +2109,7 @@ export default function MainTable() {
                 }}
                 // resourceId={currentUser?.name}
                 // userId={currentUser?.userId}
-                resourceId={selectedEmployeeId || currentUser?.name} // <-- Updated here
+                resourceId={selectedEmployeeId || currentUser?.employeeId} // <-- Updated here
                 userId={selectedEmployeeId || currentUser?.userId}
                 scheduleId={selectedScheduleId || currentUser?.ts_Sch_Id || 1}
                 role={
@@ -2130,8 +2131,8 @@ export default function MainTable() {
                 onClose={handleCloseDetail}
                 onSave={handleSaveDetails}
                 currentUser={currentUser}
-                resourceId={selectedEmployeeId || currentUser?.name}
-                userId={selectedEmployeeId || currentUser?.name}
+                resourceId={selectedEmployeeId || currentUser?.employeeId}
+                userId={selectedEmployeeId || currentUser?.employeeId}
                 scheduleId={selectedScheduleId || currentUser?.ts_Sch_Id || 1}
                 role={
                   selectedRole?.toLocaleLowerCase() ||
