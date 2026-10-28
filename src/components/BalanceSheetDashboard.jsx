@@ -1356,7 +1356,7 @@ export default function BalanceSheetDashboard({
     const baseYear = Number(currentYear);
     return Array.from({ length: 4 }, (_, index) => baseYear - index);
   }, [currentYear]);
-
+console.log("")
   // Fetch the selected fiscal year from the API.
   useEffect(() => {
     const controller = new AbortController();
