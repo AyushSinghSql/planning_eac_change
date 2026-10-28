@@ -8757,7 +8757,167 @@ export default function TimesheetDetailModal({
     );
   };
 
-  const handleHourChange = (id, dayIndex, value) => {
+  // const handleHourChange = (id, dayIndex, value) => {
+  //   if (value === "") {
+  //     setLines((currentLines) =>
+  //       currentLines.map((line) =>
+  //         line.id === id
+  //           ? { ...line, hours: { ...line.hours, [dayIndex]: "" } }
+  //           : line,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   const numValue = parseFloat(value);
+  //   let isValid = true;
+  //   let toastMessage = "";
+  //   let toastType = "warning";
+  //   let isPOExceeded = false;
+  //   let isMaxDailyExceeded = false;
+  //   const currentLine = lines.find((line) => line.id === id);
+
+  //   const status = timesheetData.Status?.toUpperCase();
+  //   const allowNegativeHours = status === "CORRECTION" || status === "REJECTED";
+
+  //   if (isNaN(numValue)) {
+  //     isValid = false;
+  //     toastType = "error";
+  //     toastMessage = "Hours must be a number.";
+  //   } else if (!allowNegativeHours && numValue < 0) {
+  //     isValid = false;
+  //     toastType = "error";
+  //     toastMessage =
+  //       "Hours cannot be negative unless correcting a rejected timesheet.";
+  //   }
+  //   // else if (numValue % 0.5 !== 0) {
+  //   //   isValid = false;
+  //   //   toastType = "error";
+  //   //   toastMessage = "Hours must be in 0.5 increments.";
+  //   // }
+  //   else if (!/^\d+(\.\d{1,2})?$/.test(String(numValue))) {
+  //     isValid = false;
+  //     toastMessage = "Hours can have a maximum of two decimal places.";
+  //   } else {
+  //     if (currentLine && currentLine.poLineNumber) {
+  //       const poLineNumber = String(currentLine.poLineNumber).trim();
+  //       const remainingHours = remainingPoHours[poLineNumber];
+
+  //       if (remainingHours !== undefined) {
+  //         const tempLines = lines.map((line) =>
+  //           line.id === id
+  //             ? { ...line, hours: { ...line.hours, [dayIndex]: numValue } }
+  //             : line,
+  //         );
+  //         const allLinesWithSamePO = tempLines.filter(
+  //           (l) => String(l.poLineNumber).trim() === poLineNumber,
+  //         );
+
+  //         const totalNewHoursForPO = allLinesWithSamePO.reduce((sum, l) => {
+  //           const initialLine = initialLines.find((init) => init.id === l.id);
+  //           const currentUITotal = Object.values(l.hours).reduce(
+  //             (s, h) => s + (parseFloat(h) || 0),
+  //             0,
+  //           );
+  //           const initialTotal = initialLine
+  //             ? Object.values(initialLine.hours).reduce(
+  //                 (s, h) => s + (parseFloat(h) || 0),
+  //                 0,
+  //               )
+  //             : 0;
+  //           return sum + (currentUITotal - initialTotal);
+  //         }, 0);
+
+  //         if (totalNewHoursForPO > remainingHours) {
+  //           isPOExceeded = true;
+  //           if (!hardEdit) {
+  //             isValid = false;
+  //             toastType = "error";
+  //             toastMessage = `Disabled: Cannot exceed remaining PO hours (${remainingHours.toFixed(
+  //               2,
+  //             )} available for PO Line ${poLineNumber}).`;
+  //           } else {
+  //             toastMessage = `PO hours exceeded. ${remainingHours.toFixed(
+  //               2,
+  //             )} hours available for PO Line ${poLineNumber}.`;
+  //             toastType = "warning";
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     if (isValid) {
+  //       const otherLinesTotal = lines
+  //         .filter((line) => line.id !== id)
+  //         .reduce(
+  //           (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
+  //           0,
+  //         );
+
+  //       const newDailyTotal = otherLinesTotal + numValue;
+
+  //       // if (newDailyTotal > maxDailyHours) {
+  //       //   isMaxDailyExceeded = true;
+  //       //   isValid = false;
+  //       //   toastType = "error";
+  //       //   const maxDailyError = `Daily total hours exceed the maximum limit of ${maxDailyHours}.`;
+  //       //   if (isPOExceeded && hardEdit) {
+  //       //     toastMessage = `${maxDailyError} Also, PO hours exceeded.`;
+  //       //   } else {
+  //       //     toastMessage = `Disabled: ${maxDailyError}`;
+  //       //   }
+  //       // }
+  //       if (newDailyTotal > maxDailyHours) {
+  //         // Check if the current line's payType is already Overtime
+  //         const isOvertimePayType =
+  //           currentLine?.payType?.toLowerCase() === "so" ||
+  //           currentLine?.payType?.toLowerCase() === "overtime";
+
+  //         // If it's an overtime line, we allow it past the max daily block
+  //         if (!isOvertimePayType) {
+  //           isMaxDailyExceeded = true;
+  //           isValid = false;
+  //           toastType = "error";
+  //           const maxDailyError = `Daily total hours exceed the maximum limit of ${maxDailyHours}. Please add a new line with the OT pay type for the excess hours.`;
+  //           if (isPOExceeded && hardEdit) {
+  //             toastMessage = `${maxDailyError} Also, PO hours exceeded.`;
+  //           } else {
+  //             toastMessage = `Disabled: ${maxDailyError}`;
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   const toastDuration = isValid && isPOExceeded && hardEdit ? 5000 : 3000;
+
+  //   if (isValid) {
+  //     setLines((currentLines) =>
+  //       currentLines.map((line) =>
+  //         line.id === id
+  //           ? { ...line, hours: { ...line.hours, [dayIndex]: numValue } }
+  //           : line,
+  //       ),
+  //     );
+  //     if (isPOExceeded && hardEdit) {
+  //       showToast(toastMessage, toastType, toastDuration);
+  //     }
+  //   } else {
+  //     showToast(toastMessage, toastType, toastDuration);
+  //     setLines((currentLines) =>
+  //       currentLines.map((line) =>
+  //         line.id === id
+  //           ? {
+  //               ...line,
+  //               hours: { ...line.hours, [dayIndex]: line.hours[dayIndex] },
+  //             }
+  //           : line,
+  //       ),
+  //     );
+  //   }
+  // };
+
+   const handleHourChange = (id, dayIndex, value) => {
     if (value === "") {
       setLines((currentLines) =>
         currentLines.map((line) =>
@@ -8768,7 +8928,7 @@ export default function TimesheetDetailModal({
       );
       return;
     }
-
+ 
     const numValue = parseFloat(value);
     let isValid = true;
     let toastMessage = "";
@@ -8776,10 +8936,10 @@ export default function TimesheetDetailModal({
     let isPOExceeded = false;
     let isMaxDailyExceeded = false;
     const currentLine = lines.find((line) => line.id === id);
-
+ 
     const status = timesheetData.Status?.toUpperCase();
     const allowNegativeHours = status === "CORRECTION" || status === "REJECTED";
-
+ 
     if (isNaN(numValue)) {
       isValid = false;
       toastType = "error";
@@ -8789,20 +8949,14 @@ export default function TimesheetDetailModal({
       toastType = "error";
       toastMessage =
         "Hours cannot be negative unless correcting a rejected timesheet.";
-    }
-    // else if (numValue % 0.5 !== 0) {
-    //   isValid = false;
-    //   toastType = "error";
-    //   toastMessage = "Hours must be in 0.5 increments.";
-    // }
-    else if (!/^\d+(\.\d{1,2})?$/.test(String(numValue))) {
+    } else if (!/^\d+(\.\d{1,2})?$/.test(String(numValue))) {
       isValid = false;
       toastMessage = "Hours can have a maximum of two decimal places.";
     } else {
       if (currentLine && currentLine.poLineNumber) {
         const poLineNumber = String(currentLine.poLineNumber).trim();
         const remainingHours = remainingPoHours[poLineNumber];
-
+ 
         if (remainingHours !== undefined) {
           const tempLines = lines.map((line) =>
             line.id === id
@@ -8812,7 +8966,7 @@ export default function TimesheetDetailModal({
           const allLinesWithSamePO = tempLines.filter(
             (l) => String(l.poLineNumber).trim() === poLineNumber,
           );
-
+ 
           const totalNewHoursForPO = allLinesWithSamePO.reduce((sum, l) => {
             const initialLine = initialLines.find((init) => init.id === l.id);
             const currentUITotal = Object.values(l.hours).reduce(
@@ -8827,7 +8981,7 @@ export default function TimesheetDetailModal({
               : 0;
             return sum + (currentUITotal - initialTotal);
           }, 0);
-
+ 
           if (totalNewHoursForPO > remainingHours) {
             isPOExceeded = true;
             if (!hardEdit) {
@@ -8845,36 +8999,30 @@ export default function TimesheetDetailModal({
           }
         }
       }
-
+ 
       if (isValid) {
-        const otherLinesTotal = lines
-          .filter((line) => line.id !== id)
-          .reduce(
-            (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
-            0,
-          );
-
-        const newDailyTotal = otherLinesTotal + numValue;
-
-        // if (newDailyTotal > maxDailyHours) {
-        //   isMaxDailyExceeded = true;
-        //   isValid = false;
-        //   toastType = "error";
-        //   const maxDailyError = `Daily total hours exceed the maximum limit of ${maxDailyHours}.`;
-        //   if (isPOExceeded && hardEdit) {
-        //     toastMessage = `${maxDailyError} Also, PO hours exceeded.`;
-        //   } else {
-        //     toastMessage = `Disabled: ${maxDailyError}`;
-        //   }
-        // }
-        if (newDailyTotal > maxDailyHours) {
-          // Check if the current line's payType is already Overtime
-          const isOvertimePayType =
-            currentLine?.payType?.toLowerCase() === "so" ||
-            currentLine?.payType?.toLowerCase() === "overtime";
-
-          // If it's an overtime line, we allow it past the max daily block
-          if (!isOvertimePayType) {
+        // Check if the current line is an overtime pay type
+        const isCurrentLineOvertime =
+          currentLine?.payType?.toLowerCase() === "so" ||
+          currentLine?.payType?.toLowerCase() === "overtime" ||
+          currentLine?.payType?.toLowerCase() === "ot";
+ 
+        if (!isCurrentLineOvertime) {
+          // Sum hours only from OTHER non-overtime lines for this day
+          const otherNonOvertimeLinesTotal = lines
+            .filter((line) => {
+              if (line.id === id) return false;
+              const pt = line.payType?.toLowerCase();
+              return pt !== "so" && pt !== "overtime" && pt !== "ot";
+            })
+            .reduce(
+              (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
+              0,
+            );
+ 
+          const newRegularDailyTotal = otherNonOvertimeLinesTotal + numValue;
+ 
+          if (newRegularDailyTotal > maxDailyHours) {
             isMaxDailyExceeded = true;
             isValid = false;
             toastType = "error";
@@ -8888,9 +9036,9 @@ export default function TimesheetDetailModal({
         }
       }
     }
-
+ 
     const toastDuration = isValid && isPOExceeded && hardEdit ? 5000 : 3000;
-
+ 
     if (isValid) {
       setLines((currentLines) =>
         currentLines.map((line) =>
@@ -8916,7 +9064,7 @@ export default function TimesheetDetailModal({
       );
     }
   };
-
+  
   const getRemainingHoursForLine = (line) => {
     if (!line.poLineNumber) return null;
     const poLineNumStr = String(line.poLineNumber).trim();
