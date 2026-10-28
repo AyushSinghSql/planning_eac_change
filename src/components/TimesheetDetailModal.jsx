@@ -8789,10 +8789,15 @@ export default function TimesheetDetailModal({
       toastType = "error";
       toastMessage =
         "Hours cannot be negative unless correcting a rejected timesheet.";
-    } else if (numValue % 0.5 !== 0) {
+    }
+    // else if (numValue % 0.5 !== 0) {
+    //   isValid = false;
+    //   toastType = "error";
+    //   toastMessage = "Hours must be in 0.5 increments.";
+    // }
+    else if (!/^\d+(\.\d{1,2})?$/.test(String(numValue))) {
       isValid = false;
-      toastType = "error";
-      toastMessage = "Hours must be in 0.5 increments.";
+      toastMessage = "Hours can have a maximum of two decimal places.";
     } else {
       if (currentLine && currentLine.poLineNumber) {
         const poLineNumber = String(currentLine.poLineNumber).trim();

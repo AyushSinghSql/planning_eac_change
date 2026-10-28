@@ -3306,6 +3306,47 @@ export default function TimesheetLine({
     }
   }, [selectedPeriod, existingTimesheetDates, isEditMode, currentYear]);
 
+  //  useEffect(() => {
+  //   const validateExistingPeriod = async () => {
+  //     if (isEditMode) {
+  //       setIsPeriodInvalid(false);
+  //       setPeriodInvalidReason("");
+  //       return;
+  //     }
+ 
+  //     const weekEndDate = getWeekEndDateFromPeriod(selectedPeriod, currentYear);
+ 
+  //     if (weekEndDate) {
+  //       try {
+  //         const response = await fetch(
+  //           `${backendUrl}/api/SubkTimesheet/period?EmplId=${userId}`,
+  //         );
+  //         if (response.ok) {
+  //           const data = await response.json();
+  //           // Guyyaan filatame tiishheetii dur uumame waliin wal simuu isaa ilaaluu
+  //           const exists = data.some(
+  //             (item) => item.timesheet_Date === weekEndDate,
+  //           );
+ 
+  //           if (exists) {
+  //             setIsPeriodInvalid(true);
+  //             setPeriodInvalidReason(
+  //               "A timesheet for this period already exists.",
+  //             );
+  //           } else {
+  //             setIsPeriodInvalid(false);
+  //             setPeriodInvalidReason("");
+  //           }
+  //         }
+  //       } catch (err) {
+  //         console.error("Validation error:", err);
+  //       }
+  //     }
+  //   };
+ 
+  //   validateExistingPeriod();
+  // }, [selectedPeriod, currentUser, isEditMode, currentYear]);
+
   useEffect(() => {
     if (!isEditMode && selectedPeriod.dates) {
       setLines((prevLines) =>
@@ -3432,10 +3473,12 @@ export default function TimesheetLine({
     if (isNaN(numValue) || numValue < 0) {
       isValid = false;
       toastMessage = "Hours must be a positive number.";
-    } else if (numValue % 0.5 !== 0) {
-      isValid = false;
-      toastMessage = "Hours must be in 0.5 increments.";
-    } else {
+    } 
+    else if (!/^\d+(\.\d{1,2})?$/.test(String(numValue))) {
+  isValid = false;
+  toastMessage = "Hours can have a maximum of two decimal places.";
+}
+     else {
       if (currentLine && currentLine.poLineNumber) {
         const poLineNumber = currentLine.poLineNumber;
         const remainingHours = remainingPoHours[poLineNumber];
@@ -3488,8 +3531,8 @@ export default function TimesheetLine({
             currentLine?.payType?.toLowerCase() === "ot";
 
           const maxDailyError = isOvertimePayType
-            ? `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours.`
-            : `Daily total (${newColumnTotal.toFixed(1)} hrs) exceeds the maximum limit of ${maxDailyHours} hours. Please add a new line with the OT pay type for the excess hours.`;
+            ? ``
+            : `Daily total maximum limit of ${maxDailyHours} hours. Please add a new line with the OT pay type for the excess hours.`;
 
           // Only block entry (isValid = false) if it is NOT an overtime line
           if (!isOvertimePayType) {
@@ -3498,9 +3541,9 @@ export default function TimesheetLine({
               ? `${toastMessage} | ${maxDailyError}`
               : maxDailyError;
           } else {
-            toastMessage = exceedsPoRemaining
-              ? `${toastMessage} | ${maxDailyError}`
-              : maxDailyError;
+            // toastMessage = exceedsPoRemaining
+            //   ? `${toastMessage} | ${maxDailyError}`
+            //   : maxDailyError;
           }
 
           setMaxHoursExceededCells((prev) => new Set(prev).add(cellKey));
