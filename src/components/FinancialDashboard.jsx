@@ -21,7 +21,7 @@ import CostStructureDashboard from "./CostStructureDashboard";
 
 import CashFlowDashboard from "./CashFlowDashboard";
 import { backendUrl } from "./config";
-import BalanceSheetDashboard from "./BalancesheetDashboard";
+// import BalanceSheetDashboard from "./BalancesheetDashboard";
 
 const FinancialDashboard = () => {
   // Added 'is_report' to the state logic
@@ -235,11 +235,11 @@ const FinancialDashboard = () => {
             </div>
           )}
 
-          {activeTab === "balancesheet" && (
+          {/* {activeTab === "balancesheet" && (
             <div className="p-2 bg-white min-h-screen">
               <BalanceSheetDashboard />
             </div>
-          )}
+          )} */}
           {activeTab === "balancesheetStatement" && (
             <div className="p-2 bg-white min-h-screen">
               <BalanceSheet />
