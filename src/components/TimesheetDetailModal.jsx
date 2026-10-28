@@ -9064,7 +9064,7 @@ export default function TimesheetDetailModal({
       );
     }
   };
-  
+
   const getRemainingHoursForLine = (line) => {
     if (!line.poLineNumber) return null;
     const poLineNumStr = String(line.poLineNumber).trim();
@@ -9652,26 +9652,21 @@ export default function TimesheetDetailModal({
           )}
 
           {/* Timesheet Schedule Period Selector Dropdown */}
-          {schedulePeriods.length > 0 && (
+           {schedulePeriods.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs font-semibold text-gray-700">
                 Period:
               </span>
               <select
                 value={selectedPeriodId || ""}
+                // disabled
                 onChange={(e) => setSelectedPeriodId(Number(e.target.value))}
-                className="bg-white px-2 py-1 text-xs border border-gray-300 rounded shadow-inner text-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="bg-gray-100 cursor-not-allowed text-gray-500 px-2 py-1 text-xs border border-gray-300 rounded shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {schedulePeriods.map((p) => (
-                  // <option key={p.periodId} value={p.periodId}>
-                  //   Period {p.periodNumber}: {formatDate(p.periodStartDate)} -{" "}
-                  //   {formatDate(p.periodEndDate)}{" "}
-                  //   {p.isOpen ? "(Open)" : "(Closed)"}
-                  // </option>
                   <option key={p.periodId} value={p.periodId}>
                     {formatDate(p.periodStartDate)} -{" "}
                     {formatDate(p.periodEndDate)}{" "}
-                    {/* {p.isOpen ? "(Open)" : "(Closed)"} */}
                   </option>
                 ))}
               </select>
