@@ -8291,7 +8291,6 @@ export default function TimesheetDetailModal({
   const [isEditable, setIsEditable] = useState(false);
   const [initialLines, setInitialLines] = useState([]);
   const [linesToDelete, setLinesToDelete] = useState([]);
-  const [payTypes, setPayTypes] = useState([]);
   const [isCurrentlySaving, setIsCurrentlySaving] = useState(false);
   const [timesheetDetails, setTimesheetDetails] = useState(null);
 
@@ -8575,23 +8574,6 @@ export default function TimesheetDetailModal({
     fetchTimesheetDetails();
   }, [periodDates]);
 
-  useEffect(() => {
-    const fetchPayTypes = async () => {
-      try {
-        const response = await fetch(`${backendUrl}/api/PayType`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Failed to fetch Pay Types");
-        const data = await response.json();
-        setPayTypes(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error fetching Pay Types:", error);
-        setPayTypes([]);
-      }
-    };
-    fetchPayTypes();
-  }, []);
-
   const fetchTimesheetDetails = async () => {
     setIsLoading(true);
     try {
@@ -8678,7 +8660,7 @@ export default function TimesheetDetailModal({
           id: item.lineNo,
           description: item.description || "",
           project: item.projId || "",
-          projectName: item?.projectName || item?.projName || "",
+          projectName: item?.projectName || "",
           plc: item.plc || "",
           plcDesc: item?.plcDesc || "",
           payType: item.payType || "SR",
@@ -8851,34 +8833,15 @@ export default function TimesheetDetailModal({
 
         const newDailyTotal = otherLinesTotal + numValue;
 
-        // if (newDailyTotal > maxDailyHours) {
-        //   isMaxDailyExceeded = true;
-        //   isValid = false;
-        //   toastType = "error";
-        //   const maxDailyError = `Daily total hours exceed the maximum limit of ${maxDailyHours}.`;
-        //   if (isPOExceeded && hardEdit) {
-        //     toastMessage = `${maxDailyError} Also, PO hours exceeded.`;
-        //   } else {
-        //     toastMessage = `Disabled: ${maxDailyError}`;
-        //   }
-        // }
         if (newDailyTotal > maxDailyHours) {
-          // Check if the current line's payType is already Overtime
-          const isOvertimePayType =
-            currentLine?.payType?.toLowerCase() === "so" ||
-            currentLine?.payType?.toLowerCase() === "overtime";
-
-          // If it's an overtime line, we allow it past the max daily block
-          if (!isOvertimePayType) {
-            isMaxDailyExceeded = true;
-            isValid = false;
-            toastType = "error";
-            const maxDailyError = `Daily total hours exceed the maximum limit of ${maxDailyHours}. Please add a new line with the OT pay type for the excess hours.`;
-            if (isPOExceeded && hardEdit) {
-              toastMessage = `${maxDailyError} Also, PO hours exceeded.`;
-            } else {
-              toastMessage = `Disabled: ${maxDailyError}`;
-            }
+          isMaxDailyExceeded = true;
+          isValid = false;
+          toastType = "error";
+          const maxDailyError = `Daily total hours exceed the maximum limit of ${maxDailyHours}.`;
+          if (isPOExceeded && hardEdit) {
+            toastMessage = `${maxDailyError} Also, PO hours exceeded.`;
+          } else {
+            toastMessage = `Disabled: ${maxDailyError}`;
           }
         }
       }
@@ -9111,40 +9074,13 @@ export default function TimesheetDetailModal({
   }, [lines, initialLines, linesToDelete]);
 
   const handleSaveWithReasonPrompt = () => {
-    // const invalidDay = Object.values(dailyTotals).find(
-    //   (val) => val > maxDailyHours,
-    // );
-
-    // if (invalidDay) {
-    //   showToast(
-    //     `Save failed: Total hours for one or more days exceed ${maxDailyHours}.`,
-    //     "error",
-    //   );
-    //   return;
-    // }
-    const hasInvalidNonOTDay = Object.entries(dailyTotals).some(
-      ([dayIndex, total]) => {
-        if (total <= maxDailyHours) return false;
-
-        // Calculate how much of this day's total comes from NON-overtime lines
-        const nonOTTotalForDay = lines
-          .filter((line) => {
-            const pt = line.payType?.toLowerCase();
-            return pt !== "so" && pt !== "overtime";
-          })
-          .reduce(
-            (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
-            0,
-          );
-
-        // If non-OT hours alone exceed maxDailyHours, then it's an invalid block
-        return nonOTTotalForDay > maxDailyHours;
-      },
+    const invalidDay = Object.values(dailyTotals).find(
+      (val) => val > maxDailyHours,
     );
 
-    if (hasInvalidNonOTDay) {
+    if (invalidDay) {
       showToast(
-        `Save failed: Total non-overtime hours for one or more days exceed ${maxDailyHours}. Please use the OT pay type for excess hours.`,
+        `Save failed: Total hours for one or more days exceed ${maxDailyHours}.`,
         "error",
       );
       return;
@@ -9180,39 +9116,13 @@ export default function TimesheetDetailModal({
     setShowReasonPrompt(false);
     setUpdateReason("");
 
-    // const invalidDay = Object.values(dailyTotals).find(
-    //   (val) => val > maxDailyHours,
-    // );
-
-    // if (invalidDay) {
-    //   showToast(
-    //     `Save failed: Total hours for one or more days exceed ${maxDailyHours}.`,
-    //     "error",
-    //   );
-    //   setIsCurrentlySaving(false);
-    //   return;
-    // }
-    const hasInvalidNonOTDay = Object.entries(dailyTotals).some(
-      ([dayIndex, total]) => {
-        if (total <= maxDailyHours) return false;
-
-        const nonOTTotalForDay = lines
-          .filter((line) => {
-            const pt = line.payType?.toLowerCase();
-            return pt !== "so" && pt !== "overtime";
-          })
-          .reduce(
-            (sum, line) => sum + (parseFloat(line.hours[dayIndex]) || 0),
-            0,
-          );
-
-        return nonOTTotalForDay > maxDailyHours;
-      },
+    const invalidDay = Object.values(dailyTotals).find(
+      (val) => val > maxDailyHours,
     );
 
-    if (hasInvalidNonOTDay) {
+    if (invalidDay) {
       showToast(
-        `Save failed: Total non-overtime hours for one or more days exceed ${maxDailyHours}. Please use the OT pay type for excess hours.`,
+        `Save failed: Total hours for one or more days exceed ${maxDailyHours}.`,
         "error",
       );
       setIsCurrentlySaving(false);
@@ -9708,8 +9618,7 @@ export default function TimesheetDetailModal({
                                         ...l,
                                         project: selectedProjId,
                                         projectName: matchedEntry
-                                          ? matchedEntry.projectName ||
-                                            matchedEntry?.projName
+                                          ? matchedEntry.projectName
                                           : "",
                                         plc: matchedEntry
                                           ? matchedEntry.billLabCatCd
@@ -9752,7 +9661,7 @@ export default function TimesheetDetailModal({
                       <td className="p-1 border-r border-b border-gray-300 min-w-[120px]">
                         <input
                           type="text"
-                          value={line.projectName || line.projName}
+                          value={line.projectName}
                           className="w-full bg-gray-50 px-2 py-1 border border-gray-300 rounded text-xs text-black shadow-inner"
                           readOnly
                         />
@@ -9874,16 +9783,7 @@ export default function TimesheetDetailModal({
                     const dayIndexUtc = dateInfo.obj.getUTCDay();
                     const dayName = days[dayIndexUtc];
                     const isWeekend = configWeekends.includes(dayName);
-
-                    // Find the corresponding pay type object for this line from your payTypes state/prop list
-                    const currentPayTypeConfig = payTypes.find(
-                      (pt) =>
-                        pt.name === line.payType || pt.id === line.payType,
-                    );
-
-                    // Check future date restriction using the pay type's configuration if available,
-                    // defaulting to standard future date check if not found.
-                    const isSystemFutureDate =
+                    const isFutureDate =
                       dateInfo.obj.getUTCFullYear() > today.getUTCFullYear() ||
                       (dateInfo.obj.getUTCFullYear() ===
                         today.getUTCFullYear() &&
@@ -9893,25 +9793,9 @@ export default function TimesheetDetailModal({
                         dateInfo.obj.getUTCMonth() === today.getUTCMonth() &&
                         dateInfo.obj.getUTCDate() > today.getUTCDate());
 
-                    // If current payType config defines 'isFuture', respect it (e.g. if isFuture is false, disable future dates)
-                    const allowsFuture = currentPayTypeConfig
-                      ? currentPayTypeConfig.isFuture
-                      : true;
-                    const isFutureDate = isSystemFutureDate && !allowsFuture;
-
                     const finalDisabled = isDisabled || isFutureDate;
                     const dayTotal = dailyTotals[dayIndex] || 0;
-
-                    // Check if this specific line is overtime using the pay type config flag `isOvertime`
-                    const isLineOvertime = currentPayTypeConfig
-                      ? currentPayTypeConfig.isOvertime
-                      : line.payType?.toLowerCase() === "ot" ||
-                        line.payType?.toLowerCase() === "overtime" ||
-                        line.payType === "SO";
-
-                    // Only flag exceededMax with red styling if the day total exceeds max AND it's not purely covered by overtime pay types
-                    const exceededMax =
-                      dayTotal > maxDailyHours && !isLineOvertime;
+                    const exceededMax = dayTotal > maxDailyHours;
 
                     let inputClasses = `w-[72px] text-right pl-1.5 pr-6 py-1 text-xs border border-gray-300 rounded shadow-inner text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none `;
                     let inputStyle = {};
@@ -10045,10 +9929,9 @@ export default function TimesheetDetailModal({
                 >
                   <div
                     className={`w-16 mx-auto ${
-                      // dailyTotals[idx] > maxDailyHours
-                      //   ? "text-red-700 font-bold"
-                      // :
-                      "text-black font-semibold"
+                      dailyTotals[idx] > maxDailyHours
+                        ? "text-red-700 font-bold"
+                        : "text-black font-semibold"
                     }`}
                   >
                     {dailyTotals[idx] ? dailyTotals[idx].toFixed(2) : "0.00"}

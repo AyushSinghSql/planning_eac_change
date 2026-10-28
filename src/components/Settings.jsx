@@ -2186,21 +2186,21 @@ const Settings = () => {
   };
 
   const addPayTypeRow = () => {
-    const newRow = {
-      id: null,
-      name: "",
-      description: "",
-      rate: "",
-      isOvertime: false,
-      isHourly: false,
-      isSalary: false,
-      isFuture: false,
-      isNew: true,
-    };
-
-    setPayTypes((prev) => [...prev, newRow]);
-    setPayTypeEditIdx(payTypes.length);
+  const newRow = {
+    id: null,
+    name: "",
+    description: "",
+    rate: "",
+    isOvertime: false,
+    isHourly: false,
+    isSalary: false,
+    isFuture: false,
+    isNew: true,
   };
+
+  setPayTypes((prev) => [...prev, newRow]);
+  setPayTypeEditIdx(payTypes.length);
+};
 
   const handlePayTypeInputChange = (index, field, value) => {
     setPayTypes((prev) =>
@@ -2253,15 +2253,15 @@ const Settings = () => {
     }
 
     const payload = {
-      name: row.name.trim(),
-      description: row.description?.trim() || "",
-      rate,
+  name: row.name.trim(),
+  description: row.description?.trim() || "",
+  rate,
 
-      isOvertime: Boolean(row.isOvertime),
-      isHourly: Boolean(row.isHourly),
-      isSalary: Boolean(row.isSalary),
-      isFuture: Boolean(row.isFuture),
-    };
+  isOvertime: Boolean(row.isOvertime),
+  isHourly: Boolean(row.isHourly),
+  isSalary: Boolean(row.isSalary),
+  isFuture: Boolean(row.isFuture),
+};
 
     try {
       const response = await fetch(`${backendUrl}/api/PayType`, {
@@ -2744,41 +2744,41 @@ const Settings = () => {
                       </div>
 
                       <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead>
-                          <tr className="bg-gray-100">
-                            <th className="border border-gray-300 p-2 text-left">
-                              Code
-                            </th>
+                       <thead>
+  <tr className="bg-gray-100">
+    <th className="border border-gray-300 p-2 text-left">
+      Code
+    </th>
 
-                            <th className="border border-gray-300 p-2 text-left">
-                              Description
-                            </th>
+    <th className="border border-gray-300 p-2 text-left">
+      Description
+    </th>
 
-                            <th className="border border-gray-300 p-2 text-right">
-                              Rate
-                            </th>
+    <th className="border border-gray-300 p-2 text-right">
+      Rate
+    </th>
 
-                            <th className="border border-gray-300 p-2 text-center">
-                              OVERTIME
-                            </th>
+    <th className="border border-gray-300 p-2 text-center">
+      OVERTIME
+    </th>
 
-                            {/* <th className="border border-gray-300 p-2 text-center">
+    <th className="border border-gray-300 p-2 text-center">
       HOURLY
     </th>
 
     <th className="border border-gray-300 p-2 text-center">
       SALARY
-    </th> */}
+    </th>
 
-                            <th className="border border-gray-300 p-2 text-center">
-                              FUTURE
-                            </th>
+    <th className="border border-gray-300 p-2 text-center">
+      FUTURE
+    </th>
 
-                            <th className="border border-gray-300 p-2 text-center">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
+    <th className="border border-gray-300 p-2 text-center">
+      Actions
+    </th>
+  </tr>
+</thead>
 
                         <tbody>
                           {payTypes.map((row, index) => {
@@ -2859,24 +2859,24 @@ const Settings = () => {
                                 </td>
 
                                 {/* OVERTIME */}
-                                <td className="border border-gray-300 p-2 text-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(row.isOvertime)}
-                                    disabled={!isEditing}
-                                    onChange={(e) =>
-                                      handlePayTypeInputChange(
-                                        index,
-                                        "isOvertime",
-                                        e.target.checked,
-                                      )
-                                    }
-                                    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
-                                  />
-                                </td>
+<td className="border border-gray-300 p-2 text-center">
+  <input
+    type="checkbox"
+    checked={Boolean(row.isOvertime)}
+    disabled={!isEditing}
+    onChange={(e) =>
+      handlePayTypeInputChange(
+        index,
+        "isOvertime",
+        e.target.checked
+      )
+    }
+    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+  />
+</td>
 
-                                {/* HOURLY */}
-                                {/* <td className="border border-gray-300 p-2 text-center">
+{/* HOURLY */}
+<td className="border border-gray-300 p-2 text-center">
   <input
     type="checkbox"
     checked={Boolean(row.isHourly)}
@@ -2890,10 +2890,10 @@ const Settings = () => {
     }
     className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
   />
-</td> */}
+</td>
 
-                                {/* SALARY */}
-                                {/* <td className="border border-gray-300 p-2 text-center">
+{/* SALARY */}
+<td className="border border-gray-300 p-2 text-center">
   <input
     type="checkbox"
     checked={Boolean(row.isSalary)}
@@ -2907,25 +2907,25 @@ const Settings = () => {
     }
     className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
   />
-</td> */}
+</td>
 
-                                {/* FUTURE */}
-                                <td className="border border-gray-300 p-2 text-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(row.isFuture)}
-                                    disabled={!isEditing}
-                                    onChange={(e) =>
-                                      handlePayTypeInputChange(
-                                        index,
-                                        "isFuture",
-                                        e.target.checked,
-                                      )
-                                    }
-                                    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
-                                  />
-                                </td>
-                                <td className="border border-gray-300 p-2">
+{/* FUTURE */}
+<td className="border border-gray-300 p-2 text-center">
+  <input
+    type="checkbox"
+    checked={Boolean(row.isFuture)}
+    disabled={!isEditing}
+    onChange={(e) =>
+      handlePayTypeInputChange(
+        index,
+        "isFuture",
+        e.target.checked
+      )
+    }
+    className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+  />
+</td>
+  <td className="border border-gray-300 p-2">
                                   <div className="flex justify-center gap-2">
                                     {isEditing ? (
                                       <>
