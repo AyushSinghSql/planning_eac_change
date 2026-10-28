@@ -2202,9 +2202,30 @@ const Settings = () => {
     setPayTypeEditIdx(payTypes.length);
   };
 
+  // const handlePayTypeInputChange = (index, field, value) => {
+  //   setPayTypes((prev) =>
+  //     prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+  //   );
+  // };
+
   const handlePayTypeInputChange = (index, field, value) => {
     setPayTypes((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+      prev.map((row, i) => {
+        if (i !== index) return row;
+
+        let updatedRow = { ...row, [field]: value };
+
+        // If FUTURE is checked, automatically uncheck OVERTIME
+        if (field === "isFuture" && value === true) {
+          updatedRow.isOvertime = false;
+        }
+        // If OVERTIME is checked, automatically uncheck FUTURE
+        else if (field === "isOvertime" && value === true) {
+          updatedRow.isFuture = false;
+        }
+
+        return updatedRow;
+      }),
     );
   };
 
@@ -2798,7 +2819,12 @@ const Settings = () => {
                                           e.target.value,
                                         )
                                       }
-                                      className="w-full border px-1.5 py-1 rounded bg-white text-sm"
+                                      disabled={!row.isNew}
+                                      className={`w-full border px-1.5 py-1 rounded text-sm ${
+                                        !row.isNew
+                                          ? "bg-gray-100 cursor-not-allowed text-gray-500"
+                                          : "bg-white"
+                                      }`}
                                       placeholder="Enter pay type name"
                                     />
                                   ) : (
