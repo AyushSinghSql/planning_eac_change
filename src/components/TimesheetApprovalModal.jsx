@@ -767,7 +767,7 @@ export default function TimesheetApprovalView({
   const [timesheetPeriod, setTimesheetPeriod] = useState("Bi-weekly");
 
   const hideableColumns =
-    resourceType === "USER"
+    resourceType !== "fbsdusbcsdnjsbhasbx"
       ? [
           "Line No",
           "Project",
@@ -778,8 +778,8 @@ export default function TimesheetApprovalView({
         ]
       : [
           "Line No",
-          // "Work Order",
-          // "Description",
+          "Work Order",
+          "Description",
           "Project",
           "Project Name",
           "PLC",
@@ -1115,7 +1115,7 @@ export default function TimesheetApprovalView({
   }
 
   const baseHeaders =
-    resourceType === "USER"
+    resourceType !== "fbsdusbcsdnjsbhasbx"
       ? [
           "Line No",
           "Project",
@@ -1312,7 +1312,7 @@ export default function TimesheetApprovalView({
                       )}
 
                       {/* Work Order column (Only for non-users) */}
-                      {resourceType !== "USER" &&
+                      {resourceType === "fbsdusbcsdnjsbhasbx" &&
                         !isColumnHidden("Work Order") && (
                           <td className="px-2 py-1 border-r border-b border-gray-300 text-center text-black">
                             {line.workOrder || "-"}
@@ -1320,7 +1320,7 @@ export default function TimesheetApprovalView({
                         )}
 
                       {/* Description column (Only for non-users) */}
-                      {resourceType !== "USER" &&
+                      {resourceType === "fbsdusbcsdnjsbhasbx" &&
                         !isColumnHidden("Description") && (
                           <td className="px-2 py-1 border-r border-b border-gray-300 text-black">
                             <div
@@ -1366,14 +1366,15 @@ export default function TimesheetApprovalView({
                       )}
 
                       {/* PO Number column (Only for non-users) */}
-                      {resourceType !== "USER" && !isColumnHidden("Po Id") && (
-                        <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
-                          {line.poNumber || "-"}
-                        </td>
-                      )}
+                      {resourceType === "fbsdusbcsdnjsbhasbx" &&
+                        !isColumnHidden("Po Id") && (
+                          <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
+                            {line.poNumber || "-"}
+                          </td>
+                        )}
 
                       {/* RLSE Number column (Only for non-users) */}
-                      {resourceType !== "USER" &&
+                      {resourceType === "fbsdusbcsdnjsbhasbx" &&
                         !isColumnHidden("Release") && (
                           <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
                             {line.rlseNumber || "-"}
@@ -1381,7 +1382,7 @@ export default function TimesheetApprovalView({
                         )}
 
                       {/* PO Line Number column (Only for non-users) */}
-                      {resourceType !== "USER" &&
+                      {resourceType === "fbsdusbcsdnjsbhasbx" &&
                         !isColumnHidden("PO LN No") && (
                           <td className="px-2 py-1 text-center border-r border-b border-gray-300 text-black">
                             {line.poLineNumber || "-"}
