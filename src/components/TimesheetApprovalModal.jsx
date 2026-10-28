@@ -778,8 +778,8 @@ export default function TimesheetApprovalView({
         ]
       : [
           "Line No",
-          "Work Order",
-          "Description",
+          // "Work Order",
+          // "Description",
           "Project",
           "Project Name",
           "PLC",
