@@ -192,7 +192,6 @@
 //   );
 // };
 
-
 // const handleSaveSalary = async () => {
 //   try {
 //     const fieldsToCompare = [
@@ -1865,6 +1864,7 @@ export default function EmployeeMaster() {
   const [salaryInfo, setSalaryInfo] = useState([]);
   const [originalSalaryInfo, setOriginalSalaryInfo] = useState([]);
   const [savingSalary, setSavingSalary] = useState(false);
+  const [selectedRowIndices, setSelectedRowIndices] = useState([]);
 
   const getCurrentUserContext = () => {
     try {
@@ -1944,7 +1944,11 @@ export default function EmployeeMaster() {
           firstName: item.firstName || item.firstname || "",
           // Store the schedule ID; the UI shows its name via the lookup
           tsSchedule: String(
-            item.tsSchedule ?? item.TsSchedule ?? item.tsSchdule ?? item.TsSchdule ?? "",
+            item.tsSchedule ??
+              item.TsSchedule ??
+              item.tsSchdule ??
+              item.TsSchdule ??
+              "",
           ),
           status: parseEmployeeStatus(item),
           createDate:
@@ -1962,7 +1966,9 @@ export default function EmployeeMaster() {
         };
       });
 
-      setTimesheetSchedule(Array.isArray(scheduleRes.data) ? scheduleRes.data : []);
+      setTimesheetSchedule(
+        Array.isArray(scheduleRes.data) ? scheduleRes.data : [],
+      );
       setEmployees(loaded);
       setSavedEmployees(loaded.map((e) => ({ ...e })));
       setSelectedIds([]);
@@ -2000,26 +2006,45 @@ export default function EmployeeMaster() {
       if (a._new && !b._new) return -1;
       if (!a._new && b._new) return 1;
 
-      const aId = String(a.employeeId || "").trim().toLowerCase();
-      const bId = String(b.employeeId || "").trim().toLowerCase();
+      const aId = String(a.employeeId || "")
+        .trim()
+        .toLowerCase();
+      const bId = String(b.employeeId || "")
+        .trim()
+        .toLowerCase();
       const aRecentIdx = aId ? recentSavedIds.indexOf(aId) : -1;
       const bRecentIdx = bId ? recentSavedIds.indexOf(bId) : -1;
 
-      if (aRecentIdx !== -1 && bRecentIdx !== -1) return aRecentIdx - bRecentIdx;
+      if (aRecentIdx !== -1 && bRecentIdx !== -1)
+        return aRecentIdx - bRecentIdx;
       if (aRecentIdx !== -1) return -1;
       if (bRecentIdx !== -1) return 1;
 
       const result = getCellValue(a, sortConfig.key)
         .toLowerCase()
-        .localeCompare(getCellValue(b, sortConfig.key).toLowerCase(), undefined, {
-          numeric: true,
-        });
+        .localeCompare(
+          getCellValue(b, sortConfig.key).toLowerCase(),
+          undefined,
+          {
+            numeric: true,
+          },
+        );
       return sortConfig.direction === "asc" ? result : -result;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employees, searchQuery, selectedStatus, sortConfig, recentSavedIds, scheduleById]);
+  }, [
+    employees,
+    searchQuery,
+    selectedStatus,
+    sortConfig,
+    recentSavedIds,
+    scheduleById,
+  ]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredEmployees.length / pageSize),
+  );
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
 
   const pageOptions = useMemo(
@@ -2112,7 +2137,10 @@ export default function EmployeeMaster() {
           (id) => !deletedIds.includes(String(id).toLowerCase()),
         );
         try {
-          localStorage.setItem("employee_master_recent_ids", JSON.stringify(next));
+          localStorage.setItem(
+            "employee_master_recent_ids",
+            JSON.stringify(next),
+          );
         } catch {}
         return next;
       });
@@ -2141,7 +2169,9 @@ export default function EmployeeMaster() {
     try {
       const employeesToSave =
         selectedIds.length > 0
-          ? employees.filter((employee) => selectedIds.includes(employee._rowId))
+          ? employees.filter((employee) =>
+              selectedIds.includes(employee._rowId),
+            )
           : employees.filter((employee) => {
               if (employee._new) return true;
               const orig = savedEmployees.find(
@@ -2170,7 +2200,11 @@ export default function EmployeeMaster() {
       }
 
       const ids = employees
-        .map((employee) => String(employee.employeeId || "").trim().toLowerCase())
+        .map((employee) =>
+          String(employee.employeeId || "")
+            .trim()
+            .toLowerCase(),
+        )
         .filter(Boolean);
 
       if (new Set(ids).size !== ids.length) {
@@ -2184,11 +2218,14 @@ export default function EmployeeMaster() {
         const isNew =
           emp._new ||
           !savedEmployees.some(
-            (s) => s.employeeId.toLowerCase() === emp.employeeId.trim().toLowerCase(),
+            (s) =>
+              s.employeeId.toLowerCase() ===
+              emp.employeeId.trim().toLowerCase(),
           );
 
         const existingSaved = savedEmployees.find(
-          (s) => s.employeeId.toLowerCase() === emp.employeeId.trim().toLowerCase(),
+          (s) =>
+            s.employeeId.toLowerCase() === emp.employeeId.trim().toLowerCase(),
         );
 
         const payload = {
@@ -2271,7 +2308,9 @@ export default function EmployeeMaster() {
     }
 
     setCopiedEmployees(
-      selectedEmployees.map(({ _rowId, _new, ...employee }) => ({ ...employee })),
+      selectedEmployees.map(({ _rowId, _new, ...employee }) => ({
+        ...employee,
+      })),
     );
   };
 
@@ -2283,7 +2322,11 @@ export default function EmployeeMaster() {
 
     const existingEmployeeIds = new Set(
       employees
-        .map((employee) => String(employee.employeeId || "").trim().toLowerCase())
+        .map((employee) =>
+          String(employee.employeeId || "")
+            .trim()
+            .toLowerCase(),
+        )
         .filter(Boolean),
     );
 
@@ -2292,7 +2335,10 @@ export default function EmployeeMaster() {
       let newEmployeeId = baseId;
       let suffix = 1;
 
-      while (newEmployeeId && existingEmployeeIds.has(newEmployeeId.toLowerCase())) {
+      while (
+        newEmployeeId &&
+        existingEmployeeIds.has(newEmployeeId.toLowerCase())
+      ) {
         newEmployeeId = `${baseId}-COPY${suffix++}`;
       }
       if (newEmployeeId) existingEmployeeIds.add(newEmployeeId.toLowerCase());
@@ -2322,9 +2368,12 @@ export default function EmployeeMaster() {
         .map((column) => escapeCSV(getCellValue(employee, column.key)))
         .join(","),
     );
-    const blob = new Blob(["\uFEFF" + [headers.join(","), ...rows].join("\r\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob(
+      ["\uFEFF" + [headers.join(","), ...rows].join("\r\n")],
+      {
+        type: "text/csv;charset=utf-8;",
+      },
+    );
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -2373,25 +2422,56 @@ export default function EmployeeMaster() {
       };
 
       const normalize = (value) =>
-        value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+        value
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
       const headers = parseCSVLine(lines[0]).map(normalize);
       const existingIds = new Set(
         employees
-          .map((employee) => String(employee.employeeId || "").trim().toLowerCase())
+          .map((employee) =>
+            String(employee.employeeId || "")
+              .trim()
+              .toLowerCase(),
+          )
           .filter(Boolean),
       );
       const imported = [];
 
       const COLUMN_ALIASES = {
         employeeId: ["employeeid", "emplid", "empid", "id"],
-        displayedName: ["displayedname", "displayname", "name", "fullname", "employeename"],
+        displayedName: [
+          "displayedname",
+          "displayname",
+          "name",
+          "fullname",
+          "employeename",
+        ],
         firstName: ["firstname", "fname", "first"],
         lastName: ["lastname", "lname", "last"],
-        tsSchedule: ["timesheetschedule", "tsschedule", "schedule", "timesheettype"],
+        tsSchedule: [
+          "timesheetschedule",
+          "tsschedule",
+          "schedule",
+          "timesheettype",
+        ],
         status: ["status", "employeestatus", "emplstatus", "isactive", "state"],
-        createDate: ["createdate", "createddate", "creationdate", "datecreated", "createdon", "createdat"],
+        createDate: [
+          "createdate",
+          "createddate",
+          "creationdate",
+          "datecreated",
+          "createdon",
+          "createdat",
+        ],
         createdBy: ["createdby", "creator", "createduser"],
-        modifiedDate: ["modifieddate", "modifydate", "updateddate", "updatedat", "modifiedon"],
+        modifiedDate: [
+          "modifieddate",
+          "modifydate",
+          "updateddate",
+          "updatedat",
+          "modifiedon",
+        ],
         modifiedBy: ["modifiedby", "modifier", "updatedby"],
         modifiedName: ["modifiedname", "supervisorname", "supervisor"],
       };
@@ -2421,7 +2501,10 @@ export default function EmployeeMaster() {
         });
 
         const employeeId = String(employee.employeeId || "").trim();
-        if (!columns.some((column) => String(employee[column.key] || "").trim())) return;
+        if (
+          !columns.some((column) => String(employee[column.key] || "").trim())
+        )
+          return;
         if (employeeId && existingIds.has(employeeId.toLowerCase())) return;
         if (employeeId) existingIds.add(employeeId.toLowerCase());
         imported.push({
@@ -2516,39 +2599,137 @@ export default function EmployeeMaster() {
 
   const updateSalaryField = (index, key, value) => {
     setSalaryInfo((previous) =>
-      previous.map((item, idx) => (idx === index ? { ...item, [key]: value } : item)),
+      previous.map((item, idx) =>
+        idx === index ? { ...item, [key]: value } : item,
+      ),
     );
   };
 
+  // const handleSaveSalary = async () => {
+  //   try {
+  //     // effectDt is part of the record key (emplId + effectDt) so it is not compared/edited
+  //     const fieldsToCompare = [
+  //       "titleDesc",
+  //       "sHrlySalCd",
+  //       "hrlyAmt",
+  //       "salAmt",
+  //       "annlAmt",
+  //       "perDiem",
+  //       "sEmplTypeCd",
+  //       "orgId",
+  //       "workStateCd",
+  //       "reasonDesc",
+  //       "stdEstHrs",
+  //       "pctIncrRt",
+  //       "labLocCd",
+  //       "salGradeCd",
+  //       "mgrEmplId1",
+  //       "endDt",
+  //       "emplClassCd",
+  //       "reasonDesc2",
+  //       "reasonDesc3",
+  //     ];
+
+  //     const normalize = (value) => (value == null ? "" : String(value).trim());
+
+  //     const updatedRows = salaryInfo.filter((row, index) => {
+  //       const original = originalSalaryInfo[index];
+  //       if (!original) return false;
+  //       return fieldsToCompare.some(
+  //         (field) => normalize(row[field]) !== normalize(original[field]),
+  //       );
+  //     });
+
+  //     if (updatedRows.length === 0) {
+  //       toast.info("No changes to save.");
+  //       return;
+  //     }
+
+  //     setSavingSalary(true);
+
+  //     const toNumber = (v) => (v === "" || v == null ? null : Number(v));
+
+  //     const payload = updatedRows.map((row) => ({
+  //       ...row,
+  //       hrlyAmt: toNumber(row.hrlyAmt),
+  //       salAmt: toNumber(row.salAmt),
+  //       annlAmt: toNumber(row.annlAmt),
+  //       stdEstHrs: toNumber(row.stdEstHrs),
+  //       pctIncrRt: toNumber(row.pctIncrRt),
+  //       effectDt: row.effectDt || null,
+  //       endDt: row.endDt || null, // "" would fail DateTime? binding
+  //     }));
+
+  //     await axios.put(
+  //       `${backendUrl}/api/EmployeeMaster/SalaryDetail/update`,
+  //       payload,
+  //     );
+
+  //     setOriginalSalaryInfo(JSON.parse(JSON.stringify(salaryInfo)));
+  //     toast.success(`${updatedRows.length} updated row(s) saved successfully.`);
+  //   } catch (error) {
+  //     toast.error(
+  //       error.response?.data?.message || "Failed to save salary information.",
+  //     );
+  //   } finally {
+  //     setSavingSalary(false);
+  //   }
+  // };
+
   const handleSaveSalary = async () => {
     try {
-      // effectDt is part of the record key (emplId + effectDt) so it is not compared/edited
       const fieldsToCompare = [
-        "titleDesc", "sHrlySalCd", "hrlyAmt", "salAmt", "annlAmt", "sEmplTypeCd",
-        "orgId", "workStateCd", "reasonDesc", "stdEstHrs", "pctIncrRt", "labLocCd",
-        "salGradeCd", "mgrEmplId1", "endDt", "emplClassCd", "reasonDesc2", "reasonDesc3",
+        "titleDesc",
+        "sHrlySalCd",
+        "hrlyAmt",
+        "salAmt",
+        "annlAmt",
+        "sEmplTypeCd",
+        "orgId",
+        "workStateCd",
+        "reasonDesc",
+        "stdEstHrs",
+        "pctIncrRt",
+        "labLocCd",
+        "salGradeCd",
+        "mgrEmplId1",
+        "endDt",
+        "emplClassCd",
+        "reasonDesc2",
+        "reasonDesc3",
       ];
 
       const normalize = (value) => (value == null ? "" : String(value).trim());
+      const toNumber = (v) => (v === "" || v == null ? null : Number(v));
 
-      const updatedRows = salaryInfo.filter((row, index) => {
-        const original = originalSalaryInfo[index];
+      // 1. Separate newly added rows from existing ones
+      const newRows = salaryInfo.filter((row) => row.isNew);
+
+      // Existing rows are those without isNew (or matched by index/emplId)
+      const existingRows = salaryInfo.filter((row) => !row.isNew);
+      const originalExistingRows = originalSalaryInfo.filter(
+        (row) => !row.isNew,
+      );
+
+      // 2. Filter existing rows that actually changed (Your existing logic)
+      const updatedRows = existingRows.filter((row, index) => {
+        const original = originalExistingRows[index];
         if (!original) return false;
         return fieldsToCompare.some(
           (field) => normalize(row[field]) !== normalize(original[field]),
         );
       });
 
-      if (updatedRows.length === 0) {
-        toast.info("No changes to save.");
+      // Check if there's anything to save at all
+      if (updatedRows.length === 0 && newRows.length === 0) {
+        toast.info("No changes or new records to save.");
         return;
       }
 
       setSavingSalary(true);
 
-      const toNumber = (v) => (v === "" || v == null ? null : Number(v));
-
-      const payload = updatedRows.map((row) => ({
+      // 3. Format the update payload (UNCHANGED format as requested)
+      const updatePayload = updatedRows.map((row) => ({
         ...row,
         hrlyAmt: toNumber(row.hrlyAmt),
         salAmt: toNumber(row.salAmt),
@@ -2556,13 +2737,54 @@ export default function EmployeeMaster() {
         stdEstHrs: toNumber(row.stdEstHrs),
         pctIncrRt: toNumber(row.pctIncrRt),
         effectDt: row.effectDt || null,
-        endDt: row.endDt || null, // "" would fail DateTime? binding
+        endDt: row.endDt || null,
       }));
 
-      await axios.put(`${backendUrl}/api/EmployeeMaster/SalaryDetail/update`, payload);
+      // 4. Format the new records payload
+      const createPayload = newRows.map((row) => ({
+        ...row,
+        emplId: salaryInfoEmployee?.employeeId, // ensure employee ID is attached to new rows
+        hrlyAmt: toNumber(row.hrlyAmt),
+        salAmt: toNumber(row.salAmt),
+        annlAmt: toNumber(row.annlAmt),
+        stdEstHrs: toNumber(row.stdEstHrs),
+        pctIncrRt: toNumber(row.pctIncrRt),
+        effectDt: row.effectDt || null,
+        endDt: row.endDt || null,
+      }));
 
+      // 5. Fire API requests concurrently (or sequentially based on your backend design)
+      const apiCalls = [];
+
+      if (updatedRows.length > 0) {
+        apiCalls.push(
+          axios.put(
+            `${backendUrl}/api/EmployeeMaster/SalaryDetail/update`,
+            updatePayload,
+          ),
+        );
+      }
+
+      if (newRows.length > 0) {
+        // Change this endpoint to match your backend route for creating/inserting salary details
+        apiCalls.push(
+          axios.post(
+            `${backendUrl}/api/EmployeeMaster/SalaryDetail/create`,
+            createPayload,
+          ),
+        );
+      }
+
+      await Promise.all(apiCalls);
+
+      // Reset backup state and clear 'isNew' flags
       setOriginalSalaryInfo(JSON.parse(JSON.stringify(salaryInfo)));
-      toast.success(`${updatedRows.length} updated row(s) saved successfully.`);
+      toast.success(
+        `Successfully saved: ${updatedRows.length} updated, ${newRows.length} new record(s).`,
+      );
+
+      // Optional: Close modal on complete success
+      setSalaryInfoModalOpen(false);
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to save salary information.",
@@ -2572,10 +2794,75 @@ export default function EmployeeMaster() {
     }
   };
 
+  const handleDeleteSalary = async () => {
+    if (selectedRowIndices.length === 0) {
+      toast.info("Please select at least one record to delete.");
+      return;
+    }
+
+    try {
+      setSavingSalary(true);
+
+      // Separate records that already exist in database vs newly added unsaved rows
+      const rowsToDelete = selectedRowIndices.map((idx) => salaryInfo[idx]);
+
+      // Rows that have an ID or are saved in originalSalaryInfo can be sent to backend
+      const existingRowsToDelete = rowsToDelete.filter((row) => !row.isNew);
+
+      if (existingRowsToDelete.length > 0) {
+        // Adjust payload and endpoint structure to match your backend expectations (e.g. DELETE with body or query params)
+        await axios.delete(
+          `${backendUrl}/api/EmployeeMaster/SalaryDetail/delete`,
+          {
+            data: existingRowsToDelete.map((row) => ({
+              emplId: salaryInfoEmployee?.employeeId,
+              effectDt: row.effectDt,
+            })),
+          },
+        );
+      }
+
+      // Remove deleted items from local state table view
+      const updatedSalaryInfo = salaryInfo.filter(
+        (_, idx) => !selectedRowIndices.includes(idx),
+      );
+
+      setSalaryInfo(updatedSalaryInfo);
+      setOriginalSalaryInfo(JSON.parse(JSON.stringify(updatedSalaryInfo)));
+      setSelectedRowIndices([]);
+
+      toast.success("Selected salary record(s) deleted successfully.");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to delete salary information.",
+      );
+    } finally {
+      setSavingSalary(false);
+    }
+  };
+
+  const openSalaryModal = async (employee) => {
+    setSalaryInfoEmployee(employee);
+    setSalaryInfoModalOpen(true);
+    setSalaryInfoLoading(true);
+
+    try {
+      const data = await fetchSalaryData(employee.employeeId);
+      setSalaryInfo(data);
+      setOriginalSalaryInfo(JSON.parse(JSON.stringify(data))); // Deep copy backup
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSalaryInfoLoading(false);
+    }
+  };
+
   /* ---------- selection ---------- */
   const toggleSelected = (id, checked) =>
     setSelectedIds((previous) =>
-      checked ? [...new Set([...previous, id])] : previous.filter((item) => item !== id),
+      checked
+        ? [...new Set([...previous, id])]
+        : previous.filter((item) => item !== id),
     );
   const toggleAllVisible = (checked) =>
     setSelectedIds((previous) =>
@@ -2596,7 +2883,9 @@ export default function EmployeeMaster() {
     return (
       <>
         <option value="">Select Schedule</option>
-        {currentMissing && <option value={currentId}>{`Schedule ${currentId}`}</option>}
+        {currentMissing && (
+          <option value={currentId}>{`Schedule ${currentId}`}</option>
+        )}
         {options.map((s) => (
           <option key={getScheduleId(s)} value={getScheduleId(s)}>
             {getScheduleLabel(s)}
@@ -2657,35 +2946,81 @@ export default function EmployeeMaster() {
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs text-slate-600">
             Total records:{" "}
-            <strong className="text-slate-800">{filteredEmployees.length}</strong>
+            <strong className="text-slate-800">
+              {filteredEmployees.length}
+            </strong>
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={handleSalaryInfo} className="btn1 btn-blue whitespace-nowrap rounded-full" disabled={userFormLoading}>
+            <button
+              type="button"
+              onClick={handleSalaryInfo}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+              disabled={userFormLoading}
+            >
               Salary Info
             </button>
-            <button type="button" onClick={handleNewUser} className="btn1 btn-blue whitespace-nowrap rounded-full" disabled={userFormLoading}>
+            <button
+              type="button"
+              onClick={handleNewUser}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+              disabled={userFormLoading}
+            >
               New User
             </button>
-            <button type="button" onClick={handleDeleteClick} className="btn1 btn-red whitespace-nowrap rounded-full" disabled={selectedIds.length === 0}>
+            <button
+              type="button"
+              onClick={handleDeleteClick}
+              className="btn1 btn-red whitespace-nowrap rounded-full"
+              disabled={selectedIds.length === 0}
+            >
               Delete
             </button>
-            <button type="button" onClick={handleClear} className="btn1 btn-blue whitespace-nowrap rounded-full" disabled={selectedIds.length === 0}>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+              disabled={selectedIds.length === 0}
+            >
               Clear
             </button>
-            <button type="button" onClick={handleCopy} className="btn1 btn-blue whitespace-nowrap rounded-full" disabled={selectedIds.length === 0}>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+              disabled={selectedIds.length === 0}
+            >
               Copy
             </button>
-            <button type="button" onClick={handlePaste} className="btn1 btn-blue whitespace-nowrap rounded-full" disabled={copiedEmployees.length === 0}>
+            <button
+              type="button"
+              onClick={handlePaste}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+              disabled={copiedEmployees.length === 0}
+            >
               Paste
             </button>
             <label className="btn1 btn-blue whitespace-nowrap rounded-full cursor-pointer">
               Import
-              <input type="file" accept=".csv,text/csv" onChange={handleImport} className="hidden" />
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleImport}
+                className="hidden"
+              />
             </label>
-            <button type="button" onClick={handleExport} className="btn1 btn-blue whitespace-nowrap rounded-full">
+            <button
+              type="button"
+              onClick={handleExport}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+            >
               Export
             </button>
-            <button type="button" onClick={handleSaveUsers} className="btn1 btn-blue whitespace-nowrap rounded-full" disabled={userFormLoading}>
+            <button
+              type="button"
+              onClick={handleSaveUsers}
+              className="btn1 btn-blue whitespace-nowrap rounded-full"
+              disabled={userFormLoading}
+            >
               {userFormLoading ? "Saving..." : "Save"}
             </button>
           </div>
@@ -2741,7 +3076,11 @@ export default function EmployeeMaster() {
                     setEditingId(id);
                   };
                   return (
-                    <tr key={employee._rowId} onClick={selectAndEditRow} className="cursor-pointer bg-white">
+                    <tr
+                      key={employee._rowId}
+                      onClick={selectAndEditRow}
+                      className="cursor-pointer bg-white"
+                    >
                       <td
                         className="border-b border-r border-slate-200 px-2 py-1.5 text-center"
                         onClick={(event) => event.stopPropagation()}
@@ -2750,7 +3089,9 @@ export default function EmployeeMaster() {
                           type="checkbox"
                           aria-label={`Select ${employee.employeeId || "new employee row"}`}
                           checked={isSelected}
-                          onChange={(event) => toggleSelected(id, event.target.checked)}
+                          onChange={(event) =>
+                            toggleSelected(id, event.target.checked)
+                          }
                           className="h-3.5 w-3.5 cursor-pointer"
                         />
                       </td>
@@ -2771,7 +3112,13 @@ export default function EmployeeMaster() {
                             ) : column.key === "status" ? (
                               <select
                                 value={employee.status || "Active"}
-                                onChange={(event) => updateEmployee(employee, column.key, event.target.value)}
+                                onChange={(event) =>
+                                  updateEmployee(
+                                    employee,
+                                    column.key,
+                                    event.target.value,
+                                  )
+                                }
                                 onClick={(event) => event.stopPropagation()}
                                 className="h-7 min-w-[82px] rounded border border-blue-200 bg-white px-1.5 text-xs outline-none focus:border-blue-500"
                               >
@@ -2782,14 +3129,26 @@ export default function EmployeeMaster() {
                               <input
                                 type="date"
                                 value={employee[column.key] || ""}
-                                onChange={(event) => updateEmployee(employee, column.key, event.target.value)}
+                                onChange={(event) =>
+                                  updateEmployee(
+                                    employee,
+                                    column.key,
+                                    event.target.value,
+                                  )
+                                }
                                 onClick={(event) => event.stopPropagation()}
                                 className="h-7 min-w-[125px] rounded border border-blue-200 bg-white px-1.5 text-xs outline-none focus:border-blue-500"
                               />
                             ) : column.key === "tsSchedule" ? (
                               <select
                                 value={String(employee.tsSchedule ?? "")}
-                                onChange={(event) => updateEmployee(employee, "tsSchedule", event.target.value)}
+                                onChange={(event) =>
+                                  updateEmployee(
+                                    employee,
+                                    "tsSchedule",
+                                    event.target.value,
+                                  )
+                                }
                                 onClick={(event) => event.stopPropagation()}
                                 aria-label={`Timesheet schedule for ${employee.employeeId || "new employee"}`}
                                 className="h-7 min-w-[130px] rounded border border-blue-200 bg-white px-1.5 text-xs outline-none focus:border-blue-500"
@@ -2800,7 +3159,13 @@ export default function EmployeeMaster() {
                               <input
                                 type="text"
                                 value={employee[column.key] || ""}
-                                onChange={(event) => updateEmployee(employee, column.key, event.target.value)}
+                                onChange={(event) =>
+                                  updateEmployee(
+                                    employee,
+                                    column.key,
+                                    event.target.value,
+                                  )
+                                }
                                 onClick={(event) => event.stopPropagation()}
                                 className="h-7 min-w-[100px] w-full rounded border border-blue-200 bg-white px-1.5 text-xs outline-none focus:border-blue-500"
                               />
@@ -2818,7 +3183,8 @@ export default function EmployeeMaster() {
                           ) : (
                             <span
                               className={
-                                column.key === "employeeId" || column.key === "displayedName"
+                                column.key === "employeeId" ||
+                                column.key === "displayedName"
                                   ? "text-blue-900"
                                   : ""
                               }
@@ -2833,7 +3199,10 @@ export default function EmployeeMaster() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={columns.length + 1} className="px-3 py-5 text-center text-slate-500">
+                  <td
+                    colSpan={columns.length + 1}
+                    className="px-3 py-5 text-center text-slate-500"
+                  >
                     {loading ? "Loading employees..." : "No employees found."}
                   </td>
                 </tr>
@@ -2847,7 +3216,10 @@ export default function EmployeeMaster() {
             <span>
               Showing{" "}
               <strong>
-                {filteredEmployees.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1}–
+                {filteredEmployees.length === 0
+                  ? 0
+                  : (safeCurrentPage - 1) * pageSize + 1}
+                –
                 {Math.min(safeCurrentPage * pageSize, filteredEmployees.length)}
               </strong>{" "}
               of <strong>{filteredEmployees.length}</strong> records
@@ -2871,10 +3243,21 @@ export default function EmployeeMaster() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setCurrentPage(1)} disabled={safeCurrentPage === 1} className="h-7 rounded border border-slate-300 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" title="First Page">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(1)}
+              disabled={safeCurrentPage === 1}
+              className="h-7 rounded border border-slate-300 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              title="First Page"
+            >
               « First
             </button>
-            <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={safeCurrentPage === 1} className="h-7 rounded border border-slate-300 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={safeCurrentPage === 1}
+              className="h-7 rounded border border-slate-300 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
               Previous
             </button>
 
@@ -2894,10 +3277,23 @@ export default function EmployeeMaster() {
               <span>of {totalPages}</span>
             </div>
 
-            <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={safeCurrentPage === totalPages} className="h-7 rounded border border-slate-300 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages, page + 1))
+              }
+              disabled={safeCurrentPage === totalPages}
+              className="h-7 rounded border border-slate-300 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
               Next
             </button>
-            <button type="button" onClick={() => setCurrentPage(totalPages)} disabled={safeCurrentPage === totalPages} className="h-7 rounded border border-slate-300 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" title="Last Page">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={safeCurrentPage === totalPages}
+              className="h-7 rounded border border-slate-300 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              title="Last Page"
+            >
               Last »
             </button>
           </div>
@@ -2916,10 +3312,37 @@ export default function EmployeeMaster() {
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
               <h3 className="text-base font-bold text-gray-900">
                 Salary Information (
-                {salaryInfoEmployee?.displayedName || salaryInfoEmployee?.employeeId || ""})
+                {salaryInfoEmployee?.displayedName ||
+                  salaryInfoEmployee?.employeeId ||
+                  ""}
+                )
               </h3>
 
               <div className="flex gap-2 items-center">
+                {/* Add New Record Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newRow = {
+                      effectDt: new Date().toISOString().split("T")[0], // Default to today or empty string ""
+                      titleDesc: "",
+                      sHrlySalCd: "",
+                      hrlyAmt: "",
+                      salAmt: "",
+                      annlAmt: "",
+                      sEmplTypeCd: "",
+                      orgId: "",
+                      workStateCd: "",
+                      reasonDesc: "",
+                      isNew: true, // Optional flag to track newly created rows
+                    };
+                    setSalaryInfo([newRow, ...salaryInfo]);
+                  }}
+                  className="btn1 btn-blue !py-1 !px-3 text-xs cursor-pointer"
+                >
+                  Add
+                </button>
+
                 <button
                   type="button"
                   onClick={handleSaveSalary}
@@ -2927,6 +3350,14 @@ export default function EmployeeMaster() {
                   className="btn1 btn-blue !py-1 !px-3 text-xs cursor-pointer"
                 >
                   {savingSalary ? "Saving..." : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteSalary}
+                  disabled={savingSalary || selectedRowIndices.length === 0}
+                  className="btn1 bg-red-600 hover:bg-red-700 text-white !py-1 !px-3 text-xs cursor-pointer disabled:opacity-50"
+                >
+                  Delete ({selectedRowIndices.length})
                 </button>
                 <button
                   type="button"
@@ -2950,6 +3381,27 @@ export default function EmployeeMaster() {
                 <table className="w-full text-xs border-collapse whitespace-nowrap">
                   <thead className="sticky top-0 bg-[#e5f3fb] z-10">
                     <tr>
+                      {/* Checkbox Header */}
+                      <th className="px-3 py-2 border-r border-b border-gray-300 text-center w-10">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all salary rows"
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              // Select all indices
+                              setSelectedRowIndices(
+                                salaryInfo.map((_, idx) => idx),
+                              );
+                            } else {
+                              setSelectedRowIndices([]);
+                            }
+                          }}
+                          checked={
+                            salaryInfo.length > 0 &&
+                            selectedRowIndices.length === salaryInfo.length
+                          }
+                        />
+                      </th>
                       {[
                         "Effective Date",
                         "Title",
@@ -2975,54 +3427,184 @@ export default function EmployeeMaster() {
                     {salaryInfo.length > 0 ? (
                       salaryInfo.map((item, idx) => (
                         <tr
-                          key={`${item.emplId}-${item.effectDt}-${idx}`}
-                          className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                          key={`${item.emplId || "new"}-${item.effectDt}-${idx}`}
+                          className={
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                          }
                         >
-                          {/* Effective date is part of the record key – read only */}
-                          <td className="px-2 py-1.5 text-center border-r border-b border-gray-300 text-slate-600">
-                            {item.effectDt || "—"}
+                          {/* Row Checkbox */}
+                          <td className="px-2 py-1.5 text-center border-r border-b border-gray-300">
+                            <input
+                              type="checkbox"
+                              aria-label={`Select salary row for ${item.effectDt || "record"}`}
+                              checked={selectedRowIndices.includes(idx)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedRowIndices([
+                                    ...selectedRowIndices,
+                                    idx,
+                                  ]);
+                                } else {
+                                  setSelectedRowIndices(
+                                    selectedRowIndices.filter((i) => i !== idx),
+                                  );
+                                }
+                              }}
+                            />
+                          </td>
+
+                          <td className="px-2 py-1.5 text-center border-r border-b border-gray-300">
+                            <input
+                              type="date"
+                              value={item.effectDt || ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "effectDt",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-28 rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-left border-r border-b border-gray-300">
-                            <input type="text" value={item.titleDesc || ""} onChange={(e) => updateSalaryField(idx, "titleDesc", e.target.value)} className="h-7 w-full rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="text"
+                              value={item.titleDesc || ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "titleDesc",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-full rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-center border-r border-b border-gray-300">
-                            <input type="text" value={item.sHrlySalCd || ""} onChange={(e) => updateSalaryField(idx, "sHrlySalCd", e.target.value)} className="h-7 w-12 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="text"
+                              value={item.sHrlySalCd || ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "sHrlySalCd",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-12 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-right border-r border-b border-gray-300">
-                            <input type="number" step="0.01" value={item.hrlyAmt ?? ""} onChange={(e) => updateSalaryField(idx, "hrlyAmt", e.target.value)} className="h-7 w-20 text-right rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.hrlyAmt ?? ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "hrlyAmt",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-20 text-right rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-right border-r border-b border-gray-300">
-                            <input type="number" step="0.01" value={item.salAmt ?? ""} onChange={(e) => updateSalaryField(idx, "salAmt", e.target.value)} className="h-7 w-24 text-right rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.salAmt ?? ""}
+                              onChange={(e) =>
+                                updateSalaryField(idx, "salAmt", e.target.value)
+                              }
+                              className="h-7 w-24 text-right rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-right border-r border-b border-gray-300">
-                            <input type="number" step="0.01" value={item.annlAmt ?? ""} onChange={(e) => updateSalaryField(idx, "annlAmt", e.target.value)} className="h-7 w-28 text-right rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500 font-bold text-green-700" />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.annlAmt ?? ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "annlAmt",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-28 text-right rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500 font-bold text-green-700"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-center border-r border-b border-gray-300">
-                            <input type="text" value={item.sEmplTypeCd || ""} onChange={(e) => updateSalaryField(idx, "sEmplTypeCd", e.target.value)} className="h-7 w-12 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="text"
+                              value={item.sEmplTypeCd || ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "sEmplTypeCd",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-12 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-center border-r border-b border-gray-300">
-                            <input type="text" value={item.orgId || ""} onChange={(e) => updateSalaryField(idx, "orgId", e.target.value)} className="h-7 w-20 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="text"
+                              value={item.orgId || ""}
+                              onChange={(e) =>
+                                updateSalaryField(idx, "orgId", e.target.value)
+                              }
+                              className="h-7 w-20 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-center border-r border-b border-gray-300">
-                            <input type="text" value={item.workStateCd || ""} onChange={(e) => updateSalaryField(idx, "workStateCd", e.target.value)} className="h-7 w-12 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="text"
+                              value={item.workStateCd || ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "workStateCd",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-12 text-center rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
 
                           <td className="px-2 py-1.5 text-left border-r border-b border-gray-300">
-                            <input type="text" value={item.reasonDesc || ""} onChange={(e) => updateSalaryField(idx, "reasonDesc", e.target.value)} className="h-7 w-full rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500" />
+                            <input
+                              type="text"
+                              value={item.reasonDesc || ""}
+                              onChange={(e) =>
+                                updateSalaryField(
+                                  idx,
+                                  "reasonDesc",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-7 w-full rounded border border-slate-300 bg-white px-1 text-xs outline-none focus:border-blue-500"
+                            />
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={10} className="text-center p-8 italic text-gray-500">
+                        <td
+                          colSpan={12}
+                          className="text-center p-8 italic text-gray-500"
+                        >
                           No salary records found for this employee.
                         </td>
                       </tr>
