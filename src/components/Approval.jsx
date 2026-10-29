@@ -2201,7 +2201,7 @@ export default function Approval() {
                 {isAdmin && (
                   <>
                     {/* Approval History Panel */}
-                    <button
+                    {/* <button
                       onClick={() => setShowHistory(true)}
                       disabled={!selectedTimesheetDate}
                       className="
@@ -2217,10 +2217,10 @@ export default function Approval() {
                       "
                     >
                       Status
-                    </button>
+                    </button> */}
 
                     {/* Revision Audit */}
-                    <button
+                    {/* <button
                       onClick={() => setShowRevision(true)}
                       disabled={!selectedTimesheetDate}
                       className="
@@ -2236,7 +2236,7 @@ export default function Approval() {
                       "
                     >
                       Revision
-                    </button>
+                    </button> */}
                   </>
                 )}
               </div>

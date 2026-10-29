@@ -1482,6 +1482,7 @@ import ApprovalEnquiry from "./components/ApprovalEnquiry";
 import LeaveProjectMapping from "./components/LeaveProjectMapping";
 import TimesheetScheduleManager from "./components/TimesheetScheduleManager";
 import ProjectPlcMapping from "./components/ProjectPlcMapping";
+import SubkTimesheetExport from "./components/SubkTimesheetExport";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -2209,6 +2210,16 @@ function App() {
                 <RequirePermission screenKey="tmdashboard">
                   <div className="mt-12 ml-2">
                     <DashboardGraphs />
+                  </div>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="sub-timesheet-export"
+              element={
+                <RequirePermission screenKey="tmdashboard">
+                  <div className="mt-12 ml-2">
+                    <SubkTimesheetExport />
                   </div>
                 </RequirePermission>
               }

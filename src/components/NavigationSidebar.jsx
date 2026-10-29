@@ -2144,6 +2144,14 @@ const NavigationSidebar = ({
                     />}
                     {(currentUserRole?.toUpperCase() === "ADMIN") && 
                     <NavItem
+                      label="Export Timesheet"
+                      path="/dashboard/sub-timesheet-export"
+                      selected={selectedPage}
+                      onClick={handleLinkClick}
+                      searchTerm={searchTerm}
+                    />}
+                    {(currentUserRole?.toUpperCase() === "ADMIN") && 
+                    <NavItem
                       label="Generate Invoice"
                       path="/dashboard/sub-export-table"
                       selected={selectedPage}
