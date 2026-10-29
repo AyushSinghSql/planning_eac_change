@@ -2142,13 +2142,15 @@ const NavigationSidebar = ({
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
                     />}
-                    {/* <NavItem
+                    {(currentUserRole?.toUpperCase() === "ADMIN") && 
+                    <NavItem
                       label="Generate Invoice"
                       path="/dashboard/sub-export-table"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
+                    />}
+                    {(currentUserRole?.toUpperCase() === "ADMIN") &&
                     <NavItem
                       label="Invoice Export"
                       path="/dashboard/sub-invoice-export"
@@ -2156,7 +2158,8 @@ const NavigationSidebar = ({
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
                     />
-                    <NavItem
+}
+                    {/* <NavItem
                       label="PO Info"
                       path="/dashboard/sub-po-info"
                       selected={selectedPage}
@@ -2176,14 +2179,15 @@ const NavigationSidebar = ({
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    />
+                    /> */}
+                    {(currentUserRole?.toUpperCase() === "ADMIN") &&
                     <NavItem
                       label="Report"
                       path="/dashboard/sub-report"
                       selected={selectedPage}
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
-                    /> */}
+                    /> }
                     {(currentUserRole?.toUpperCase() === "ADMIN") && <><NavItem
                       label="Manage Project"
                       path="/dashboard/sub-project-master"
