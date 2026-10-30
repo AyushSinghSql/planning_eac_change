@@ -383,7 +383,7 @@ export default function SubkTimesheetExport() {
     // "Pay Type",
     "Hours",
     "Customer",
-    "Approver",
+    "Approved by",
   ];
   const colCount = columns.length + 2;
 
