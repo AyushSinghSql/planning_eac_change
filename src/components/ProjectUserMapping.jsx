@@ -520,6 +520,8 @@ export default function ProjectUserMapping({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const clientId = import.meta.env.VITE_CLIENT_ID;
+
   const { canEdit } = useOutletContext
     ? useOutletContext()
     : { canEdit: () => true };
@@ -563,14 +565,23 @@ export default function ProjectUserMapping({ onClose }) {
     async (searchText) => {
       const trimmedTerm =
         typeof searchText === "string" ? searchText.trim() : "";
-      if (trimmedTerm.length < 4) {
-        return [];
+      if (clientId === "SSAI") {
+        if (trimmedTerm.length < 4) {
+          return [];
+        }
       }
 
       try {
+        const params = { take: lookupTake };
+
+        if (clientId === "SSAI") {
+          params.searchTerm = trimmedTerm;
+        }
+
         const res = await axios.get(`${backendUrl}/api/ProjectMaster/search`, {
-          params: { searchTerm: trimmedTerm, take: lookupTake },
+          params,
         });
+
         const projData = Array.isArray(res.data) ? res.data : [];
 
         return projData.map((p) => ({
@@ -587,11 +598,39 @@ export default function ProjectUserMapping({ onClose }) {
     [lookupTake],
   );
 
+  useEffect(() => {
+    if (clientId !== "SSAI") {
+      setProjectLoading(true);
+
+      fetchProjects("")
+        .then((results) => setAsyncProjectOptions(results))
+        .finally(() => setProjectLoading(false));
+    }
+  }, [clientId, fetchProjects]);
+
   const handleProjectInputChange = (newInput, { action }) => {
     if (action === "input-change") {
       const val = typeof newInput === "string" ? newInput : "";
       setInputValue(val);
-      if (val.trim().length >= 4) {
+      // if (val.trim().length >= 4) {
+      //   setProjectLoading(true);
+      //   fetchProjects(val).then((results) => {
+      //     setAsyncProjectOptions(results);
+      //     setProjectLoading(false);
+      //   });
+      // } else {
+      //   setAsyncProjectOptions([]);
+      // }
+
+      const minLength = clientId === "SSAI" ? 4 : 1;
+
+      if (clientId !== "SSAI") {
+        setProjectLoading(true);
+        fetchProjects("").then((results) => {
+          setAsyncProjectOptions(results);
+          setProjectLoading(false);
+        });
+      } else if (val.trim().length >= 4) {
         setProjectLoading(true);
         fetchProjects(val).then((results) => {
           setAsyncProjectOptions(results);
@@ -925,11 +964,13 @@ export default function ProjectUserMapping({ onClose }) {
               Select Project <span className="text-red-500">*</span>
             </label>
             <span className="text-[11px] text-gray-500">
-              Type at least 4 characters to search
+              {clientId === "SSAI"
+                ? "Type at least 4 characters to search"
+                : "Select a project or type to search"}
             </span>
           </div>
           <div>
-            <Select
+            {/* <Select
               options={asyncProjectOptions}
               isLoading={projectLoading}
               value={
@@ -946,6 +987,33 @@ export default function ProjectUserMapping({ onClose }) {
               isSearchable
               noOptionsMessage={() =>
                 (inputValue || "").trim().length < 4
+                  ? "Please enter at least 4 characters..."
+                  : "No projects found"
+              }
+            />
+             */}
+
+            <Select
+              options={asyncProjectOptions}
+              isLoading={projectLoading}
+              value={
+                asyncProjectOptions.find(
+                  (o) => o.value === selectedProjectId,
+                ) || null
+              }
+              onChange={(opt) => setSelectedProjectId(opt ? opt.value : "")}
+              onInputChange={handleProjectInputChange}
+              placeholder={
+                clientId === "SSAI"
+                  ? "Type at least 4 characters to search Project ID or Name..."
+                  : "Select a project..."
+              }
+              className="text-xs"
+              classNamePrefix="select"
+              isClearable
+              isSearchable
+              noOptionsMessage={() =>
+                clientId === "SSAI" && (inputValue || "").trim().length < 4
                   ? "Please enter at least 4 characters..."
                   : "No projects found"
               }
