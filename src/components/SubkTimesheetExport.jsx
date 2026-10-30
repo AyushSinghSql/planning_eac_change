@@ -121,7 +121,7 @@ export default function SubkTimesheetExport() {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=PROCESSED&isExported=false`,
+        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=PROCESSED&isExported=false&isInvoiced=false`,
       );
       const data = Array.isArray(response.data) ? response.data : [];
 
@@ -255,7 +255,7 @@ export default function SubkTimesheetExport() {
       "Location",
       "Superivor",
       "Cost Rate",
-      "OT Bill Rate",
+      "OT Cost Rate",
       "Per Diem",
     ];
 
@@ -286,13 +286,13 @@ export default function SubkTimesheetExport() {
           "ServiceItem (PLC)": timesheet.plcDesc
             ? `${timesheet.plc || ""} - ${timesheet.plcDesc}`
             : timesheet.plc || "",
-          HourlyRate: timesheet.costRate != null ? `$${Number(timesheet.costRate).toFixed(2)}` : "",
+          HourlyRate: timesheet.hrlyAmt != null ? `$${Number(timesheet.hrlyAmt).toFixed(2)}` : "",
           Taxable: false,
           Class: timesheet.empl_class ?? "",
           Location: "",
           Superivor: timesheet.pm_User_Id || timesheet.pmUserId || "",
           "Cost Rate": timesheet.costRate != null ? `$${Number(timesheet.costRate).toFixed(2)}` : "",
-          "OT Bill Rate": timesheet.otCostRate != null ? `$${Number(timesheet.otCostRate).toFixed(2)}` : "",
+          "OT Cost Rate": timesheet.otCostRate != null ? `$${Number(timesheet.otCostRate).toFixed(2)}` : "",
           "Per Diem": perdiemValue ? `$${Number(perdiemValue).toFixed(2)}` : "",
           // "Per Diem": timesheet.perDiem ?? "",
         });
@@ -366,6 +366,7 @@ export default function SubkTimesheetExport() {
       );
     } finally {
       setExporting(false);
+      await fetchTimesheets();
     }
   };
 

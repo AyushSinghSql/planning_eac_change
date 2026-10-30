@@ -1321,29 +1321,29 @@ const InvoiceViewer = ({ data, setInvoiceModalVisible, onInvoiceSuccess }) => {
       />
 
       <div
-        className="overflow-y-auto p-4 scrollbar-thin font-sans bg-slate-100"
+        className="overflow-y-auto scrollbar-thin font-sans bg-slate-100"
         style={{ maxHeight: "75vh" }}
       >
         {/* Header summary banner */}
-        <div className="max-w-[800px] mx-auto text-center font-bold text-xs mb-6 text-blue-900 bg-[#e5f3fb] border border-blue-200 p-3 rounded-lg shadow-sm">
+        {/* <div className="max-w-[800px] mx-auto text-center font-bold text-xs mb-6 text-blue-900 bg-[#e5f3fb] border border-blue-200 p-3 rounded-lg shadow-sm">
           Invoice Preview - {data.length} Invoice{data.length > 1 ? "s" : ""}{" "}
           Found
-        </div>
+        </div> */}
 
         {/* Render each invoice */}
         {data.map((invoice, index) => renderSingleInvoice(invoice, index))}
       </div>
 
       {/* Action Buttons Footer */}
-      <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-white font-sans">
+      {/* <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-white font-sans">
         <button
           onClick={() => setInvoiceModalVisible(false)}
           className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer"
         >
           Close
-        </button>
+        </button> */}
 
-        {/* <button
+      {/* <button
           onClick={handleConfirmInvoices}
           disabled={isLoading}
           className={`px-5 py-2 text-white font-semibold text-xs rounded-lg transition shadow-sm ${
@@ -1354,7 +1354,7 @@ const InvoiceViewer = ({ data, setInvoiceModalVisible, onInvoiceSuccess }) => {
         >
           {isLoading ? "Creating Invoices..." : "Confirm All Invoices"}
         </button> */}
-      </div>
+      {/* </div> */}
     </>
   );
 };

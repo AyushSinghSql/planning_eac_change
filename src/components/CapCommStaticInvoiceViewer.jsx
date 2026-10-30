@@ -932,18 +932,30 @@ const CapCommInteractiveInvoiceBuilder = () => {
             label: `${p.periodStartDate} to ${p.periodEndDate} (Period ${p.periodNumber}${p.isOpen ? " - Active" : ""})`,
           }));
 
-          setPeriodsList(mappedPeriods);
-          const currentPeriod = mappedPeriods.find(
-            (p) => todayStr >= p.startDate && todayStr <= p.endDate,
-          );
+          const allOption = {
+            periodId: "",
+            periodNumber: null,
+            startDate: "",
+            endDate: "",
+            isOpen: false,
+            label: "All Periods", // Or just "All"
+          };
 
-          if (currentPeriod) {
-            setSelectedPeriod(currentPeriod);
-          } else if (mappedPeriods.length > 0) {
-            setSelectedPeriod(
-              mappedPeriods.find((p) => p.isOpen) || mappedPeriods[0],
-            );
-          }
+          // setPeriodsList(mappedPeriods);
+          // setSelectedPeriod(null);
+          setPeriodsList([allOption, ...mappedPeriods]);
+          setSelectedPeriod(allOption);
+          // const currentPeriod = mappedPeriods.find(
+          //   (p) => todayStr >= p.startDate && todayStr <= p.endDate,
+          // );
+
+          // if (currentPeriod) {
+          //   setSelectedPeriod(currenulltPeriod);
+          // } else if (mappedPeriods.length > 0) {
+          //   setSelectedPeriod(
+          //     mappedPeriods.find((p) => p.isOpen) || mappedPeriods[0],
+          //   );
+          // }
         }
       } catch (error) {
         console.error("Error fetching schedule periods:", error);
@@ -989,11 +1001,12 @@ const CapCommInteractiveInvoiceBuilder = () => {
 
   // --- 4. Fetch Subcontractor Timesheet API ---
   const handleFetchTimesheetLines = async () => {
-    if (!selectedPeriod || !selectedPeriod.endDate) return;
+    // if (!selectedPeriod || !selectedPeriod.endDate) return;
     setLoadingSubk(true);
     try {
+      const period = selectedPeriod?.endDate || "";
       const response = await axios.get(
-        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=PROCESSED&timesheetDate=${selectedPeriod.endDate}&isExported=false`,
+        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=PROCESSED&timesheetDate=${period}&isExported=true&isInvoiced=false`,
       );
       if (response.data && Array.isArray(response.data)) {
         setRawSubkLines(response.data);
@@ -1045,17 +1058,29 @@ const CapCommInteractiveInvoiceBuilder = () => {
   }, [rawSubkLines, selectedLineIds]);
 
   // --- Unique Invoice No. & Due Date ---
+  // --- Unique Invoice No. & Due Date ---
   const generatedInvoiceNo = useMemo(() => {
-    if (!selectedCustomer) return "INV-001";
+    if (!selectedCustomer) return `INV-${Date.now().toString().slice(-6)}`;
+
     const custCode = selectedCustomer.id.split(":")[0] || "CUST";
-    const periodCode = selectedPeriod
-      ? `P${selectedPeriod.periodNumber || selectedPeriod.periodId}`
-      : "P1";
+
+    // Handle "All Periods" or empty period gracefully
+    const periodCode =
+      selectedPeriod && selectedPeriod.periodNumber
+        ? `P${selectedPeriod.periodNumber}`
+        : selectedPeriod && selectedPeriod.periodId
+          ? `P${selectedPeriod.periodId}`
+          : "ALL";
+
     const projCode =
       selectedProjects.length > 0
         ? selectedProjects[0].split(":")[1]?.split("-")[0] || "GEN"
         : "GEN";
-    return `${custCode}-${periodCode}-${projCode}`;
+
+    // Append a short timestamp suffix (e.g., last 4 digits of current time) to ensure uniqueness
+    const uniqueSuffix = Date.now().toString().slice(-4);
+
+    return `${custCode}-${periodCode}-${projCode}-${uniqueSuffix}`;
   }, [selectedCustomer, selectedPeriod, selectedProjects]);
 
   const dueDate = useMemo(() => {
@@ -1081,16 +1106,34 @@ const CapCommInteractiveInvoiceBuilder = () => {
     );
 
     if (checkedRows.length > 0) {
-      const mappedItems = checkedRows.map((item) => ({
-        id: item.lineNo,
-        plc: item.plc || "Professional Services",
-        description: `[${selectedPeriod?.startDate} to ${selectedPeriod?.endDate}] ${item.resource_Id || ""} (${item.payTypeName || "SR"})`,
-        hours: item.hours || 0,
-        rate: item.payTypeAdjustedRate || 75.0,
-        amount:
-          item.billAmt ||
-          (item.hours || 0) * (item.payTypeAdjustedRate || 75.0),
-      }));
+      const mappedItems = checkedRows.map((item) => {
+        // Sapulen ti umno a period iti periodsList a mangsakup iti timesheet_Date ti linia
+        const matchingPeriod = periodsList.find(
+          (p) =>
+            p.startDate &&
+            p.endDate &&
+            item.timesheet_Date >= p.startDate &&
+            item.timesheet_Date <= p.endDate,
+        );
+
+        const startDate = matchingPeriod
+          ? matchingPeriod.startDate
+          : selectedPeriod?.startDate || item.timesheet_Date || "";
+        const endDate = matchingPeriod
+          ? matchingPeriod.endDate
+          : selectedPeriod?.endDate || item.timesheet_Date || "";
+
+        return {
+          id: item.lineNo,
+          plc: item.plc || "Professional Services",
+          description: `[${startDate} to ${endDate}] ${item.resource_Id || ""} (${item.payTypeName || "SR"})`,
+          hours: item.hours || 0,
+          rate: item.payTypeAdjustedRate || 75.0,
+          amount:
+            item.billAmt ||
+            (item.hours || 0) * (item.payTypeAdjustedRate || 75.0),
+        };
+      });
       setActiveLineItems(mappedItems);
     } else {
       setActiveLineItems([]);
@@ -1476,9 +1519,8 @@ const CapCommInteractiveInvoiceBuilder = () => {
             <div className="w-full mx-auto bg-white p-2 rounded-xl shadow-md mb-8 border border-slate-200">
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                 <h3 className="text-sm font-bold text-slate-800">
-                  Select Timesheet Lines to Preview & Export (
-                  {selectedLineIds.length} of {rawSubkLines.length} selected) (`
-                  {selectedPeriod.startDate} to {selectedPeriod.endDate}`)
+                  Select Timesheet Lines to Preview ({selectedLineIds.length} of{" "}
+                  {rawSubkLines.length} selected)
                 </h3>
                 <button
                   onClick={handlePreviewInvoice}

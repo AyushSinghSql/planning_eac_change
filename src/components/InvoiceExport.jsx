@@ -1421,9 +1421,6 @@
 //   );
 // }
 
-
-
-
 import React, { useState, useEffect } from "react";
 import { Receipt, Filter, Download, X, Eye, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -2861,7 +2858,7 @@ export default function InvoiceExport() {
                             }
                           />
                         </td>
-                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
+                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900 text-center">
                           <div
                             style={{
                               overflow: "hidden",
@@ -2892,7 +2889,7 @@ export default function InvoiceExport() {
                               "N/A"}
                           </div>
                         </td> */}
-                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
+                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900 text-center">
                           {formatDate(invoice.invoiceDate)}
                         </td>
                         <td className="px-2 py-1 text-xs border-r border-b font-normal text-right whitespace-nowrap border-gray-300 text-gray-900">
@@ -2901,10 +2898,10 @@ export default function InvoiceExport() {
                             invoice.currency,
                           )}
                         </td>
-                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
+                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900 text-center">
                           {invoice.currency || "USD"}
                         </td>
-                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
+                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900 text-center">
                           {formatDate(invoice.createdAt)}
                         </td>
                         <td className="px-2 py-1 text-xs border-r border-b flex items-center justify-center font-normal border-gray-300 text-gray-900">
