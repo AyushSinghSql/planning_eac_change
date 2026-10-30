@@ -2697,7 +2697,7 @@ export default function InvoiceExport() {
             </button>
 
             {/* Export Button */}
-            <button
+            {/* <button
               onClick={exportToCSV}
               disabled={exportCount === 0 || isExporting}
               data-export-button
@@ -2714,7 +2714,7 @@ export default function InvoiceExport() {
             >
               <FileDown className="h-4 w-4 mr-2" />
               {isExporting ? "Exporting..." : `Export (${exportCount})`}
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -2790,12 +2790,12 @@ export default function InvoiceExport() {
                     <th className="th-thead text-xs font-bold text-gray-600 text-center">
                       Invoice Number
                     </th>
-                    <th className="th-thead text-xs font-bold text-gray-600 text-center">
+                    {/* <th className="th-thead text-xs font-bold text-gray-600 text-center">
                       Work Order
                     </th>
                     <th className="th-thead text-xs font-bold text-gray-600 text-center">
                       Vendor
-                    </th>
+                    </th> */}
                     <th className="th-thead text-xs font-bold text-gray-600 text-center">
                       Invoice Date
                     </th>
@@ -2811,11 +2811,11 @@ export default function InvoiceExport() {
                     <th className="th-thead text-xs font-bold text-gray-600 text-center">
                       Action
                     </th>
-                    {userRole === "admin" && (
+                    {/* {userRole === "admin" && (
                       <th className="th-thead text-xs font-bold text-gray-600 text-center">
                         Correction
                       </th>
-                    )}
+                    )} */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
@@ -2871,7 +2871,7 @@ export default function InvoiceExport() {
                             {invoice.invoiceNumber || "N/A"}
                           </div>
                         </td>
-                        <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
+                        {/* <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
                           <div
                             style={{
                               overflow: "hidden",
@@ -2891,7 +2891,7 @@ export default function InvoiceExport() {
                             {invoice.invoiceTimesheetLines?.[0]?.vendor ||
                               "N/A"}
                           </div>
-                        </td>
+                        </td> */}
                         <td className="px-2 py-1 text-xs border-r border-b font-normal border-gray-300 text-gray-900">
                           {formatDate(invoice.invoiceDate)}
                         </td>
@@ -2928,7 +2928,7 @@ export default function InvoiceExport() {
                           </button>
                         </td>
                         {/* Conditional correction column */}
-                        {userRole === "admin" && (
+                        {/* {userRole === "admin" && (
                           <td className="px-2 py-1 text-xs border-r border-b text-center font-normal border-gray-300 text-gray-900">
                             {invoice.isExported && (
                               <button
@@ -2951,7 +2951,7 @@ export default function InvoiceExport() {
                               </button>
                             )}
                           </td>
-                        )}
+                        )} */}
                       </tr>
                     );
                   })}
@@ -2964,7 +2964,7 @@ export default function InvoiceExport() {
 
       {/* Preview Modal */}
       {previewModalVisible && (
-        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 pt-15 bg-black/30 bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
