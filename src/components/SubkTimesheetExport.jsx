@@ -665,9 +665,9 @@ function Details({ item, hours, totalHours }) {
                 <th className="whitespace-nowrap px-3 py-2 font-medium">
                   Hours
                 </th>
-                {/* <th className="whitespace-nowrap px-3 py-2 font-medium">
+                <th className="whitespace-nowrap px-3 py-2 font-medium">
                   Comment
-                </th> */}
+                </th>
                 <th className="whitespace-nowrap px-3 py-2 font-medium">
                   Created At
                 </th>
@@ -688,7 +688,7 @@ function Details({ item, hours, totalHours }) {
                   <td className="whitespace-nowrap px-3 py-2 tabular-nums">
                     {numberValue(day.hours).toFixed(2)}
                   </td>
-                  {/* <td className="px-3 py-2">{display(day.comment)}</td> */}
+                  <td className="px-3 py-2">{display(day.comment)}</td>
                   <td className="whitespace-nowrap px-3 py-2">
                     {formatAny(day.createdAt)}
                   </td>

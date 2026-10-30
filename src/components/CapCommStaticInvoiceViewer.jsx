@@ -1420,6 +1420,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
       toast.error(`Failed to create invoice: ${error.message}`);
     } finally {
       setIsLoading(false);
+      setLinesFetched(false);
     }
   };
 
