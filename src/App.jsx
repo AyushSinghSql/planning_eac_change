@@ -1483,6 +1483,7 @@ import LeaveProjectMapping from "./components/LeaveProjectMapping";
 import TimesheetScheduleManager from "./components/TimesheetScheduleManager";
 import ProjectPlcMapping from "./components/ProjectPlcMapping";
 import SubkTimesheetExport from "./components/SubkTimesheetExport";
+import CapCommInteractiveInvoiceBuilder from "./components/CapCommStaticInvoiceViewer";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -2169,7 +2170,8 @@ function App() {
               element={
                 <RequirePermission screenKey="generateinvoice">
                   <div className="mt-12 ml-2">
-                    <ExportTable />
+                    {/* <ExportTable /> */}
+                    <CapCommInteractiveInvoiceBuilder />
                   </div>
                 </RequirePermission>
               }

@@ -863,7 +863,7 @@ const LeaveProjectMapping = () => {
 
       try {
         const response = await fetch(
-          `${backendUrl}/Project/GetAllLeaveProject`,
+          `${backendUrl}/api/ProjectMaster`,
           { credentials: "include" },
         );
 

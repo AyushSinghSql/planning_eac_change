@@ -104,6 +104,8 @@ export default function SubkTimesheetExport() {
   const [nameFilter, setNameFilter] = useState("");
   const [projectFilter, setProjectFilter] = useState("");
 
+  const perdiemValue = import.meta.env.VITE_PER_DIEM;
+
   const approverId =
     currentUser?.employeeId || currentUser?.name || currentUser?.userId || "";
 
@@ -291,7 +293,8 @@ export default function SubkTimesheetExport() {
           Superivor: timesheet.pm_User_Id || timesheet.pmUserId || "",
           "Cost Rate": timesheet.costRate != null ? `$${Number(timesheet.costRate).toFixed(2)}` : "",
           "OT Bill Rate": timesheet.otCostRate != null ? `$${Number(timesheet.otCostRate).toFixed(2)}` : "",
-          "Per Diem": timesheet.perDiem ?? "",
+          "Per Diem": perdiemValue ? `$${Number(perdiemValue).toFixed(2)}` : "",
+          // "Per Diem": timesheet.perDiem ?? "",
         });
       });
     });

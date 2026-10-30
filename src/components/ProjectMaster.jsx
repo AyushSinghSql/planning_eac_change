@@ -10,6 +10,7 @@ const columns = [
   { key: "project_id", label: "Project ID" },
   { key: "project_name", label: "Project Name" },
   { key: "project_type", label: "Project Type" },
+  { key: "customer_id", label: "Customer ID" },
   { key: "owning_org_id", label: "Owning Org ID" },
   { key: "project_manager_id", label: "Manager ID" },
   { key: "project_manager_name", label: "Manager Name" },
@@ -19,6 +20,7 @@ const requiredFields = [
   "project_id",
   "project_name",
   "project_type",
+  "customer_id",
   "owning_org_id",
   "project_manager_id",
 ];
@@ -52,6 +54,7 @@ function ProjectMaster() {
         throw new Error(`Failed to fetch projects (${response.status})`);
       }
       const data = await response.json();
+      
       const loaded = (Array.isArray(data) ? data : []).map((item, index) => {
         const managerId = (
           item.projectManagerId ||
@@ -68,6 +71,7 @@ function ProjectMaster() {
           project_id: item.projectId || item.project_id || "",
           project_name: item.projectName || item.project_name || "",
           project_type: item.projectType || item.project_type || "",
+          customer_id: item.custId || item.customer_id || "",
           owning_org_id: item.owningOrgId || item.owning_org_id || "",
           project_manager_id: managerId,
           // If Manager ID is not selected/empty, do NOT show any default or legacy name
@@ -309,6 +313,7 @@ function ProjectMaster() {
       project_id: "",
       project_name: "",
       project_type: "",
+      customer_id: "",
       owning_org_id: "",
       project_manager_id: "",
       project_manager_name: "",
@@ -503,6 +508,7 @@ function ProjectMaster() {
           projectId: project.project_id.trim(),
           projectName: project.project_name.trim(),
           projectType: project.project_type.trim(),
+          custId: project.customer_id.trim(), // Fixed: Uses state property customer_id mapped to backend's custId
           owningOrgId: project.owning_org_id.trim(),
           projectManagerId: managerId,
           projectManagerName:
