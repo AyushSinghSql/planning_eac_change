@@ -1408,9 +1408,9 @@ const CapCommInteractiveInvoiceBuilder = () => {
       toast.success(`Invoice (${generatedInvoiceNo}) created successfully!`);
 
       setIsPreviewVisible(false);
-      if (onInvoiceSuccess) {
-        onInvoiceSuccess([invoicePayload]);
-      }
+      // if (onInvoiceSuccess) {
+      //   onInvoiceSuccess([invoicePayload]);
+      // }
     } catch (error) {
       console.error("Error creating invoice:", error);
       toast.error(`Failed to create invoice: ${error.message}`);
