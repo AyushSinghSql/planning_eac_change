@@ -712,7 +712,7 @@
 import React, { useRef, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import logoImg from "../assets/image.png";
+import logoImg from "../assets/CapComm_Logo_v2_nobk.png";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { backendUrl } from "./config";
