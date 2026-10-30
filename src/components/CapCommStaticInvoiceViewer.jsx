@@ -1140,7 +1140,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
         try {
           doc.addImage(logoImg, "PNG", pageWidth - 45, 15, 30, 12);
         } catch (e) {
-            console.log('error', e)
+          console.log("error", e);
         }
 
         doc.setFillColor(244, 248, 251);
@@ -1652,7 +1652,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
                       }`}
                     >
                       {downloading ? "Generating PDF..." : "Download PDF"}
-                    </button>
+                    </button>{" "}
                     <button
                       onClick={handleConfirmInvoices}
                       disabled={isLoading}
