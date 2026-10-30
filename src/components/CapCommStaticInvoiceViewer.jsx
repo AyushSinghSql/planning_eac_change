@@ -871,6 +871,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
   const [selectedLineIds, setSelectedLineIds] = useState([]);
   const [loadingSubk, setLoadingSubk] = useState(false);
   const [linesFetched, setLinesFetched] = useState(false);
+  const [invoiceNo, setInvoiceNo] = useState("");
 
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0],
@@ -1143,8 +1144,6 @@ const CapCommInteractiveInvoiceBuilder = () => {
     setIsPreviewVisible(true);
   };
 
-  
-
   const totalAmount = useMemo(() => {
     return activeLineItems.reduce((acc, item) => acc + item.amount, 0);
   }, [activeLineItems]);
@@ -1221,7 +1220,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
         doc.text("PO & SALES INFO:", 110, 94);
 
         doc.setFont("helvetica", "normal");
-        doc.text(`Invoice No: ${generatedInvoiceNo}`, 18, 99);
+        doc.text(`Invoice No: ${invoiceNo}`, 18, 99);
         doc.text(
           `Terms: ${selectedCustomer?.defaultTerms || "Net 30"}`,
           18,
@@ -1338,7 +1337,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
         align: "right",
       });
 
-      doc.save(`CapComm_Invoice_${generatedInvoiceNo}.pdf`);
+      doc.save(`CapComm_Invoice_${invoiceNo}.pdf`);
     } catch (error) {
       console.error("PDF generation failed:", error);
     } finally {
@@ -1361,7 +1360,8 @@ const CapCommInteractiveInvoiceBuilder = () => {
       }
 
       const invoicePayload = {
-        invoiceNumber: generatedInvoiceNo,
+        // invoiceNumber: generatedInvoiceNo,
+        invoiceNumber: invoiceNo,
         invoiceDate: new Date(invoiceDate).toISOString(),
         invoiceAmount: totalAmount,
         venderName: checkedRows[0]?.createdBy || "Test Vendor",
@@ -1423,6 +1423,12 @@ const CapCommInteractiveInvoiceBuilder = () => {
       setLinesFetched(false);
     }
   };
+
+  useEffect(() => {
+    if (generatedInvoiceNo) {
+      setInvoiceNo(generatedInvoiceNo);
+    }
+  }, [generatedInvoiceNo]);
 
   return (
     <div className="min-h-screen bg-[#f9fafd] flex flex-col overflow-auto font-inter pr-2">
@@ -1486,9 +1492,10 @@ const CapCommInteractiveInvoiceBuilder = () => {
                   </label>
                   <input
                     type="text"
-                    readOnly
-                    value={generatedInvoiceNo}
-                    className="w-full px-3 py-2 text-xs font-semibold text-blue-800 bg-slate-50 border border-slate-300 rounded-lg shadow-inner cursor-not-allowed"
+                    // readOnly
+                    value={invoiceNo}
+                    onChange={(e) => setInvoiceNo(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold text-blue-800 bg-slate-50 border border-slate-300 rounded-lg shadow-inner "
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1768,7 +1775,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
                         Invoice details
                       </div>
                       <div className="text-slate-600 space-y-0.5">
-                        <div>Invoice no.: {generatedInvoiceNo}</div>
+                        <div>Invoice no.: {invoiceNo}</div>
                         <div className="font-semibold text-blue-700">
                           Terms: {selectedCustomer?.defaultTerms || "Net 30"}
                         </div>
