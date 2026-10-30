@@ -1125,6 +1125,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
 
         return {
           id: item.lineNo,
+          tsDate: item.ts_Date,
           plc: item.plc || "Professional Services",
           description: `[${startDate} to ${endDate}] ${item.resource_Id || ""} (${item.payTypeName || "SR"})`,
           hours: item.hours || 0,
@@ -1141,6 +1142,8 @@ const CapCommInteractiveInvoiceBuilder = () => {
 
     setIsPreviewVisible(true);
   };
+
+  
 
   const totalAmount = useMemo(() => {
     return activeLineItems.reduce((acc, item) => acc + item.amount, 0);
@@ -1376,14 +1379,15 @@ const CapCommInteractiveInvoiceBuilder = () => {
         currency: "USD",
         invoiceTimesheetLines: activeLineItems.map((line) => ({
           poLineNumber: line.poLine,
-          timesheetLineNo: line.line_No,
+          timesheetLineNo: line.id,
+          // timesheetLineNo: line.line_No,
           mappedHours: line.hours,
           mappedAmount: line.amount,
           rate: line.rate,
           employee: line.employee,
           vendor: line.vendor,
           plc: line.plc,
-          hours_Date: line.hours_Date,
+          hours_Date: line.tsDate,
           createdBy: "Test",
           updatedBy: "Test",
         })),
