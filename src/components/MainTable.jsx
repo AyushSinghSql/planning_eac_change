@@ -1635,9 +1635,10 @@ export default function MainTable() {
     setLeaveLoading(true);
 
     try {
+      const emplId = selectedEmployeeId || currentUser.employeeId
       // 1. Fetch user leave balances
       const balanceResponse = await fetch(
-        `${backendUrl}/api/EmployeeLeaveTransactions/balance/${selectedEmployeeId}?fiscalYear=${currentYear}`,
+        `${backendUrl}/api/EmployeeLeaveTransactions/balance/${emplId}?fiscalYear=${currentYear}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
