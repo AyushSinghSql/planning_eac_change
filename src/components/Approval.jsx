@@ -1417,7 +1417,9 @@ export default function Approval() {
   };
 
   const correctionEligibleCount = selectedRows.filter(
-    (row) => row.status?.toLowerCase() === "processed",
+    (row) =>
+      row.status?.toLowerCase() === "processed" ||
+      row.status?.toLowerCase() === "approved",
   ).length;
 
   const processedEligibleCount = selectedRows.filter(
@@ -1859,7 +1861,7 @@ export default function Approval() {
                     />
                     Submitted
                   </label>
-                  {isAdmin && (
+                  {/* {isAdmin && (
                     <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
                       <input
                         type="checkbox"
@@ -1870,7 +1872,7 @@ export default function Approval() {
                       />
                       Processed
                     </label>
-                  )}
+                  )} */}
                 </div>
               </div>
               <button
@@ -1926,13 +1928,13 @@ export default function Approval() {
                       return (
                         <>
                           {/* Approve button */}
-                          {/* <button
+                          <button
                             onClick={handleBulkApproveClick}
                             disabled={
                               approveLoading ||
                               approveEligibleCount === 0 ||
                               hasApprovedSelected ||
-                              hasProcessedSelected || 
+                              hasProcessedSelected ||
                               allProcessedSelected
                             }
                             className="btn1 btn-blue cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1940,7 +1942,7 @@ export default function Approval() {
                             {approveLoading
                               ? "Processing..."
                               : `Approve (${approveEligibleCount})`}
-                          </button> */}
+                          </button>
 
                           {/* Reject button */}
                           <button
@@ -1960,7 +1962,7 @@ export default function Approval() {
                           {isAdmin && (
                             <>
                               {/* Processed button */}
-                              <button
+                              {/* <button
                                 onClick={handleBulkProcessedClick}
                                 disabled={
                                   processedLoading ||
@@ -1972,10 +1974,10 @@ export default function Approval() {
                                   ? "Processing..."
                                   : "Processed"}{" "}
                                 ({processedEligibleCount})
-                              </button>
+                              </button> */}
 
                               {/* Correction button */}
-                              <button
+                              {/* <button
                                 onClick={handleBulkCorrectionClick}
                                 disabled={
                                   correctionLoading ||
@@ -1987,7 +1989,7 @@ export default function Approval() {
                                   ? "Processing..."
                                   : "Correct"}{" "}
                                 ({correctionEligibleCount})
-                              </button>
+                              </button> */}
                             </>
                           )}
                         </>

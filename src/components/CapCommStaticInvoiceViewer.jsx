@@ -1007,7 +1007,7 @@ const CapCommInteractiveInvoiceBuilder = () => {
     try {
       const period = selectedPeriod?.endDate || "";
       const response = await axios.get(
-        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=PROCESSED&timesheetDate=${period}&isExported=true&isInvoiced=false`,
+        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=APPROVED&timesheetDate=${period}&isInvoiced=false`,
       );
       if (response.data && Array.isArray(response.data)) {
         setRawSubkLines(response.data);
@@ -1158,6 +1158,194 @@ const CapCommInteractiveInvoiceBuilder = () => {
   }, [selectedProjects, projectsList]);
 
   // --- PDF Generator ---
+  // const handleDownloadPdf = () => {
+  //   setDownloading(true);
+  //   try {
+  //     const doc = new jsPDF("p", "mm", "a4");
+  //     const pageWidth = doc.internal.pageSize.getWidth();
+  //     const pageHeight = doc.internal.pageSize.getHeight();
+
+  //     const drawHeader = () => {
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(20);
+  //       doc.setTextColor(0, 71, 171);
+  //       doc.text("INVOICE", 14, 20);
+
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(10);
+  //       doc.setTextColor(50, 50, 50);
+  //       doc.text("Capital Communications LLC.", 14, 27);
+
+  //       doc.setFont("helvetica", "normal");
+  //       doc.setFontSize(9);
+  //       doc.setTextColor(100, 100, 100);
+  //       doc.text("14600 Flint Lee Rd Unit E\nCHANTILLY, VA 20151", 14, 32);
+  //       doc.text("apalma@capcomm.tech | +1 (703) 309-3832", 14, 44);
+
+  //       try {
+  //         doc.addImage(logoImg, "PNG", pageWidth - 45, 15, 30, 12);
+  //       } catch (e) {
+  //         console.log("error", e);
+  //       }
+
+  //       doc.setFillColor(244, 248, 251);
+  //       doc.roundedRect(14, 50, pageWidth - 28, 62, 2, 2, "F");
+  //       doc.setDrawColor(210, 220, 230);
+  //       doc.roundedRect(14, 50, pageWidth - 28, 62, 2, 2, "S");
+
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(9);
+  //       doc.setTextColor(0, 71, 171);
+  //       doc.text(activeProjectNames, 18, 57);
+
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(8);
+  //       doc.setTextColor(80, 80, 80);
+  //       doc.text("BILL TO:", 18, 64);
+  //       doc.text("SHIP TO:", 110, 64);
+
+  //       doc.setFont("helvetica", "normal");
+  //       doc.setFontSize(8);
+  //       doc.setTextColor(100, 100, 100);
+  //       doc.text(selectedCustomer?.billTo || "", 18, 69);
+  //       doc.text(selectedCustomer?.shipTo || "", 110, 69);
+
+  //       doc.setDrawColor(200, 205, 215);
+  //       doc.line(18, 88, pageWidth - 18, 88);
+
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(8);
+  //       doc.setTextColor(80, 80, 80);
+  //       doc.text("INVOICE DETAILS:", 18, 94);
+  //       doc.text("PO & SALES INFO:", 110, 94);
+
+  //       doc.setFont("helvetica", "normal");
+  //       doc.text(`Invoice No: ${invoiceNo}`, 18, 99);
+  //       doc.text(
+  //         `Terms: ${selectedCustomer?.defaultTerms || "Net 30"}`,
+  //         18,
+  //         103,
+  //       );
+  //       doc.text(`Invoice Date: ${invoiceDate}`, 18, 107);
+  //       doc.text(`Due Date: ${dueDate}`, 18, 111);
+
+  //       doc.text("PO Number: 1825575", 110, 99);
+  //       doc.text("Sales Person: RJM", 110, 103);
+  //       doc.text(
+  //         `Rate Mode: ${selectedCustomer?.defaultRateType || "Bill Rate"}`,
+  //         110,
+  //         107,
+  //       );
+  //     };
+
+  //     drawHeader();
+
+  //     let currentY = 124;
+
+  //     const drawTableHeader = (y) => {
+  //       doc.setFillColor(240, 244, 248);
+  //       doc.rect(14, y, pageWidth - 28, 8, "F");
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(8);
+  //       doc.setTextColor(70, 70, 70);
+  //       doc.text("#", 17, y + 5.5);
+  //       doc.text("Product or service", 27, y + 5.5);
+  //       doc.text("Description", 75, y + 5.5);
+  //       doc.text("Qty", 138, y + 5.5, { align: "right" });
+  //       doc.text("Rate", 162, y + 5.5, { align: "right" });
+  //       doc.text("Amount", pageWidth - 17, y + 5.5, { align: "right" });
+  //     };
+
+  //     drawTableHeader(currentY);
+  //     currentY += 10;
+
+  //     activeLineItems.forEach((item, index) => {
+  //       // Define strict column widths for text wrapping
+  //       const colWidthPlc = 45;
+  //       const colWidthDesc = 40;
+
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(8);
+  //       const wrappedPlc = doc.splitTextToSize(item.plc || "", colWidthPlc);
+
+  //       doc.setFont("helvetica", "normal");
+  //       const wrappedDesc = doc.splitTextToSize(
+  //         item.description || "",
+  //         colWidthDesc,
+  //       );
+
+  //       // Calculate required row height dynamically based on wrapped text lines
+  //       const maxLines = Math.max(wrappedPlc.length, wrappedDesc.length);
+  //       const rowHeight = Math.max(8, maxLines * 4 + 4);
+
+  //       if (currentY + rowHeight > pageHeight - 25) {
+  //         doc.addPage();
+  //         drawHeader();
+  //         currentY = 124;
+  //         drawTableHeader(currentY);
+  //         currentY += 10;
+  //       }
+
+  //       // Render Row Data with proper bounding X coordinates
+  //       doc.setFont("helvetica", "normal");
+  //       doc.setTextColor(90, 90, 90);
+  //       doc.text(`${index + 1}.`, 17, currentY + 4);
+
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setTextColor(40, 40, 40);
+  //       doc.text(wrappedPlc, 27, currentY + 4);
+
+  //       doc.setFont("helvetica", "normal");
+  //       doc.setTextColor(100, 100, 100);
+  //       doc.text(wrappedDesc, 75, currentY + 4);
+
+  //       doc.setTextColor(70, 70, 70);
+  //       doc.text(item.hours.toFixed(2), 138, currentY + 4, { align: "right" });
+  //       doc.text(`$${item.rate.toFixed(2)}`, 162, currentY + 4, {
+  //         align: "right",
+  //       });
+  //       doc.text(`$${item.amount.toFixed(2)}`, pageWidth - 17, currentY + 4, {
+  //         align: "right",
+  //       });
+
+  //       currentY += rowHeight;
+  //       doc.setDrawColor(230, 235, 240);
+  //       doc.line(14, currentY, pageWidth - 14, currentY);
+  //       currentY += 3;
+  //     });
+
+  //     if (currentY > pageHeight - 25) {
+  //       doc.addPage();
+  //       currentY = 20;
+  //     }
+
+  //     currentY += 5;
+  //     doc.setFillColor(244, 248, 251);
+  //     doc.roundedRect(pageWidth - 85, currentY, 71, 14, 2, 2, "F");
+  //     doc.setDrawColor(210, 220, 230);
+  //     doc.roundedRect(pageWidth - 85, currentY, 71, 14, 2, 2, "S");
+
+  //     doc.setFont("helvetica", "bold");
+  //     doc.setFontSize(9);
+  //     doc.setTextColor(50, 50, 50);
+  //     doc.text("Total Amount Due:", pageWidth - 80, currentY + 9);
+
+  //     doc.setFont("helvetica", "bold");
+  //     doc.setFontSize(11);
+  //     doc.setTextColor(0, 71, 171);
+  //     doc.text(`$${totalAmount.toFixed(2)}`, pageWidth - 20, currentY + 9, {
+  //       align: "right",
+  //     });
+
+  //     doc.save(`CapComm_Invoice_${invoiceNo}.pdf`);
+  //   } catch (error) {
+  //     console.error("PDF generation failed:", error);
+  //   } finally {
+  //     setDownloading(false);
+  //   }
+  // };
+
+  //with watermark
   const handleDownloadPdf = () => {
     setDownloading(true);
     try {
@@ -1166,6 +1354,9 @@ const CapCommInteractiveInvoiceBuilder = () => {
       const pageHeight = doc.internal.pageSize.getHeight();
 
       const drawHeader = () => {
+        // Only draw the invoice header on the first page
+        if (doc.internal.getNumberOfPages() > 1) return;
+
         doc.setFont("helvetica", "bold");
         doc.setFontSize(20);
         doc.setTextColor(0, 71, 171);
@@ -1243,6 +1434,9 @@ const CapCommInteractiveInvoiceBuilder = () => {
       let currentY = 124;
 
       const drawTableHeader = (y) => {
+        // Only draw table column headers on the first page
+        if (doc.internal.getNumberOfPages() > 1) return;
+
         doc.setFillColor(240, 244, 248);
         doc.rect(14, y, pageWidth - 28, 8, "F");
         doc.setFont("helvetica", "bold");
@@ -1260,7 +1454,6 @@ const CapCommInteractiveInvoiceBuilder = () => {
       currentY += 10;
 
       activeLineItems.forEach((item, index) => {
-        // Define strict column widths for text wrapping
         const colWidthPlc = 45;
         const colWidthDesc = 40;
 
@@ -1274,19 +1467,20 @@ const CapCommInteractiveInvoiceBuilder = () => {
           colWidthDesc,
         );
 
-        // Calculate required row height dynamically based on wrapped text lines
         const maxLines = Math.max(wrappedPlc.length, wrappedDesc.length);
         const rowHeight = Math.max(8, maxLines * 4 + 4);
 
         if (currentY + rowHeight > pageHeight - 25) {
           doc.addPage();
           drawHeader();
-          currentY = 124;
+
+          currentY = 20; // Start cleanly near top of page 2
           drawTableHeader(currentY);
-          currentY += 10;
+          // Since drawTableHeader checks for page > 1, it will skip drawing the column headers here
+
+          currentY += 2; // Slight padding since there's no table header block on page 2
         }
 
-        // Render Row Data with proper bounding X coordinates
         doc.setFont("helvetica", "normal");
         doc.setTextColor(90, 90, 90);
         doc.text(`${index + 1}.`, 17, currentY + 4);
@@ -1337,6 +1531,25 @@ const CapCommInteractiveInvoiceBuilder = () => {
         align: "right",
       });
 
+      // --- WATERMARK LOOP ACROSS ALL PAGES ---
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.saveGraphicsState();
+
+        doc.setGState(new doc.GState({ opacity: 0.15 }));
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(45);
+        doc.setTextColor(150, 150, 150);
+
+        doc.text("UNCONFIRMED", pageWidth / 2, pageHeight / 2, {
+          angle: 45,
+          align: "center",
+        });
+
+        doc.restoreGraphicsState();
+      }
+
       doc.save(`CapComm_Invoice_${invoiceNo}.pdf`);
     } catch (error) {
       console.error("PDF generation failed:", error);
@@ -1359,8 +1572,32 @@ const CapCommInteractiveInvoiceBuilder = () => {
         return;
       }
 
+      // Compute po_Start_End_Date dynamically using selectedPeriod or matching period lookup
+      const getPoStartEndDate = () => {
+        if (selectedPeriod?.startDate && selectedPeriod?.endDate) {
+          return `${selectedPeriod.startDate} to ${selectedPeriod.endDate}`;
+        }
+
+        // Fallback: lookup period based on timesheet_Date of the checked row
+        const firstItem = checkedRows[0];
+        if (firstItem?.timesheet_Date) {
+          const matchingPeriod = periodsList.find(
+            (p) =>
+              p.startDate &&
+              p.endDate &&
+              firstItem.timesheet_Date >= p.startDate &&
+              firstItem.timesheet_Date <= p.endDate,
+          );
+          if (matchingPeriod) {
+            return `${matchingPeriod.startDate} to ${matchingPeriod.endDate}`;
+          }
+          return `${firstItem.timesheet_Date} to ${firstItem.timesheet_Date}`;
+        }
+
+        return "";
+      };
+
       const invoicePayload = {
-        // invoiceNumber: generatedInvoiceNo,
         invoiceNumber: invoiceNo,
         invoiceDate: new Date(invoiceDate).toISOString(),
         invoiceAmount: totalAmount,
@@ -1371,16 +1608,13 @@ const CapCommInteractiveInvoiceBuilder = () => {
         remitTo: selectedCustomer?.billTo || "",
         po_Number: checkedRows[0]?.poNumber || "1825575",
         po_rlse_Number: checkedRows[0]?.rlseNumber || "0",
-        po_Start_End_Date: selectedPeriod
-          ? `${selectedPeriod.startDate} to ${selectedPeriod.endDate}`
-          : "",
+        po_Start_End_Date: getPoStartEndDate(),
         buyer: checkedRows[0]?.pm_User_Id || "RJM",
         terms: selectedCustomer?.defaultTerms || "Net 30",
         currency: "USD",
         invoiceTimesheetLines: activeLineItems.map((line) => ({
           poLineNumber: line.poLine,
           timesheetLineNo: line.id,
-          // timesheetLineNo: line.line_No,
           mappedHours: line.hours,
           mappedAmount: line.amount,
           rate: line.rate,
@@ -1412,9 +1646,6 @@ const CapCommInteractiveInvoiceBuilder = () => {
       toast.success(`Invoice (${generatedInvoiceNo}) created successfully!`);
 
       setIsPreviewVisible(false);
-      // if (onInvoiceSuccess) {
-      //   onInvoiceSuccess([invoicePayload]);
-      // }
     } catch (error) {
       console.error("Error creating invoice:", error);
       toast.error(`Failed to create invoice: ${error.message}`);
@@ -1423,6 +1654,85 @@ const CapCommInteractiveInvoiceBuilder = () => {
       setLinesFetched(false);
     }
   };
+
+  // const handleConfirmInvoices = async () => {
+  //   setIsLoading(true);
+
+  //   try {
+  //     const checkedRows = rawSubkLines.filter((item) =>
+  //       selectedLineIds.includes(item.lineNo),
+  //     );
+
+  //     if (checkedRows.length === 0) {
+  //       toast.warning("Please select at least one timesheet line to confirm.");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     const invoicePayload = {
+  //       // invoiceNumber: generatedInvoiceNo,
+  //       invoiceNumber: invoiceNo,
+  //       invoiceDate: new Date(invoiceDate).toISOString(),
+  //       invoiceAmount: totalAmount,
+  //       venderName: checkedRows[0]?.createdBy || "Test Vendor",
+  //       createdBy: "Test",
+  //       updatedBy: "Test",
+  //       billTo: selectedCustomer?.billTo || "",
+  //       remitTo: selectedCustomer?.billTo || "",
+  //       po_Number: checkedRows[0]?.poNumber || "1825575",
+  //       po_rlse_Number: checkedRows[0]?.rlseNumber || "0",
+  //       po_Start_End_Date: selectedPeriod
+  //         ? `${selectedPeriod.startDate} to ${selectedPeriod.endDate}`
+  //         : "",
+  //       buyer: checkedRows[0]?.pm_User_Id || "RJM",
+  //       terms: selectedCustomer?.defaultTerms || "Net 30",
+  //       currency: "USD",
+  //       invoiceTimesheetLines: activeLineItems.map((line) => ({
+  //         poLineNumber: line.poLine,
+  //         timesheetLineNo: line.id,
+  //         // timesheetLineNo: line.line_No,
+  //         mappedHours: line.hours,
+  //         mappedAmount: line.amount,
+  //         rate: line.rate,
+  //         employee: line.employee,
+  //         vendor: line.vendor,
+  //         plc: line.plc,
+  //         hours_Date: line.tsDate,
+  //         createdBy: "Test",
+  //         updatedBy: "Test",
+  //       })),
+  //     };
+
+  //     console.log("Submitting Invoice Payload:", invoicePayload);
+
+  //     const response = await fetch(`${backendUrl}/api/Invoices`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(invoicePayload),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         `Failed to create invoice ${generatedInvoiceNo}: ${response.status}`,
+  //       );
+  //     }
+
+  //     const responseData = await response.json();
+  //     console.log("Invoice created successfully:", responseData);
+  //     toast.success(`Invoice (${generatedInvoiceNo}) created successfully!`);
+
+  //     setIsPreviewVisible(false);
+  //     // if (onInvoiceSuccess) {
+  //     //   onInvoiceSuccess([invoicePayload]);
+  //     // }
+  //   } catch (error) {
+  //     console.error("Error creating invoice:", error);
+  //     toast.error(`Failed to create invoice: ${error.message}`);
+  //   } finally {
+  //     setIsLoading(false);
+  //     setLinesFetched(false);
+  //   }
+  // };
 
   useEffect(() => {
     if (generatedInvoiceNo) {

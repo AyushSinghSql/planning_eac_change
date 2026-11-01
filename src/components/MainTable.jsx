@@ -871,7 +871,7 @@ export default function MainTable() {
             userId: u.userId,
             scheduleId: u.ts_Schl_id?.ts_Schedule_Id,
             statusCd: u.ts_Schl_id?.sEmplStatusCd,
-            employeeId: u.ts_Schl_id?.emplId
+            employeeId: u.ts_Schl_id?.emplId,
           })),
         );
       } catch (e) {
@@ -1029,10 +1029,101 @@ export default function MainTable() {
     }
   }, [currentSelectedRowId, rows]);
 
+  // const fetchData = async () => {
+  //   const targetResource = selectedEmployeeId || currentUser?.employeeId;
+  //   if (!targetResource) return [];
+  //   // if (!currentUser) return [];
+  //   setLoading(true);
+  //   try {
+  //     const apiUrl = `${backendUrl}/api/SubkTimesheet/ByResourceV1/${targetResource}?month=${filterMonth}&year=${filterYear}`;
+  //     const response = await fetch(apiUrl);
+  //     if (!response.ok)
+  //       throw new Error("Network response failed while fetching timesheets.");
+
+  //     const apiData = await response.json();
+  //     if (!Array.isArray(apiData) || apiData.length === 0) {
+  //       setRows([]);
+  //       return [];
+  //     }
+
+  //     const uniqueResourceIds = [
+  //       ...new Set(apiData.map((item) => item.resource_Id).filter((id) => id)),
+  //     ];
+  //     const nameMap = new Map();
+
+  //     if (uniqueResourceIds.length > 0) {
+  //       const namePromises = uniqueResourceIds.map((id) =>
+  //         fetch(`${backendUrl}/api/PurchaseOrders/ByResourceDetails/${id}`)
+  //           .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
+  //           .catch(() => null),
+  //       );
+  //       const results = await Promise.all(namePromises);
+  //       results.forEach((poData, index) => {
+  //         if (poData && poData.length > 0 && poData[0].resourceName) {
+  //           const resourceId = uniqueResourceIds[index];
+  //           nameMap.set(resourceId, poData[0].resourceName);
+  //         }
+  //       });
+  //     }
+
+  //     // Build user details map from API data
+  //     const userMap = {};
+  //     apiData.forEach((item) => {
+  //       if (item.pm_User_Id) {
+  //         userMap[item.pm_User_Id] = item.pm_User_Id; // Store PM User ID
+  //       }
+  //     });
+  //     setUserDetailsMap(userMap);
+
+  //     const timesheetMap = new Map();
+  //     apiData.forEach((item) => {
+  //       const date = formatDate(item.timesheet_Date);
+  //       if (timesheetMap.has(date)) {
+  //         const existing = timesheetMap.get(date);
+  //         existing.Hours += item.hours;
+  //         existing.allTimesheets.push(item);
+  //       } else {
+  //         timesheetMap.set(date, {
+  //           ...item,
+  //           id: item.timesheetId || item.lineNo,
+  //           Date: date,
+  //           "Employee ID": item.resource_Id || "",
+  //           Name:
+  //             nameMap.get(item.resource_Id) ||
+  //             item.displayedName ||
+  //             `Employee ${item.resource_Id}`,
+  //           Hours: item.hours,
+  //           "Project ID": item.projId || "",
+  //           Status: item.status || "OPEN",
+  //           Approver: item.pm_User_Id || "N/A",
+  //           "Approved Date": item.approvedDate
+  //             ? formatDate(item.approvedDate)
+  //             : " ",
+  //           Comment: item.comment || "",
+  //           "Created Date": item.createdAt ? formatDate(item.createdAt) : " ",
+  //           allTimesheets: [item],
+  //         });
+  //       }
+  //     });
+
+  //     // setRows(Array.from(timesheetMap.values()));
+  //     const finalRows = Array.from(timesheetMap.values());
+  //     setRows(finalRows);
+
+  //     return finalRows;
+  //   } catch (error) {
+  //     console.error("Failed to fetch data:", error);
+  //     // showToast('No Timesheet Found', "error");
+  //     setRows([]);
+  //     return [];
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchData = async () => {
     const targetResource = selectedEmployeeId || currentUser?.employeeId;
     if (!targetResource) return [];
-    // if (!currentUser) return [];
     setLoading(true);
     try {
       const apiUrl = `${backendUrl}/api/SubkTimesheet/ByResourceV1/${targetResource}?month=${filterMonth}&year=${filterYear}`;
@@ -1070,50 +1161,79 @@ export default function MainTable() {
       const userMap = {};
       apiData.forEach((item) => {
         if (item.pm_User_Id) {
-          userMap[item.pm_User_Id] = item.pm_User_Id; // Store PM User ID
+          userMap[item.pm_User_Id] = item.pm_User_Id;
         }
       });
       setUserDetailsMap(userMap);
 
+      // Grouping by Timesheet End Date with dynamic status evaluation
       const timesheetMap = new Map();
+
+      // First, group all raw items by date
       apiData.forEach((item) => {
         const date = formatDate(item.timesheet_Date);
-        if (timesheetMap.has(date)) {
-          const existing = timesheetMap.get(date);
-          existing.Hours += item.hours;
-          existing.allTimesheets.push(item);
-        } else {
-          timesheetMap.set(date, {
-            ...item,
-            id: item.timesheetId || item.lineNo,
-            Date: date,
-            "Employee ID": item.resource_Id || "",
-            Name:
-              nameMap.get(item.resource_Id) ||
-              item.displayedName ||
-              `Employee ${item.resource_Id}`,
-            Hours: item.hours,
-            "Project ID": item.projId || "",
-            Status: item.status || "OPEN",
-            Approver: item.pm_User_Id || "N/A",
-            "Approved Date": item.approvedDate
-              ? formatDate(item.approvedDate)
-              : " ",
-            Comment: item.comment || "",
-            "Created Date": item.createdAt ? formatDate(item.createdAt) : " ",
-            allTimesheets: [item],
-          });
+        if (!timesheetMap.has(date)) {
+          timesheetMap.set(date, []);
         }
+        timesheetMap.get(date).push(item);
       });
 
-      // setRows(Array.from(timesheetMap.values()));
-      const finalRows = Array.from(timesheetMap.values());
-      setRows(finalRows);
+      // Now, determine the grouped status for each timesheet end date
+      const finalRows = Array.from(timesheetMap.entries()).map(
+        ([date, items]) => {
+          const totalHours = items.reduce(
+            (sum, line) => sum + (line.hours || 0),
+            0,
+          );
+          const primaryItem = items[0];
 
+          // Status check logic
+          const statuses = items.map((line) =>
+            (line.status || "OPEN").toUpperCase(),
+          );
+
+          let computedStatus = "Open";
+
+          if (statuses.some((s) => s === "DRAFT" || s === "OPEN")) {
+            computedStatus = "Open";
+          } else if (statuses.every((s) => s === "SUBMITTED")) {
+            computedStatus = "Submitted";
+          } else if (statuses.every((s) => s === "APPROVED")) {
+            computedStatus = "APPROVED";
+          } else {
+            // If there is any distinct status (e.g., Processed, Rejected, Correction)
+            computedStatus = items[0].status || "OPEN";
+          }
+
+          return {
+            ...primaryItem,
+            id: primaryItem.timesheetId || primaryItem.lineNo,
+            Date: date,
+            "Employee ID": primaryItem.resource_Id || "",
+            Name:
+              nameMap.get(primaryItem.resource_Id) ||
+              primaryItem.displayedName ||
+              `Employee ${primaryItem.resource_Id}`,
+            Hours: totalHours,
+            "Project ID": primaryItem.projId || "",
+            Status: computedStatus,
+            Approver: primaryItem.pm_User_Id || "N/A",
+            "Approved Date": primaryItem.approvedDate
+              ? formatDate(primaryItem.approvedDate)
+              : " ",
+            Comment: primaryItem.comment || "",
+            "Created Date": primaryItem.createdAt
+              ? formatDate(primaryItem.createdAt)
+              : " ",
+            allTimesheets: items,
+          };
+        },
+      );
+
+      setRows(finalRows);
       return finalRows;
     } catch (error) {
       console.error("Failed to fetch data:", error);
-      // showToast('No Timesheet Found', "error");
       setRows([]);
       return [];
     } finally {
@@ -1273,29 +1393,53 @@ export default function MainTable() {
 
     setIsSubmittingLeave(true);
     try {
-      const payload = {
-        emplId: selectedEmployeeId || currentUser?.employeeId || "EMP001",
-        leaveCode: selectedLeaveCode,
-        transactionType: "LEAVE",
-        transactionDate: new Date().toISOString(),
-        fiscalYear: leaveStartDate.getFullYear(),
-        hours: parseFloat(totalHoursCalculated) || 8.0,
-        remarks: leaveReason || "",
-        createdBy: currentUser?.name || "admin",
-      };
+      let currentDate = new Date(leaveStartDate);
+      const endDate = new Date(leaveEndDate);
+      const hoursPerDay = parseFloat(totalHoursCalculated) || 8.0;
 
-      await axios.post(`${backendUrl}/api/EmployeeLeaveTransactions`, payload);
+      while (currentDate <= endDate) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const day = String(currentDate.getDate()).padStart(2, "0");
+        const formattedDateString = `${year}-${month}-${day}`;
 
-      showToast("Leave applied successfully!", "success");
+        const payload = {
+          emplId: selectedEmployeeId || currentUser?.name || "EMP001",
+          leaveCode: selectedLeaveCode,
+          transactionType: "PENDING",
+          transactionDate: formattedDateString,
+          fiscalYear: year,
+          hours: hoursPerDay,
+          remarks: leaveReason || "",
+          createdBy: currentUser?.name || "admin",
+        };
+
+        await axios.post(
+          `${backendUrl}/api/EmployeeLeaveTransactions`,
+          payload,
+        );
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      showToast("Leave applied successfully for all dates!", "success");
       setIsApplyingLeave(false);
       setShowLeaveModal(false);
-
-      // Optionally refresh leave balance data if needed
       handleLeaveBalance();
     } catch (error) {
-      const errorMsg =
-        error?.response?.data?.message || error?.message || "Unknown error";
-      showToast(`Failed to apply leave: ${errorMsg}`, "error");
+      // Handles both plain text response and JSON response gracefully
+      const errorData = error?.response?.data;
+      let errorMsg = "Unknown error";
+
+      if (typeof errorData === "string") {
+        errorMsg = errorData;
+      } else if (errorData?.message) {
+        errorMsg = errorData.message;
+      } else if (error?.message) {
+        errorMsg = error?.message;
+      }
+
+      showToast(errorMsg, "error");
     } finally {
       setIsSubmittingLeave(false);
     }
@@ -1491,28 +1635,25 @@ export default function MainTable() {
     setLeaveLoading(true);
 
     try {
-      const response = await fetch(
-        `${backendUrl}/api/EmployeeLeaveTransactions/balance/EMP001?fiscalYear=${currentYear}`,
+      // 1. Fetch user leave balances
+      const balanceResponse = await fetch(
+        `${backendUrl}/api/EmployeeLeaveTransactions/balance/${selectedEmployeeId}?fiscalYear=${currentYear}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         },
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!balanceResponse.ok) {
+        throw new Error(`HTTP error! status: ${balanceResponse.status}`);
       }
 
-      const data = await response.json();
+      const balanceData = await balanceResponse.json();
 
-      // Map API response to match JSX property names
-      const formattedData = Array.isArray(data)
-        ? data.map((item) => ({
+      const formattedData = Array.isArray(balanceData)
+        ? balanceData.map((item) => ({
             leaveTypeCode: item.leave_code || "",
-            // leaveTypeName: item.leave_type_name || item.leave_code, // fallback if name isn't provided
             begining_hours: item.begining_hours || 0,
-            // carriedForward: item.carried_forward || 0,
-            // beginningAdjustments: item.beginning_adjustments || 0,
             accruedHours: item.accrued_hours || 0,
             leaveTakenHours: item.leave_taken_hours || 0,
             availableBalance: item.balance_hours || 0,
@@ -1520,7 +1661,20 @@ export default function MainTable() {
         : [];
 
       setLeaveData(formattedData);
-      setLeaveTypes(formattedData);
+
+      // 2. Fetch master leave types from /api/LeaveType
+      const leaveTypesResponse = await fetch(`${backendUrl}/api/LeaveType`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (leaveTypesResponse.ok) {
+        const leaveTypesData = await leaveTypesResponse.json();
+        setLeaveTypes(Array.isArray(leaveTypesData) ? leaveTypesData : []);
+      } else {
+        // Fallback to balance codes if master endpoint fails
+        setLeaveTypes(formattedData);
+      }
     } catch (error) {
       showToast(`Error fetching leave balance: ${error.message}`, "error");
       setLeaveData([]);
@@ -1528,6 +1682,7 @@ export default function MainTable() {
       setLeaveLoading(false);
     }
   };
+
   const handleCreateClick = () => {
     // Close any open detail modal first
     setSelectedTimesheetData(null);
@@ -1715,7 +1870,7 @@ export default function MainTable() {
                     value={selectedEmployeeId}
                     onChange={(e) => {
                       const selectedVal = e.target.value;
-                      console.log(selectedVal)
+                      console.log(selectedVal);
                       if (selectedEmployeeId !== selectedVal) {
                         setSelectedTimesheetData(false);
                       }
@@ -1930,16 +2085,32 @@ export default function MainTable() {
                                   {item.leaveTypeCode}
                                 </td>
                                 <td className="px-3 py-2 text-center border-r border-b border-gray-300">
-                                  {item.begining_hours}
+                                  {item.begining_hours}{" "}
+                                  {item.begining_hours === 0 ||
+                                  item.begining_hours === 1
+                                    ? "hr"
+                                    : "hrs"}
                                 </td>
                                 <td className="px-3 py-2 text-center border-r border-b border-gray-300">
-                                  {item.accruedHours}
+                                  {item.accruedHours}{" "}
+                                  {item.accruedHours === 0 ||
+                                  item.accruedHours === 1
+                                    ? "hr"
+                                    : "hrs"}
                                 </td>
                                 <td className="px-3 py-2 text-center border-r border-b border-gray-300">
-                                  {item.leaveTakenHours}
+                                  {item.leaveTakenHours}{" "}
+                                  {item.leaveTakenHours === 0 ||
+                                  item.leaveTakenHours === 1
+                                    ? "hr"
+                                    : "hrs"}
                                 </td>
                                 <td className="px-3 py-2 text-center border-b border-gray-300 font-bold text-green-600 bg-green-50/40">
-                                  {item.availableBalance}
+                                  {item.availableBalance}{" "}
+                                  {item.availableBalance === 0 ||
+                                  item.availableBalance === 1
+                                    ? "hr"
+                                    : "hrs"}
                                 </td>
                               </tr>
                             ))
@@ -2012,13 +2183,12 @@ export default function MainTable() {
                           <option value="">-Select-</option>
                           {leaveTypes.map((type, idx) => (
                             <option key={idx} value={type.leaveTypeCode}>
-                              {type.leaveTypeCode} (Available:{" "}
-                              {type.availableBalance} hrs)
+                              {type.leaveTypeCode} -{" "}
+                              {type.leaveTypeName || type.description}
                             </option>
                           ))}
                         </select>
                       </div>
-
                       {/* Notes / Reason */}
                       <div className="flex flex-col row-span-2">
                         <label className="font-semibold text-gray-700 mb-1">

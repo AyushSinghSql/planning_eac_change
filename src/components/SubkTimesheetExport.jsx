@@ -121,7 +121,7 @@ export default function SubkTimesheetExport() {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=PROCESSED&isExported=false&isInvoiced=false`,
+        `${backendUrl}/api/SubkTimesheet/GetByApprover?status=APPROVED&isExported=false`,
       );
       const data = Array.isArray(response.data) ? response.data : [];
 
@@ -261,7 +261,7 @@ export default function SubkTimesheetExport() {
 
     const exportRows = [];
     selectedTimesheets.forEach((timesheet) => {
-        console.log(timesheet)
+      console.log(timesheet);
       const dailyHours = Array.isArray(timesheet.timesheetHours)
         ? timesheet.timesheetHours.filter(
             (entry) => entry && typeof entry === "object",
@@ -286,13 +286,22 @@ export default function SubkTimesheetExport() {
           "ServiceItem (PLC)": timesheet.plcDesc
             ? `${timesheet.plc || ""} - ${timesheet.plcDesc}`
             : timesheet.plc || "",
-          HourlyRate: timesheet.hrlyAmt != null ? `$${Number(timesheet.hrlyAmt).toFixed(2)}` : "",
+          HourlyRate:
+            timesheet.hrlyAmt != null
+              ? `$${Number(timesheet.hrlyAmt).toFixed(2)}`
+              : "",
           Taxable: false,
           Class: timesheet.empl_class ?? "",
           Location: "",
           Superivor: timesheet.pm_User_Id || timesheet.pmUserId || "",
-          "Cost Rate": timesheet.costRate != null ? `$${Number(timesheet.costRate).toFixed(2)}` : "",
-          "OT Cost Rate": timesheet.otCostRate != null ? `$${Number(timesheet.otCostRate).toFixed(2)}` : "",
+          "Cost Rate":
+            timesheet.costRate != null
+              ? `$${Number(timesheet.costRate).toFixed(2)}`
+              : "",
+          "OT Cost Rate":
+            timesheet.otCostRate != null
+              ? `$${Number(timesheet.otCostRate).toFixed(2)}`
+              : "",
           "Per Diem": perdiemValue ? `$${Number(perdiemValue).toFixed(2)}` : "",
           // "Per Diem": timesheet.perDiem ?? "",
         });
@@ -324,7 +333,7 @@ export default function SubkTimesheetExport() {
       XLSX.utils.book_append_sheet(workbook, worksheet, "Subk Timesheets");
       XLSX.writeFile(workbook, fileName);
 
-      console.log(selectedTimesheets)
+      console.log(selectedTimesheets);
       const requestIds = selectedTimesheets
         .map((item) => Number(item.lineNo))
         .filter((id) => Number.isInteger(id) && id > 0);
@@ -338,19 +347,21 @@ export default function SubkTimesheetExport() {
       }
 
       const timesheetIds = selectedTimesheets
-        .map((item) => Number(item.lineNo ?? item.timesheetId ?? item.timesheet_Id))
+        .map((item) =>
+          Number(item.lineNo ?? item.timesheetId ?? item.timesheet_Id),
+        )
         .filter((id) => Number.isInteger(id) && id > 0);
 
-        if (timesheetIds.length !== selectedTimesheets.length) {
-            console.log("Hello")
+      if (timesheetIds.length !== selectedTimesheets.length) {
+        console.log("Hello");
         showToast("Some timesheets have an invalid ID.", "warning");
         return;
-        }
+      }
 
-        await axios.post(
+      await axios.post(
         `${backendUrl}/api/SubkTimesheet/SetTimesheetExported?fileName=${encodeURIComponent(fileName)}`,
-        timesheetIds
-        );
+        timesheetIds,
+      );
 
       showToast(
         `Exported ${selectedTimesheets.length} timesheets (${exportRows.length} rows).`,
@@ -390,72 +401,71 @@ export default function SubkTimesheetExport() {
   /* ----------------------------- render ----------------------------- */
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-2 text-gray-800">
+    <div className="min-h-screen bg-gray-50 text-gray-800">
       <div className="mx-auto space-y-3">
         {/* Header */}
-          <div className="w-full flex justify-between items-center mb-3 px-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                    {/* Left Side: Icon and Title */}
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-6 w-6 text-blue-600" />
-                      <div>
-                        <h1 className="text-lg font-bold text-gray-800">
-                          Timesheet export
-                        </h1>
-                      </div>
-                    </div>
-                  </div>
+        <div className="w-full flex justify-between items-center mb-3 px-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+          {/* Left Side: Icon and Title */}
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-6 w-6 text-blue-600" />
+            <div>
+              <h1 className="text-lg font-bold text-gray-800">
+                Payment Process
+              </h1>
+            </div>
+          </div>
+        </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="date"
-            value={fromDate}
-            max={toDate || undefined}
-            onChange={(e) => setFromDate(e.target.value)}
-            aria-label="From date"
-            className={`${inputCls} !w-36`}
-          />
-          <input
-            type="date"
-            value={toDate}
-            min={fromDate || undefined}
-            onChange={(e) => setToDate(e.target.value)}
-            aria-label="To date"
-            className={`${inputCls} !w-36`}
-          />
-          <input
-            value={employeeFilter}
-            onChange={(e) => setEmployeeFilter(e.target.value)}
-            placeholder="Employee ID"
-            className={`${inputCls} !w-32`}
-          />
-          {/* <input
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={fromDate}
+              max={toDate || undefined}
+              onChange={(e) => setFromDate(e.target.value)}
+              aria-label="From date"
+              className={`${inputCls} !w-36`}
+            />
+            <input
+              type="date"
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(e) => setToDate(e.target.value)}
+              aria-label="To date"
+              className={`${inputCls} !w-36`}
+            />
+            <input
+              value={employeeFilter}
+              onChange={(e) => setEmployeeFilter(e.target.value)}
+              placeholder="Employee ID"
+              className={`${inputCls} !w-32`}
+            />
+            {/* <input
             value={nameFilter}
             onChange={(e) => setNameFilter(e.target.value)}
             placeholder="Name"
             className={`${inputCls} !w-40`}
           /> */}
-          <input
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-            placeholder="Project"
-            className={`${inputCls} !w-32`}
-          />
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex h-8 items-center gap-1 rounded px-2 text-xs text-gray-500 hover:bg-gray-200 hover:text-gray-800"
-            >
-              <X className="h-3.5 w-3.5" />
-              Clear
-            </button>
-          )}
+            <input
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+              placeholder="Project"
+              className={`${inputCls} !w-32`}
+            />
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex h-8 items-center gap-1 rounded px-2 text-xs text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </button>
+            )}
           </div>
 
-         
-            <div className="flex gap-2">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={fetchTimesheets}
@@ -656,8 +666,8 @@ function Details({ item, hours, totalHours }) {
       {validHours.length ? (
         <div className="relative max-h-60 w-full min-w-0 overflow-auto rounded border border-gray-200 bg-white">
           {" "}
-            <table className="w-max min-w-full text-left text-xs">
-                <thead className="bg-gray-100 text-gray-600">
+          <table className="w-max min-w-full text-left text-xs">
+            <thead className="bg-gray-100 text-gray-600">
               <tr>
                 <th className="whitespace-nowrap px-3 py-2 font-medium">
                   Date

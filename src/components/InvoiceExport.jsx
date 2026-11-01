@@ -2605,17 +2605,17 @@ export default function InvoiceExport() {
   //   );
   // }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-f9fafd flex items-center justify-center pl-44 pr-4">
-        <div className="text-center text-gray-600">
-          <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No Invoices</p>
-          {/* <p className="text-sm">{error}</p> */}
-        </div>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-f9fafd flex items-center justify-center pl-44 pr-4">
+  //       <div className="text-center text-gray-600">
+  //         <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
+  //         <p className="text-lg font-medium">No Invoices</p>
+  //         {/* <p className="text-sm">{error}</p> */}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <>
