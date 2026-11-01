@@ -1484,6 +1484,7 @@ import TimesheetScheduleManager from "./components/TimesheetScheduleManager";
 import ProjectPlcMapping from "./components/ProjectPlcMapping";
 import SubkTimesheetExport from "./components/SubkTimesheetExport";
 import CapCommInteractiveInvoiceBuilder from "./components/CapCommStaticInvoiceViewer";
+import LeaveApproval from "./components/LeaveApproval";
 
 function App() {
   const getCurrentUserContext = () => {
@@ -1551,7 +1552,7 @@ function App() {
               Access Denied
             </h2>
             <p className="text-sm text-gray-600">
-              You do not have permission to view this screen 
+              You do not have permission to view this screen
               {/* (<span className="font-mono font-semibold">{screenKey}</span>). */}
               Please contact your administrator if you believe this is an error.
             </p>
@@ -2359,9 +2360,9 @@ function App() {
             <Route
               path="leave-project-mapping"
               element={
-                  <div className="mt-12 ml-2">
-                    <LeaveProjectMapping />
-                  </div>
+                <div className="mt-12 ml-2">
+                  <LeaveProjectMapping />
+                </div>
               }
             />
             <Route
@@ -2370,6 +2371,16 @@ function App() {
                 // <RequirePermission screenKey="invoiceexport">
                 <div className="mt-12 ml-2">
                   <TimesheetScheduleManager />
+                </div>
+                // </RequirePermission>
+              }
+            />
+            <Route
+              path="sub-leave-approval"
+              element={
+                // <RequirePermission screenKey="invoiceexport">
+                <div className="mt-12 ml-2">
+                  <LeaveApproval />
                 </div>
                 // </RequirePermission>
               }

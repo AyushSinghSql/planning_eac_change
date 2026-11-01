@@ -1570,157 +1570,163 @@ const NavigationSidebar = ({
               </div>
 
               {/* LEVEL 1: Dashboard Section */}
-              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setReportingOpen(!reportingOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <LayoutDashboard className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
-                      </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        Dashboard & Reporting
-                      </span>
-                    </div>
-                    {isExpanded &&
-                      (reportingOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
-
-                {/* LEVEL 2: Under Dashboard */}
-                {(reportingOpen || searchTerm) && isExpanded && (
-                  <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
-                      label="Executive Dashboard"
-                      path="/dashboard/project-report"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-
-                    <NavItem
-                      label="Active Reports"
-                      path="/dashboard/reporting-screen"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-
-                    <NavItem
-                      label="Version Analysis"
-                      path="/dashboard/project-variance"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-
-                    {/* LEVEL 2 Sub-Group (3rd Level Trigger) */}
-                    <NavSubGroup
-                      label="BI Reports"
-                      searchTerm={searchTerm}
-                      defaultOpen={
-                        pathname.includes("/dashboard/cfo-bi-reports") ||
-                        pathname.includes("/dashboard/cfo-bi-reports-labor") ||
-                        pathname.includes(
-                          "/dashboard/top10-bottom10-bi-reports",
-                        ) ||
-                        pathname.includes(
-                          "/dashboard/total-company-bi-reports",
-                        ) ||
-                        pathname.includes(
-                          "/dashboard/current-month-actuals-vs-forecast",
-                        )
-                      }
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() => setReportingOpen(!reportingOpen)}
                     >
-                      <NavItem
-                        label="CFO Reports"
-                        path="/dashboard/cfo-bi-reports"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Labor Utilization"
-                        path="/dashboard/cfo-bi-reports-labor"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Total Company"
-                        path="/dashboard/total-company-bi-reports"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Top 10 and Bottom 10 Projects"
-                        path="/dashboard/top10-bottom10-bi-reports"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Current month Actuals Vs Forecast"
-                        path="/dashboard/current-month-actuals-vs-forecast"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                    </NavSubGroup>
-                  </div>
-                )}
-              </div>}
-
-              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setPrToPoTrackerOpen(!prToPoTrackerOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <FileCheck2 className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <LayoutDashboard className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          Dashboard & Reporting
+                        </span>
                       </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        Procure-to-Pay
-                      </span>
+                      {isExpanded &&
+                        (reportingOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
                     </div>
-                    {isExpanded &&
-                      (prToPoTrackerOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
+                  )}
 
-                {(prToPoTrackerOpen || searchTerm) && isExpanded && (
-                  <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
-                      label="Dashboard"
-                      path="/dashboard/pr-to-po-tracker"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </div>
-                )}
-              </div>}
+                  {/* LEVEL 2: Under Dashboard */}
+                  {(reportingOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      <NavItem
+                        label="Executive Dashboard"
+                        path="/dashboard/project-report"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+
+                      <NavItem
+                        label="Active Reports"
+                        path="/dashboard/reporting-screen"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+
+                      <NavItem
+                        label="Version Analysis"
+                        path="/dashboard/project-variance"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+
+                      {/* LEVEL 2 Sub-Group (3rd Level Trigger) */}
+                      <NavSubGroup
+                        label="BI Reports"
+                        searchTerm={searchTerm}
+                        defaultOpen={
+                          pathname.includes("/dashboard/cfo-bi-reports") ||
+                          pathname.includes(
+                            "/dashboard/cfo-bi-reports-labor",
+                          ) ||
+                          pathname.includes(
+                            "/dashboard/top10-bottom10-bi-reports",
+                          ) ||
+                          pathname.includes(
+                            "/dashboard/total-company-bi-reports",
+                          ) ||
+                          pathname.includes(
+                            "/dashboard/current-month-actuals-vs-forecast",
+                          )
+                        }
+                      >
+                        <NavItem
+                          label="CFO Reports"
+                          path="/dashboard/cfo-bi-reports"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Labor Utilization"
+                          path="/dashboard/cfo-bi-reports-labor"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Total Company"
+                          path="/dashboard/total-company-bi-reports"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Top 10 and Bottom 10 Projects"
+                          path="/dashboard/top10-bottom10-bi-reports"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Current month Actuals Vs Forecast"
+                          path="/dashboard/current-month-actuals-vs-forecast"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                      </NavSubGroup>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() => setPrToPoTrackerOpen(!prToPoTrackerOpen)}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <FileCheck2 className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          Procure-to-Pay
+                        </span>
+                      </div>
+                      {isExpanded &&
+                        (prToPoTrackerOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
+                    </div>
+                  )}
+
+                  {(prToPoTrackerOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      <NavItem
+                        label="Dashboard"
+                        path="/dashboard/pr-to-po-tracker"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* LEVEL 1: Projects Section */}
               {currentUserRole?.toUpperCase() === "ADMIN" && !searchTerm && (
@@ -1749,169 +1755,37 @@ const NavigationSidebar = ({
                 </div>
               )}
 
-              {currentUserRole?.toUpperCase() === "ADMIN" && (planningOpen || searchTerm) && isExpanded && (
-                <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                  <NavSubGroup
-                    label="Project Financial Dashboards"
-                    searchTerm={searchTerm}
-                    defaultOpen={
-                      pathname.includes("/dashboard/project-performance") ||
-                      pathname.includes("/dashboard/labor-utilization-summary")
-                    }
-                  >
-                    <NavItem
-                      label="Project Performance"
-                      path="/dashboard/project-performance"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Project Console"
-                      path="/dashboard/project-analysis-dash"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Labor Utilization"
-                      path="/dashboard/labor-utilization-summary"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </NavSubGroup>
-
-                  <NavSubGroup
-                    label="Plan Project and EAC"
-                    searchTerm={searchTerm}
-                    defaultOpen={
-                      pathname.includes("/dashboard/project-budget-status") ||
-                      pathname.includes("/dashboard/mass-utility") ||
-                      pathname.includes("/dashboard/quick-budget")
-                    }
-                  >
-                    <NavItem
-                      label="Plan Projects"
-                      path="/dashboard/project-budget-status"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Quick Budget"
-                      path="/dashboard/quick-budget"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Mass Utility"
-                      path="/dashboard/mass-utility"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </NavSubGroup>
-
-                  <NavSubGroup
-                    label="Plan New Business"
-                    searchTerm={searchTerm}
-                    defaultOpen={
-                      pathname.includes("/dashboard/new-business") ||
-                      pathname.includes("/dashboard/create-project-budget") ||
-                      pathname.includes("/dashboard/nb-project")
-                    }
-                  >
-                    <NavItem
-                      label="Manage New Business"
-                      path="/dashboard/new-business"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Plan New Businesses"
-                      path="/dashboard/nb-project"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Transfer Project Budget"
-                      path="/dashboard/create-project-budget"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </NavSubGroup>
-                </div>
-              )}
-
-              {/* LEVEL 1: Opportunities & Pricing Section */}
-              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setOppSectionOpen(!oppSectionOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <Target className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
-                      </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        Opportunity & Pricing
-                      </span>
-                    </div>
-                    {isExpanded &&
-                      (oppSectionOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
-
-                {(oppSectionOpen || searchTerm) && isExpanded && (
+              {currentUserRole?.toUpperCase() === "ADMIN" &&
+                (planningOpen || searchTerm) &&
+                isExpanded && (
                   <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
                     <NavSubGroup
-                      label="Capture Opportunity & Plan Pipeline"
+                      label="Project Financial Dashboards"
                       searchTerm={searchTerm}
                       defaultOpen={
-                        pathname.includes("/dashboard/import-opportunity") ||
-                        pathname.includes("/dashboard/opp-project") ||
-                        pathname.includes("/dashboard/analog-rate") ||
-                        pathname.includes("/dashboard/parametric-rate")
+                        pathname.includes("/dashboard/project-performance") ||
+                        pathname.includes(
+                          "/dashboard/labor-utilization-summary",
+                        )
                       }
                     >
                       <NavItem
-                        label="Import Opportunities"
-                        path="/dashboard/import-opportunity"
+                        label="Project Performance"
+                        path="/dashboard/project-performance"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
                       />
                       <NavItem
-                        label="Plan Opportunities"
-                        path="/dashboard/opp-project"
+                        label="Project Console"
+                        path="/dashboard/project-analysis-dash"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
                       />
                       <NavItem
-                        label="Analogous Rate"
-                        path="/dashboard/analog-rate"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Parametric Rate"
-                        path="/dashboard/parametric-rate"
+                        label="Labor Utilization"
+                        path="/dashboard/labor-utilization-summary"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
@@ -1919,167 +1793,63 @@ const NavigationSidebar = ({
                     </NavSubGroup>
 
                     <NavSubGroup
-                      label="Cost Proposal and Pricing"
+                      label="Plan Project and EAC"
                       searchTerm={searchTerm}
                       defaultOpen={
-                        pathname.includes("/dashboard/pricing-new-business") ||
-                        pathname.includes("/dashboard/pricing-nb-project") ||
-                        pathname.includes("/dashboard/pricing-mass-utility") ||
-                        pathname.includes(
-                          "/dashboard/pricing-rate-configure",
-                        ) ||
-                        pathname.includes("/dashboard/pricing")
+                        pathname.includes("/dashboard/project-budget-status") ||
+                        pathname.includes("/dashboard/mass-utility") ||
+                        pathname.includes("/dashboard/quick-budget")
                       }
                     >
                       <NavItem
-                        label="Contract Setup"
-                        path="/dashboard/pricing-new-business"
+                        label="Plan Projects"
+                        path="/dashboard/project-budget-status"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
                       />
                       <NavItem
-                        label="Proposal Builder"
-                        path="/dashboard/pricing-nb-project"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Pricing Studio"
-                        path="/dashboard/pricing"
+                        label="Quick Budget"
+                        path="/dashboard/quick-budget"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
                       />
                       <NavItem
                         label="Mass Utility"
-                        path="/dashboard/pricing-mass-utility"
-                        selected={selectedPage}
-                        onClick={handleLinkClick}
-                        searchTerm={searchTerm}
-                      />
-                      <NavItem
-                        label="Rate Configuration"
-                        path="/dashboard/pricing-rate-configure"
+                        path="/dashboard/mass-utility"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
                       />
                     </NavSubGroup>
-                  </div>
-                )}
-              </div>}
 
-              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setCorporateBudgetOpen(!corporateBudgetOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <Briefcase className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
-                      </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        Corporate Budget
-                      </span>
-                    </div>
-                    {isExpanded &&
-                      (corporateBudgetOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
-
-                {(corporateBudgetOpen || searchTerm) && isExpanded && (
-                  <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
-                      label="By Account"
-                      path="/dashboard/gl-budgeting"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="By Division/Department/Organization"
-                      path="/dashboard/corporate-budget-department"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </div>
-                )}
-              </div>}
-
-              {/* LEVEL 1: Compliance (DCAA) */}
-              {currentUserRole?.toUpperCase() === "ADMIN" && <div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setPbrSectionOpen(!pbrSectionOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <Gauge className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
-                      </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        GovCon Compliances
-                      </span>
-                    </div>
-                    {isExpanded &&
-                      (pbrSectionOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
-
-                {(pbrSectionOpen || searchTerm) && isExpanded && (
-                  <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
-                      label="Provisional Billing Rates (PBR)"
-                      path="/dashboard/pbr-report"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Incurred Cost Model (ICE)"
-                      path="/dashboard/ice-tabs"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
                     <NavSubGroup
-                      label="Forward Pricing Rates (FPRP)"
+                      label="Plan New Business"
                       searchTerm={searchTerm}
                       defaultOpen={
-                        pathname.includes("/dashboard/pool-rate-tabs") ||
-                        pathname.includes("/dashboard/rate-configure")
+                        pathname.includes("/dashboard/new-business") ||
+                        pathname.includes("/dashboard/create-project-budget") ||
+                        pathname.includes("/dashboard/nb-project")
                       }
                     >
                       <NavItem
-                        label="Rate Configuration"
-                        path="/dashboard/pool-rate-tabs"
+                        label="Manage New Business"
+                        path="/dashboard/new-business"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
                       />
                       <NavItem
-                        label="Rate Computation"
-                        path="/dashboard/rate-configure"
+                        label="Plan New Businesses"
+                        path="/dashboard/nb-project"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Transfer Project Budget"
+                        path="/dashboard/create-project-budget"
                         selected={selectedPage}
                         onClick={handleLinkClick}
                         searchTerm={searchTerm}
@@ -2087,7 +1857,259 @@ const NavigationSidebar = ({
                     </NavSubGroup>
                   </div>
                 )}
-              </div>}
+
+              {/* LEVEL 1: Opportunities & Pricing Section */}
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() => setOppSectionOpen(!oppSectionOpen)}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <Target className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          Opportunity & Pricing
+                        </span>
+                      </div>
+                      {isExpanded &&
+                        (oppSectionOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
+                    </div>
+                  )}
+
+                  {(oppSectionOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      <NavSubGroup
+                        label="Capture Opportunity & Plan Pipeline"
+                        searchTerm={searchTerm}
+                        defaultOpen={
+                          pathname.includes("/dashboard/import-opportunity") ||
+                          pathname.includes("/dashboard/opp-project") ||
+                          pathname.includes("/dashboard/analog-rate") ||
+                          pathname.includes("/dashboard/parametric-rate")
+                        }
+                      >
+                        <NavItem
+                          label="Import Opportunities"
+                          path="/dashboard/import-opportunity"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Plan Opportunities"
+                          path="/dashboard/opp-project"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Analogous Rate"
+                          path="/dashboard/analog-rate"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Parametric Rate"
+                          path="/dashboard/parametric-rate"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                      </NavSubGroup>
+
+                      <NavSubGroup
+                        label="Cost Proposal and Pricing"
+                        searchTerm={searchTerm}
+                        defaultOpen={
+                          pathname.includes(
+                            "/dashboard/pricing-new-business",
+                          ) ||
+                          pathname.includes("/dashboard/pricing-nb-project") ||
+                          pathname.includes(
+                            "/dashboard/pricing-mass-utility",
+                          ) ||
+                          pathname.includes(
+                            "/dashboard/pricing-rate-configure",
+                          ) ||
+                          pathname.includes("/dashboard/pricing")
+                        }
+                      >
+                        <NavItem
+                          label="Contract Setup"
+                          path="/dashboard/pricing-new-business"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Proposal Builder"
+                          path="/dashboard/pricing-nb-project"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Pricing Studio"
+                          path="/dashboard/pricing"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Mass Utility"
+                          path="/dashboard/pricing-mass-utility"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Rate Configuration"
+                          path="/dashboard/pricing-rate-configure"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                      </NavSubGroup>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() =>
+                        setCorporateBudgetOpen(!corporateBudgetOpen)
+                      }
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <Briefcase className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          Corporate Budget
+                        </span>
+                      </div>
+                      {isExpanded &&
+                        (corporateBudgetOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
+                    </div>
+                  )}
+
+                  {(corporateBudgetOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      <NavItem
+                        label="By Account"
+                        path="/dashboard/gl-budgeting"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="By Division/Department/Organization"
+                        path="/dashboard/corporate-budget-department"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* LEVEL 1: Compliance (DCAA) */}
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() => setPbrSectionOpen(!pbrSectionOpen)}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <Gauge className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          GovCon Compliances
+                        </span>
+                      </div>
+                      {isExpanded &&
+                        (pbrSectionOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
+                    </div>
+                  )}
+
+                  {(pbrSectionOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      <NavItem
+                        label="Provisional Billing Rates (PBR)"
+                        path="/dashboard/pbr-report"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Incurred Cost Model (ICE)"
+                        path="/dashboard/ice-tabs"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavSubGroup
+                        label="Forward Pricing Rates (FPRP)"
+                        searchTerm={searchTerm}
+                        defaultOpen={
+                          pathname.includes("/dashboard/pool-rate-tabs") ||
+                          pathname.includes("/dashboard/rate-configure")
+                        }
+                      >
+                        <NavItem
+                          label="Rate Configuration"
+                          path="/dashboard/pool-rate-tabs"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Rate Computation"
+                          path="/dashboard/rate-configure"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                      </NavSubGroup>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Time and Subcontractor Management */}
               <div>
@@ -2121,13 +2143,15 @@ const NavigationSidebar = ({
 
                 {(subContractorSectionOpen || searchTerm) && isExpanded && (
                   <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    {currentUserRole?.toUpperCase() === "ADMIN" && <NavItem
-                      label="Dashboard"
-                      path="/dashboard/sub-dashboards"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />}
+                    {currentUserRole?.toUpperCase() === "ADMIN" && (
+                      <NavItem
+                        label="Dashboard"
+                        path="/dashboard/sub-dashboards"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    )}
                     <NavItem
                       label="Create Timesheet"
                       path="/dashboard/sub-create-timesheet"
@@ -2135,38 +2159,44 @@ const NavigationSidebar = ({
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
                     />
-                    {(currentUserRole?.toUpperCase() === "ADMIN" || currentUserRole?.toUpperCase() === "SUPERVISOR" || currentUserRole?.toUpperCase() === "PROJECT MANAGER") && <NavItem
-                      label="Enquiry & Approval"
-                      path="/dashboard/sub-enquiry-approval"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />}
-                    {(currentUserRole?.toUpperCase() === "ADMIN") && 
-                    <NavItem
-                      label="Export Timesheet"
-                      path="/dashboard/sub-timesheet-export"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />}
-                    {(currentUserRole?.toUpperCase() === "ADMIN") && 
-                    <NavItem
-                      label="Generate Invoice"
-                      path="/dashboard/sub-export-table"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />}
-                    {(currentUserRole?.toUpperCase() === "ADMIN") &&
-                    <NavItem
-                      label="Invoice Export"
-                      path="/dashboard/sub-invoice-export"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-}
+                    {(currentUserRole?.toUpperCase() === "ADMIN" ||
+                      currentUserRole?.toUpperCase() === "SUPERVISOR" ||
+                      currentUserRole?.toUpperCase() === "PROJECT MANAGER") && (
+                      <NavItem
+                        label="Enquiry & Approval"
+                        path="/dashboard/sub-enquiry-approval"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    )}
+                    {currentUserRole?.toUpperCase() === "ADMIN" && (
+                      <NavItem
+                        label="Payment Process"
+                        path="/dashboard/sub-timesheet-export"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    )}
+                    {currentUserRole?.toUpperCase() === "ADMIN" && (
+                      <NavItem
+                        label="Generate Invoice"
+                        path="/dashboard/sub-export-table"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    )}
+                    {currentUserRole?.toUpperCase() === "ADMIN" && (
+                      <NavItem
+                        label="Invoice Export"
+                        path="/dashboard/sub-invoice-export"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    )}
                     {/* <NavItem
                       label="PO Info"
                       path="/dashboard/sub-po-info"
@@ -2188,196 +2218,214 @@ const NavigationSidebar = ({
                       onClick={handleLinkClick}
                       searchTerm={searchTerm}
                     /> */}
-                    {(currentUserRole?.toUpperCase() === "ADMIN") &&
-                    <NavItem
-                      label="Report"
-                      path="/dashboard/sub-report"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    /> }
-                    {(currentUserRole?.toUpperCase() === "ADMIN") && <><NavItem
-                      label="Manage Project"
-                      path="/dashboard/sub-project-master"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Manage Employee"
-                      path="/dashboard/sub-employee-master"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Project Leave Mapping"
-                      path="/dashboard/leave-project-mapping"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Manage Timesheet Schdule"
-                      path="/dashboard/sub-schedule-manager"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Groups Management"
-                      path="/dashboard/group-management"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="User Workflow Mapping"
-                      path="/dashboard/sub-workflow-mapping"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Employee Project Mapping"
-                      path="/dashboard/sub-project-user-mapping"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    
-                    <NavItem
-                      label="Settings"
-                      path="/dashboard/sub-settings"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    /></>}
+                    {currentUserRole?.toUpperCase() === "ADMIN" && (
+                      <NavItem
+                        label="Report"
+                        path="/dashboard/sub-report"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    )}
+                    {currentUserRole?.toUpperCase() === "ADMIN" ||
+                      (currentUserRole?.toUpperCase() === "SUPERVISOR" && (
+                        <NavItem
+                          label="Leave Approve"
+                          path="/dashboard/sub-leave-approval"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                      ))}
+                    {currentUserRole?.toUpperCase() === "ADMIN" && (
+                      <>
+                        <NavItem
+                          label="Manage Project"
+                          path="/dashboard/sub-project-master"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Manage Employee"
+                          path="/dashboard/sub-employee-master"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Project Leave Mapping"
+                          path="/dashboard/leave-project-mapping"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Manage Timesheet Schdule"
+                          path="/dashboard/sub-schedule-manager"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Groups Management"
+                          path="/dashboard/group-management"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="User Workflow Mapping"
+                          path="/dashboard/sub-workflow-mapping"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                        <NavItem
+                          label="Employee Project Mapping"
+                          path="/dashboard/sub-project-user-mapping"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+
+                        <NavItem
+                          label="Settings"
+                          path="/dashboard/sub-settings"
+                          selected={selectedPage}
+                          onClick={handleLinkClick}
+                          searchTerm={searchTerm}
+                        />
+                      </>
+                    )}
                   </div>
                 )}
               </div>
 
               {/* LEVEL 1: Settings */}
-              {currentUserRole?.toUpperCase() === "ADMIN" &&<div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setConfigurationOpen(!configurationOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <Layers className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() => setConfigurationOpen(!configurationOpen)}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <Layers className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          Settings
+                        </span>
                       </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        Settings
-                      </span>
+                      {isExpanded &&
+                        (configurationOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
                     </div>
-                    {isExpanded &&
-                      (configurationOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
+                  )}
 
-                {(configurationOpen || searchTerm) && isExpanded && (
-                  <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    <NavItem
-                      label="Project Plc Mapping"
-                      path="/dashboard/sub-plc-mapping"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Configuration Settings"
-                      path="/dashboard/global-configuration"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Access Mapping"
-                      path="/dashboard/projectmapping"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Account Mapping"
-                      path="/dashboard/account-mapping"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Ceiling Configuration"
-                      path="/dashboard/ceiling-configuration"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Fiscal Year Periods"
-                      path="/dashboard/maintain-fiscal-year-periods"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Annual Holidays"
-                      path="/dashboard/annual-holidays"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Prospective ID Setup"
-                      path="/dashboard/prospective-id-setup"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </div>
-                )}
-              </div>}
+                  {(configurationOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      <NavItem
+                        label="Project Plc Mapping"
+                        path="/dashboard/sub-plc-mapping"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Configuration Settings"
+                        path="/dashboard/global-configuration"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Access Mapping"
+                        path="/dashboard/projectmapping"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Account Mapping"
+                        path="/dashboard/account-mapping"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Ceiling Configuration"
+                        path="/dashboard/ceiling-configuration"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Fiscal Year Periods"
+                        path="/dashboard/maintain-fiscal-year-periods"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Annual Holidays"
+                        path="/dashboard/annual-holidays"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Prospective ID Setup"
+                        path="/dashboard/prospective-id-setup"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* LEVEL 1: Admin */}
-             {currentUserRole?.toUpperCase() === "ADMIN" && <div>
-                {!searchTerm && (
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
-                    onClick={() => setAdminSetingOpen(!adminSetingOpen)}
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 flex justify-center">
-                        <ShieldCheck className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+              {currentUserRole?.toUpperCase() === "ADMIN" && (
+                <div>
+                  {!searchTerm && (
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 group"
+                      onClick={() => setAdminSetingOpen(!adminSetingOpen)}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 flex justify-center">
+                          <ShieldCheck className="w-6 h-6 text-gray-600 group-hover:text-[#17414d]" />
+                        </div>
+                        <span
+                          className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
+                            isExpanded ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          Admin
+                        </span>
                       </div>
-                      <span
-                        className={`ml-4 text-sm font-medium text-gray-700 transition-opacity duration-200 ${
-                          isExpanded ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        Admin
-                      </span>
+                      {isExpanded &&
+                        (adminSetingOpen ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        ))}
                     </div>
-                    {isExpanded &&
-                      (adminSetingOpen ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      ))}
-                  </div>
-                )}
+                  )}
 
-                {(adminSetingOpen || searchTerm) && isExpanded && (
-                  <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
-                    {/* <NavItem
+                  {(adminSetingOpen || searchTerm) && isExpanded && (
+                    <div className="ml-12 mr-4 space-y-1 border-l border-gray-100 pl-2">
+                      {/* <NavItem
                       label="Manage Groups"
                       path="/dashboard/manage-groups"
                       selected={selectedPage}
@@ -2385,30 +2433,31 @@ const NavigationSidebar = ({
                       searchTerm={searchTerm}
                     /> */}
 
-                    <NavItem
-                      label="Manage Users"
-                      path="/dashboard/manage-users"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Manage Roles"
-                      path="/dashboard/manage-roles"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                    <NavItem
-                      label="Manage Devices"
-                      path="/dashboard/authorize-device"
-                      selected={selectedPage}
-                      onClick={handleLinkClick}
-                      searchTerm={searchTerm}
-                    />
-                  </div>
-                )}
-              </div>}
+                      <NavItem
+                        label="Manage Users"
+                        path="/dashboard/manage-users"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Manage Roles"
+                        path="/dashboard/manage-roles"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                      <NavItem
+                        label="Manage Devices"
+                        path="/dashboard/authorize-device"
+                        selected={selectedPage}
+                        onClick={handleLinkClick}
+                        searchTerm={searchTerm}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
