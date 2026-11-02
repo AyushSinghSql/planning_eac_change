@@ -3328,7 +3328,7 @@ export default function TimesheetLine({
       if (periodEndDate) {
         try {
           const response = await fetch(
-            `${backendUrl}/api/SubkTimesheet/period?EmplId=${userId}`,
+            `${backendUrl}/api/SubkTimesheet/period?EmplId=${resourceId}`,
           );
           if (response.ok) {
             const data = await response.json();

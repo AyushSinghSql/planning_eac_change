@@ -2338,7 +2338,7 @@ export default function MainTable() {
                   onClick={handleNotify}
                   className="btn1 btn-blue cursor-pointer"
                 >
-                  Confirm Submit
+                  Confirm
                 </button>
               </div>
             </div>
