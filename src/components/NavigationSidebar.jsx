@@ -2227,8 +2227,8 @@ const NavigationSidebar = ({
                         searchTerm={searchTerm}
                       />
                     )}
-                    {currentUserRole?.toUpperCase() === "ADMIN" ||
-                      (currentUserRole?.toUpperCase() === "SUPERVISOR" && (
+                    {(currentUserRole?.toUpperCase() === "ADMIN" ||
+                      currentUserRole?.toUpperCase() === "SUPERVISOR") && (
                         <NavItem
                           label="Leave Approve"
                           path="/dashboard/sub-leave-approval"
@@ -2236,7 +2236,7 @@ const NavigationSidebar = ({
                           onClick={handleLinkClick}
                           searchTerm={searchTerm}
                         />
-                      ))}
+                      )}
                     {currentUserRole?.toUpperCase() === "ADMIN" && (
                       <>
                         <NavItem
