@@ -10176,14 +10176,14 @@ export default function TimesheetDetailModal({
               >
                 Copy
               </ActionButton>
-              {timesheetData?.Status?.toUpperCase() !== "CORRECTION" && (
+              {/* {timesheetData?.Status?.toUpperCase() !== "CORRECTION" && (
                 <ActionButton
                   onClick={deleteLines}
                   disabled={selectedLines.size === 0}
                 >
                   Delete
                 </ActionButton>
-              )}
+              )} */}
             </>
           )}
           <ActionButton onClick={onClose}>Cancel</ActionButton>

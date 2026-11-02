@@ -4474,12 +4474,12 @@ export default function TimesheetLine({
             >
               Copy
             </ActionButton>
-            <ActionButton
+            {/* <ActionButton
               onClick={deleteLines}
               disabled={isPeriodInvalid || selectedLines.size === 0}
             >
               Delete
-            </ActionButton>
+            </ActionButton> */}
             <ActionButton onClick={() => onClose()} variant="secondary">
               Cancel
             </ActionButton>
