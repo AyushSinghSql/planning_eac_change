@@ -3027,13 +3027,13 @@ const Settings = () => {
                     <div className="flex items-center mb-2">
                       <SettingsIcon className="h-4 w-4 text-blue-600 mr-3" />
                       <h2 className="text-l font-semibold text-gray-900">
-                        Configure Timesheet Period
+                        Configure Weekend
                       </h2>
                     </div>
 
                     <div className="bg-gray-50 rounded-lg p-2">
                       <div className="space-y-2">
-                        <div>
+                        {/* <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Timesheet Period
                           </label>
@@ -3066,11 +3066,11 @@ const Settings = () => {
                           <p className="mt-1 text-xs text-gray-500">
                             Select how often timesheets are generated.
                           </p>
-                        </div>
+                        </div> */}
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Set Weekend
+                            {/* Set Weekend */}
                             {weekendDays.length > 0 &&
                               weekendDays.join(", ") !==
                                 originalValues.weekendDays?.join(", ") && (
