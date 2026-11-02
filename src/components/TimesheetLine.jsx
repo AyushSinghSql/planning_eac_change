@@ -4194,10 +4194,34 @@ export default function TimesheetLine({
       );
       return;
     }
+    // Fixed: check if any line is missing a Project ID
+    if (lines.some((line) => !line.project)) {
+      showToast("Select a Project ID.", "warning");
+      return;
+    }
+
     if (grandTotal === 0) {
       showToast("Cannot submit a timesheet with zero hours.", "warning");
       return;
     }
+
+    // --- NEW: Check if total hours (Regular + Overtime) exceed 24 hours for any day ---
+    // for (let dayIdx = 0; dayIdx < selectedPeriod.dates.length; dayIdx++) {
+    //   let dayTotalHours = 0;
+
+    //   lines.forEach((line) => {
+    //     const hVal = parseFloat(line.hours?.[dayIdx]) || 0;
+    //     dayTotalHours += hVal;
+    //   });
+
+    //   if (dayTotalHours > maxDailyHours) {
+    //     showToast(
+    //       `Cannot submit. Day ${dayIdx + 1} total hours (${dayTotalHours}) cannot exceed ${maxDailyHours} hours per day.`,
+    //       "error",
+    //     );
+    //     return;
+    //   }
+    // }
 
     // 0. Check if any day has Overtime hours entered while Regular/Standard hours are less than maxDailyHours
     for (let dayIdx = 0; dayIdx < selectedPeriod.dates.length; dayIdx++) {
