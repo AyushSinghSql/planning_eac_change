@@ -2507,14 +2507,14 @@ export default function ApprovalEnquiry() {
   const [selectedTimesheetDate, setSelectedTimesheetDate] = useState(null);
   const [selectedTimesheetLines, setSelectedTimesheetLines] = useState([]);
   // const [searchStatus, setSearchStatus] = useState("");
-  const [searchStatus, setSearchStatus] = useState([]);
+  const [searchStatus, setSearchStatus] = useState(["submitted"]);
   const [correctionLoading, setCorrectionLoading] = useState(false);
   const [processedLoading, setProcessedLoading] = useState(false);
   const now = new Date();
   const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
   const currentYear = String(now.getFullYear());
-  const [filterMonth, setFilterMonth] = useState(currentMonth);
-  const [filterYear, setFilterYear] = useState(currentYear);
+  const [filterMonth, setFilterMonth] = useState();
+  const [filterYear, setFilterYear] = useState();
   const [statusHoverRow, setStatusHoverRow] = useState(null);
   const [approvalPanelRow, setApprovalPanelRow] = useState(null);
 
@@ -2994,7 +2994,7 @@ export default function ApprovalEnquiry() {
     setSelectAll(false);
     setNotifySelectAll(false);
     setUnifiedSelectAll(false);
-    setSearchStatus(""); // Reset status filter
+    // setSearchStatus(""); // Reset status filter
     setSelectedResourceType(null);
   }, []);
 
@@ -4470,7 +4470,7 @@ export default function ApprovalEnquiry() {
                     Submitted
                   </label>
                   {/* {isAdmin && ( */}
-                  <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
+                  {/* <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={searchStatus.includes("processed")}
@@ -4479,7 +4479,7 @@ export default function ApprovalEnquiry() {
                       className="cursor-pointer accent-blue-600"
                     />
                     Processed
-                  </label>
+                  </label> */}
                   {/* )} */}
                 </div>
               </div>

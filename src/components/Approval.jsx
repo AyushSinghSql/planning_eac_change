@@ -195,14 +195,16 @@ export default function Approval() {
   const [selectedTimesheetDate, setSelectedTimesheetDate] = useState(null);
   const [selectedTimesheetLines, setSelectedTimesheetLines] = useState([]);
   // const [searchStatus, setSearchStatus] = useState("");
-  const [searchStatus, setSearchStatus] = useState([]);
+  const [searchStatus, setSearchStatus] = useState(["submitted"]);
   const [correctionLoading, setCorrectionLoading] = useState(false);
   const [processedLoading, setProcessedLoading] = useState(false);
   const now = new Date();
   const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
   const currentYear = String(now.getFullYear());
-  const [filterMonth, setFilterMonth] = useState(currentMonth);
-  const [filterYear, setFilterYear] = useState(currentYear);
+  // const [filterMonth, setFilterMonth] = useState(currentMonth);
+  // const [filterYear, setFilterYear] = useState(currentYear);
+  const [filterMonth, setFilterMonth] = useState();
+  const [filterYear, setFilterYear] = useState();
   const [statusHoverRow, setStatusHoverRow] = useState(null);
   const [approvalPanelRow, setApprovalPanelRow] = useState(null);
 
@@ -676,7 +678,7 @@ export default function Approval() {
     setSelectAll(false);
     setNotifySelectAll(false);
     setUnifiedSelectAll(false);
-    setSearchStatus(""); // Reset status filter
+    // setSearchStatus(""); // Reset status filter
     setSelectedResourceType(null);
   }, []);
 
