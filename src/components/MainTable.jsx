@@ -1396,6 +1396,7 @@ export default function MainTable() {
       let currentDate = new Date(leaveStartDate);
       const endDate = new Date(leaveEndDate);
       const hoursPerDay = parseFloat(totalHoursCalculated) || 8.0;
+      const dailyHoursPerDay = parseFloat(dailyHours) || 8.0;
 
       while (currentDate <= endDate) {
         const year = currentDate.getFullYear();
@@ -1409,7 +1410,7 @@ export default function MainTable() {
           transactionType: "PENDING",
           transactionDate: formattedDateString,
           fiscalYear: year,
-          hours: hoursPerDay,
+          hours: dailyHoursPerDay,
           remarks: leaveReason || "",
           createdBy: currentUser?.name || "admin",
         };
@@ -1635,7 +1636,7 @@ export default function MainTable() {
     setLeaveLoading(true);
 
     try {
-      const emplId = selectedEmployeeId || currentUser.employeeId
+      const emplId = selectedEmployeeId || currentUser.employeeId;
       // 1. Fetch user leave balances
       const balanceResponse = await fetch(
         `${backendUrl}/api/EmployeeLeaveTransactions/balance/${emplId}?fiscalYear=${currentYear}`,
